@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.springboot.microservice.exception;
+package uk.gov.justice.laa.ia.datastore.exception;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;

@@ -1,8 +1,8 @@
-package uk.gov.justice.laa.springboot.microservice.mapper;
+package uk.gov.justice.laa.ia.datastore.mapper;
 
 import org.mapstruct.Mapper;
+import uk.gov.justice.laa.ia.datastore.entity.ItemEntity;
 import uk.gov.justice.laa.ia.datastore.model.Item;
-import uk.gov.justice.laa.springboot.microservice.entity.ItemEntity;
 
 /**
  * The mapper between Item and ItemEntity.

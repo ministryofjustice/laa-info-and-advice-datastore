@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.springboot.microservice.exception;
+package uk.gov.justice.laa.ia.datastore.exception;
 
 /**
  * The exception thrown when item not found.

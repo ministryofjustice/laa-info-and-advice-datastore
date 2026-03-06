@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.springboot.microservice.entity;
+package uk.gov.justice.laa.ia.datastore.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

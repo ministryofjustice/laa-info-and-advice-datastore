@@ -1,14 +1,14 @@
-package uk.gov.justice.laa.springboot.microservice.service;
+package uk.gov.justice.laa.ia.datastore.service;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import uk.gov.justice.laa.ia.datastore.entity.ItemEntity;
+import uk.gov.justice.laa.ia.datastore.exception.ItemNotFoundException;
+import uk.gov.justice.laa.ia.datastore.mapper.ItemMapper;
 import uk.gov.justice.laa.ia.datastore.model.Item;
 import uk.gov.justice.laa.ia.datastore.model.ItemRequestBody;
-import uk.gov.justice.laa.springboot.microservice.entity.ItemEntity;
-import uk.gov.justice.laa.springboot.microservice.exception.ItemNotFoundException;
-import uk.gov.justice.laa.springboot.microservice.mapper.ItemMapper;
-import uk.gov.justice.laa.springboot.microservice.repository.ItemRepository;
+import uk.gov.justice.laa.ia.datastore.repository.ItemRepository;
 
 /**
  * Service class for handling items requests.

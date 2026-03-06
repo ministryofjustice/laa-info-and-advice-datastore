@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.springboot.microservice.controller;
+package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
@@ -25,7 +25,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.model.Item;
 import uk.gov.justice.laa.ia.datastore.model.ItemRequestBody;
-import uk.gov.justice.laa.springboot.microservice.service.ItemService;
+import uk.gov.justice.laa.ia.datastore.service.ItemService;
 
 @WebMvcTest(ItemController.class)
 class ItemControllerTest {

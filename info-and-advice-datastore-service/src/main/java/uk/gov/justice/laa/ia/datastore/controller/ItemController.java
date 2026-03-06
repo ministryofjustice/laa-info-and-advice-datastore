@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.springboot.microservice.controller;
+package uk.gov.justice.laa.ia.datastore.controller;
 
 import java.net.URI;
 import java.util.List;
@@ -11,7 +11,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import uk.gov.justice.laa.ia.datastore.api.ItemsApi;
 import uk.gov.justice.laa.ia.datastore.model.Item;
 import uk.gov.justice.laa.ia.datastore.model.ItemRequestBody;
-import uk.gov.justice.laa.springboot.microservice.service.ItemService;
+import uk.gov.justice.laa.ia.datastore.service.ItemService;
 
 /**
  * Controller for handling items requests.

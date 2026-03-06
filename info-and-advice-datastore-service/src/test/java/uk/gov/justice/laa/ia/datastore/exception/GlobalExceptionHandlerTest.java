@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.springboot.microservice.exception;
+package uk.gov.justice.laa.ia.datastore.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
