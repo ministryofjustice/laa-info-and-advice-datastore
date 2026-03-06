@@ -6,7 +6,7 @@ build/
 !**/src/test/**/build/
 .DS_Store
 
-spring-boot-microservice-api/generated
+info-and-advice-datastore-api/generated
 
 ### IntelliJ IDEA ###
 .idea
