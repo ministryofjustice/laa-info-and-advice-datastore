@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.springboot.microservice;
+package uk.gov.justice.laa.ia.datastore;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

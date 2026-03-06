@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.springboot.microservice.controller;
+package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -16,7 +16,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.justice.laa.springboot.microservice.SpringBootMicroserviceApplication;
+import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
 
 @SpringBootTest(classes = SpringBootMicroserviceApplication.class)
 @AutoConfigureMockMvc
