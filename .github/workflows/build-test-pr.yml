@@ -32,7 +32,7 @@ jobs:
         run: ./gradlew jacocoTestCoverageVerification
 
       - name: Integration test
-        run: ./gradlew integrationTest --tests '*IntegrationTest'
+        run: ./gradlew integrationTest
 
       - name: Publish package
         run: ./gradlew publish
@@ -44,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: checkstyle-report
-          path: spring-boot-microservice-service/build/reports/checkstyle
+          path: info-and-advice-datastore-service/build/reports/checkstyle
           retention-days: 14
 
       - name: Upload test report
@@ -52,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-report
-          path: spring-boot-microservice-service/build/reports/tests
+          path: info-and-advice-datastore-service/build/reports/tests
           retention-days: 14
 
       - name: Upload jacoco coverage report
@@ -60,7 +60,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: jacoco-coverage-report
-          path: spring-boot-microservice-service/build/reports/jacoco
+          path: info-and-advice-datastore-service/build/reports/jacoco
           retention-days: 14
 
   vulnerability-scan-app:
@@ -104,10 +104,10 @@ jobs:
         run: ./gradlew build
 
       - name: Build a Docker image
-        run: docker build -t spring-boot-microservice:scan .
+        run: docker build -t info-and-advice-datastore:scan .
 
       - name: Run Snyk to check Docker image for vulnerabilities
         uses: snyk/actions/docker@master
         with:
-          image: spring-boot-microservice:scan
+          image: info-and-advice-datastore:scan
           args: --file=Dockerfile --severity-threshold=high
