@@ -1,0 +1,146 @@
+name: Deploy to UAT
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    paths:
+      - "deploy/**"
+      - ".github/**"
+      - "Dockerfile"
+      - "decide-api/**"
+      - "decide-service/**"
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: "corretto"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Run build
+        run: ./gradlew build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test coverage verification
+        run: ./gradlew jacocoTestCoverageVerification
+
+      - name: Run integration tests
+        run: ./gradlew integrationTest --tests '*IntegrationTest'
+
+      - name: Publish package
+        run: ./gradlew publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload checkstyle report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: checkstyle-report
+          path: info-and-advice-datastore-service/build/reports/checkstyle
+          retention-days: 14
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-report
+          path: info-and-advice-datastore-service/build/reports/tests
+          retention-days: 14
+
+      - name: Upload jacoco coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jacoco-coverage-report
+          path: info-and-advice-datastore-service/build/reports/jacoco
+          retention-days: 14
+
+  snyk-scan-app:
+    runs-on: ubuntu-latest
+
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      SNYK_TEST_EXCLUDE: build,generated
+      SNYK_TARGET_REFERENCE: main
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run Snyk test to check for app code vulnerabilities
+        uses: snyk/actions/gradle@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: code test
+          args: --severity-threshold=high
+
+
+  snyk-scan-docker-image:
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: 25
+          distribution: "corretto"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build app jar with gradle
+        run: ./gradlew build
+
+      - name: Build a Docker image
+        run: docker build -t info-and-advice-datastore:scan .
+
+      - name: Run Snyk to check Docker image for vulnerabilities
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: info-and-advice-datastore:scan
+          args: --file=Dockerfile --severity-threshold=high --policy-path=.snyk
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: uat
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read # This is required for actions/checkout
+    needs:
+      - integration-tests
+      - snyk-scan-docker-image
+      - snyk-scan-app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Deploy to uat
+        uses: ./.github/actions/deploy
+        with:
+          app-environment: uat
+          kube-cert: ${{ secrets.KUBE_CERT }}
+          kube-token: ${{ secrets.KUBE_TOKEN }}
+          kube-cluster: ${{ secrets.KUBE_CLUSTER }}
+          kube-namespace: ${{ secrets.KUBE_NAMESPACE }}
+          ecr-repository: ${{ vars.ECR_REPOSITORY }}
+          ecr-registry-url: ${{ secrets.ECR_REGISTRY_URL }}
+          ecr-role-to-assume: ${{ secrets.ECR_ROLE_TO_ASSUME }}
+          ecr-region: ${{ vars.ECR_REGION }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-sha: ${{ github.sha }}
+          github-ref-name: ${{ github.ref_name }}
+          github-head-ref: ${{ github.head_ref }}
+          image-tag: ${{ github.sha }}
