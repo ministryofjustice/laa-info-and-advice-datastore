@@ -19,8 +19,8 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'laa-spring-boot-microservice-template'
+rootProject.name = 'laa-info-and-advice-service'
 
-include 'spring-boot-microservice-api'
-include 'spring-boot-microservice-service'
+include 'info-and-advice-datastore-api'
+include 'info-and-advice-datastore-service'
 
