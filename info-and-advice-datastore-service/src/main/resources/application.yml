@@ -1,6 +1,6 @@
 spring:
   application:
-    name: LAA Spring Boot Microservice
+    name: LAA Information and Advice Datastore
 
   # example database
   datasource:
@@ -20,8 +20,8 @@ spring:
 # used by actuator info endpoint
 info:
   app:
-    name: LAA Spring Boot Microservice application
-    description: An example Spring Boot Microservice application that provides a REST API.
+    name: LAA Information and Advice Datastore
+    description: Datastore for information and advice
     version: 1.0.0
 
 management:
