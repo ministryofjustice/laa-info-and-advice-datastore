@@ -1,0 +1,35 @@
+# Prek configuration for Java project
+repos:
+  - repo: local
+    hooks:
+      - id: gradle-spotless-apply
+        name: Gradle Spotless (format)
+        entry: ./gradlew
+        language: system
+        args: [ "spotlessApply", "--quiet" ]
+        pass_filenames: false
+
+      - id: checkstyle
+        name: Checkstyle
+        entry: ./gradlew
+        language: system
+        args: [ "checkstyleAll", "--quiet" ]
+        pass_filenames: false
+
+  # Ministry of Justice DevSecOps hooks for secret detection
+  # Not supporting custom api tokens of PDA service
+  - repo: https://github.com/ministryofjustice/devsecops-hooks
+    rev: v1.4.0
+    hooks:
+      - id: baseline
+        # Exclude directories that are not part of the codebase
+        exclude: |
+          (?x)^(
+            build/|
+            .gradle/|
+            .idea/|
+            .git/|
+            src/e2e/node_modules/|
+            src/e2e/.gradle/|
+            src/e2e/build
+          )
