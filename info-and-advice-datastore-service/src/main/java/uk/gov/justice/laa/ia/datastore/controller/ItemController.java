@@ -13,9 +13,7 @@ import uk.gov.justice.laa.ia.datastore.model.Item;
 import uk.gov.justice.laa.ia.datastore.model.ItemRequestBody;
 import uk.gov.justice.laa.ia.datastore.service.ItemService;
 
-/**
- * Controller for handling items requests.
- */
+/** Controller for handling items requests. */
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -41,8 +39,8 @@ public class ItemController implements ItemsApi {
     log.info("Creating item {}", itemRequestBody);
 
     Long id = service.createItem(itemRequestBody);
-    URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-        .buildAndExpand(id).toUri();
+    URI uri =
+        ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
     return ResponseEntity.created(uri).build();
   }
 
