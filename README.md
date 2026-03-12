@@ -44,6 +44,13 @@ In the above workflow files, change all occurrences of the `spring-boot-microser
 
 </details>
 
+### Install pre-hook commits
+
+`scripts/setup-hooks.sh` to install pre-commit hooks this will run
+- Spotless on the codebase
+- checkStyle on main, test and integration test
+- https://github.com/ministryofjustice/devsecops-hooks to scan for any secrets that may accidentally may have been commited. 
+
 ### Add GitHub Token
 Generate a Github PAT (Personal Access Token) to access the required plugin, via https://github.com/settings/tokens
 

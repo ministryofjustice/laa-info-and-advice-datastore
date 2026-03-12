@@ -72,13 +72,13 @@ class ItemControllerTest {
             .description("This is an updated item three.")
             .build();
     when(mockItemService.createItem(itemRequestBody)).thenReturn(3L);
-
     mockMvc
         .perform(
             post("/api/v1/items")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"name\": \"Item Three\", \"description\": \"This is an updated item three.\"}")
+                    "{\"name\": \"Item Three\", \"description\":"
+                        + " \"This is an updated item three.\"}")
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isCreated())
         .andExpect(header().string("Location", containsString("/api/v1/items/3")));
@@ -97,7 +97,8 @@ class ItemControllerTest {
             content()
                 .json(
                     "{\"type\":\"about:blank\",\"title\":\"Bad Request\","
-                        + "\"status\":400,\"detail\":\"Invalid request content.\",\"instance\":\"/api/v1/items\"}"));
+                        + "\"status\":400,\"detail\":\"Invalid request content.\","
+                        + "\"instance\":\"/api/v1/items\"}"));
 
     verify(mockItemService, never()).createItem(any(ItemRequestBody.class));
   }
@@ -129,7 +130,8 @@ class ItemControllerTest {
             content()
                 .json(
                     "{\"type\":\"about:blank\",\"title\":\"Bad Request\","
-                        + "\"status\":400,\"detail\":\"Invalid request content.\",\"instance\":\"/api/v1/items/2\"}"));
+                        + "\"status\":400,\"detail\":\"Invalid request content.\","
+                        + "\"instance\":\"/api/v1/items/2\"}"));
 
     verify(mockItemService, never()).updateItem(eq(2L), any(ItemRequestBody.class));
   }

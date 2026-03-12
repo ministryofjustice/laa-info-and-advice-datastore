@@ -6,7 +6,7 @@ repos:
         name: Gradle Spotless (format)
         entry: ./gradlew
         language: system
-        args: [ "spotlessApply", "--quiet" ]
+        args: [ "spotlessApply" ]
         pass_filenames: false
 
       - id: checkstyle
@@ -29,7 +29,4 @@ repos:
             .gradle/|
             .idea/|
             .git/|
-            src/e2e/node_modules/|
-            src/e2e/.gradle/|
-            src/e2e/build
           )

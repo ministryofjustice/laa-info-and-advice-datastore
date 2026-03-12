@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
 
+/** Integration tests for the ItemController. */
 @SpringBootTest(classes = SpringBootMicroserviceApplication.class)
 @AutoConfigureMockMvc
 @Transactional
@@ -52,7 +53,8 @@ public class ItemControllerIntegrationTest {
             post("/api/v1/items")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"name\": \"Item Six\", \"description\": \"This is a description of Item Six.\"}")
+                    "{\"name\": \"Item Six\", \"description\": "
+                        + "\"This is a description of Item Six.\"}")
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isCreated());
   }
@@ -64,7 +66,8 @@ public class ItemControllerIntegrationTest {
             put("/api/v1/items/2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"id\": 2, \"name\": \"Item Two\", \"description\": \"This is a updated description of Item Three.\"}")
+                    "{\"id\": 2, \"name\": \"Item Two\", \"description\": "
+                        + "\"This is a updated description of Item Three.\"}")
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }
