@@ -1,4 +1,4 @@
-# Default values for your-repo-name.
+# Default values for laa-info-and-advice-datastore.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -73,7 +73,7 @@ resources:
 
 livenessProbe:
   httpGet:
-    path: /status
+    path: /health
     port: http
   initialDelaySeconds: 30
   periodSeconds: 60
