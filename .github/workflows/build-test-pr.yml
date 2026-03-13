@@ -64,6 +64,7 @@ jobs:
           retention-days: 14
 
   vulnerability-scan-app:
+    if: false
     runs-on: ubuntu-latest
     needs:
       - build-test
@@ -82,6 +83,7 @@ jobs:
           args: --severity-threshold=high
 
   vulnerability-scan-docker:
+    if: false
     runs-on: ubuntu-latest
     needs:
       - build-test

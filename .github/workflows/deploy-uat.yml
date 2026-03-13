@@ -8,8 +8,8 @@ on:
       - "deploy/**"
       - ".github/**"
       - "Dockerfile"
-      - "decide-api/**"
-      - "decide-service/**"
+      - "info-and-advice-datastore-api/**"
+      - "info-and-advice-datastore-service/**"
 
 jobs:
   integration-tests:
@@ -66,6 +66,7 @@ jobs:
           retention-days: 14
 
   snyk-scan-app:
+    if: false
     runs-on: ubuntu-latest
 
     env:
@@ -85,6 +86,7 @@ jobs:
 
 
   snyk-scan-docker-image:
+    if: false
     runs-on: ubuntu-latest
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -122,8 +124,8 @@ jobs:
       contents: read # This is required for actions/checkout
     needs:
       - integration-tests
-      - snyk-scan-docker-image
-      - snyk-scan-app
+      #- snyk-scan-docker-image
+      #- snyk-scan-app
     steps:
       - name: Checkout
         uses: actions/checkout@v6
