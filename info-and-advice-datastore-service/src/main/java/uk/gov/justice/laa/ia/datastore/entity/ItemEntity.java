@@ -10,9 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * The entity class for items.
- */
+/** The entity class for items. */
 @Data
 @Builder
 @NoArgsConstructor

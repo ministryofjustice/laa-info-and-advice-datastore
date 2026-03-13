@@ -24,21 +24,20 @@ import uk.gov.justice.laa.ia.datastore.repository.ItemRepository;
 @ExtendWith(MockitoExtension.class)
 class ItemServiceTest {
 
-  @Mock
-  private ItemRepository mockItemRepository;
+  @Mock private ItemRepository mockItemRepository;
 
-  @Mock
-  private ItemMapper mockItemMapper;
+  @Mock private ItemMapper mockItemMapper;
 
-  @InjectMocks
-  private ItemService itemService;
+  @InjectMocks private ItemService itemService;
 
   @Test
   void shouldGetAllItems() {
     ItemEntity firstItemEntity = new ItemEntity(1L, "Item One", "This is Item One.");
     ItemEntity secondItemEntity = new ItemEntity(2L, "Item Two", "This is Item Two.");
-    Item firstItem = Item.builder().id(1L).name("Item One").description("This is Item One.").build();
-    Item secondItem = Item.builder().id(2L).name("Item Two").description("This is Item Two.").build();
+    Item firstItem =
+        Item.builder().id(1L).name("Item One").description("This is Item One.").build();
+    Item secondItem =
+        Item.builder().id(2L).name("Item Two").description("This is Item Two.").build();
     when(mockItemRepository.findAll()).thenReturn(List.of(firstItemEntity, secondItemEntity));
     when(mockItemMapper.toItem(firstItemEntity)).thenReturn(firstItem);
     when(mockItemMapper.toItem(secondItemEntity)).thenReturn(secondItem);
@@ -77,7 +76,8 @@ class ItemServiceTest {
 
   @Test
   void shouldCreateItem() {
-    ItemRequestBody itemRequestBody = ItemRequestBody.builder().name("Item Three").description("This is Item Three.").build();
+    ItemRequestBody itemRequestBody =
+        ItemRequestBody.builder().name("Item Three").description("This is Item Three.").build();
     ItemEntity itemEntity = new ItemEntity(3L, "Item Three", "This is Item Three.");
     when(mockItemRepository.save(new ItemEntity(null, "Item Three", "This is Item Three.")))
         .thenReturn(itemEntity);
@@ -92,7 +92,8 @@ class ItemServiceTest {
     Long id = 1L;
     String name = "Item One";
     String description = "This is Item One.";
-    ItemRequestBody itemRequestBody = ItemRequestBody.builder().name(name).description(description).build();
+    ItemRequestBody itemRequestBody =
+        ItemRequestBody.builder().name(name).description(description).build();
     ItemEntity itemEntity = new ItemEntity(id, name, description);
     when(mockItemRepository.findById(id)).thenReturn(Optional.of(itemEntity));
 
@@ -104,7 +105,8 @@ class ItemServiceTest {
   @Test
   void shouldNotUpdateItem_whenItemNotFoundThenThrowsException() {
     Long id = 5L;
-    ItemRequestBody itemRequestBody = ItemRequestBody.builder().name("Item Five").description("This is Item Five.").build();
+    ItemRequestBody itemRequestBody =
+        ItemRequestBody.builder().name("Item Five").description("This is Item Five.").build();
     when(mockItemRepository.findById(id)).thenReturn(Optional.empty());
 
     assertThrows(ItemNotFoundException.class, () -> itemService.updateItem(id, itemRequestBody));

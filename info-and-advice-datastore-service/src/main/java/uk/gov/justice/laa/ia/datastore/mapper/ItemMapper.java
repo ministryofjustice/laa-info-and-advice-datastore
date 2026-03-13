@@ -4,9 +4,7 @@ import org.mapstruct.Mapper;
 import uk.gov.justice.laa.ia.datastore.entity.ItemEntity;
 import uk.gov.justice.laa.ia.datastore.model.Item;
 
-/**
- * The mapper between Item and ItemEntity.
- */
+/** The mapper between Item and ItemEntity. */
 @Mapper(componentModel = "spring")
 public interface ItemMapper {
 

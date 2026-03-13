@@ -1,6 +1,7 @@
 plugins {
     id 'io.freefair.lombok' version '9.2.0'
     id 'uk.gov.laa.springboot.laa-spring-boot-gradle-plugin'
+    id 'com.diffplug.spotless' version "8.3.0"
 }
 
 test {
@@ -31,6 +32,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
 
@@ -45,8 +47,25 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+}
+
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        importOrder()
+        removeUnusedImports()
+        cleanthat()
+        googleJavaFormat()
+    }
+}
+
+tasks.register('checkstyleAll') {
+    group = 'verification'
+    description = 'Runs checkstyleMain, checkstyleTest, and checkstyleIntegrationTest.'
+    dependsOn tasks.matching { it.name in ['checkstyleMain', 'checkstyleTest', 'checkstyleIntegrationTest'] }
 }

@@ -44,6 +44,20 @@ In the above workflow files, change all occurrences of the `spring-boot-microser
 
 </details>
 
+### Install pre-hook commits
+
+`scripts/setup-hooks.sh` to install pre-commit hooks this will run
+- Spotless on the codebase
+- checkStyle on main, test and integration test
+- snyk security scan (see setup Snyk)
+- https://github.com/ministryofjustice/devsecops-hooks to scan for any secrets that may accidentally may have been commited. 
+
+### Setup Snyk
+- Register for an account with Snyk
+- run `brew install snyk`
+- run `snyk auth` to verify you're account
+- run `synk code test` to run security tests (this runs automatically on pre-commit)
+
 ### Add GitHub Token
 Generate a Github PAT (Personal Access Token) to access the required plugin, via https://github.com/settings/tokens
 

@@ -17,9 +17,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-/**
- * The global exception handler for all exceptions.
- */
+/** The global exception handler for all exceptions. */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -41,14 +39,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @Override
   protected ResponseEntity<Object> handleHttpMessageNotReadable(
       HttpMessageNotReadableException exception,
-      HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
     return handleInvalidRequestContent(exception, headers, request);
   }
 
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(
       MethodArgumentNotValidException exception,
-      HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
     return handleInvalidRequestContent(exception, headers, request);
   }
 

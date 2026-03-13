@@ -10,9 +10,7 @@ import uk.gov.justice.laa.ia.datastore.model.Item;
 import uk.gov.justice.laa.ia.datastore.model.ItemRequestBody;
 import uk.gov.justice.laa.ia.datastore.repository.ItemRepository;
 
-/**
- * Service class for handling items requests.
- */
+/** Service class for handling items requests. */
 @RequiredArgsConstructor
 @Service
 public class ItemService {

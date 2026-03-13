@@ -1,8 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.exception;
 
-/**
- * The exception thrown when item not found.
- */
+/** The exception thrown when item not found. */
 public class ItemNotFoundException extends RuntimeException {
 
   /**

@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,26 +11,31 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
 
+/** Integration tests for the ItemController. */
 @SpringBootTest(classes = SpringBootMicroserviceApplication.class)
 @AutoConfigureMockMvc
 @Transactional
+@ExtendWith(SpringExtension.class)
+@WithMockUser()
 public class ItemControllerIntegrationTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+  @Autowired private MockMvc mockMvc;
 
   @Test
   void shouldGetAllItems() throws Exception {
     mockMvc
-        .perform(get("/api/v1/items"))
+        .perform(get("/api/v1/items").with(csrf()))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.*", hasSize(5)));
@@ -37,7 +43,8 @@ public class ItemControllerIntegrationTest {
 
   @Test
   void shouldGetItem() throws Exception {
-    mockMvc.perform(get("/api/v1/items/1"))
+    mockMvc
+        .perform(get("/api/v1/items/1").with(csrf()))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.id").value(1))
@@ -50,8 +57,11 @@ public class ItemControllerIntegrationTest {
     mockMvc
         .perform(
             post("/api/v1/items")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"Item Six\", \"description\": \"This is a description of Item Six.\"}")
+                .content(
+                    "{\"name\": \"Item Six\", \"description\": "
+                        + "\"This is a description of Item Six.\"}")
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isCreated());
   }
@@ -61,14 +71,17 @@ public class ItemControllerIntegrationTest {
     mockMvc
         .perform(
             put("/api/v1/items/2")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"id\": 2, \"name\": \"Item Two\", \"description\": \"This is a updated description of Item Three.\"}")
+                .content(
+                    "{\"id\": 2, \"name\": \"Item Two\", \"description\": "
+                        + "\"This is a updated description of Item Three.\"}")
                 .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }
 
   @Test
   void shouldDeleteItem() throws Exception {
-    mockMvc.perform(delete("/api/v1/items/3")).andExpect(status().isNoContent());
+    mockMvc.perform(delete("/api/v1/items/3").with(csrf())).andExpect(status().isNoContent());
   }
 }
