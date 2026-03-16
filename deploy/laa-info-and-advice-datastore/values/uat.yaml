@@ -18,7 +18,7 @@ serviceAccount:
   create: false
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: "your-github-action-service-account"
+  name: "laa-info-and-advice-datastore-service-account"
 
 podAnnotations: {}
 podLabels: {}
