@@ -21,7 +21,7 @@ repos:
 # Retrieved 2026-03-18, License - CC BY-SA 4.0
 
   - repo: https://github.com/jorisroovers/gitlint
-    rev: ''  # pick a tag / sha to use
+    rev: '4d9119760056492eabc201bfad5de2f9e660b85f'
     hooks:
     -   id: gitlint
 
