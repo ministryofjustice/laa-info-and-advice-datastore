@@ -15,13 +15,16 @@ repos:
         language: system
         args: [ "checkstyleAll", "--quiet" ]
         pass_filenames: false
-        
-      - id: snyk-code-scan
-        name: Snyk code scan
-        entry: snyk
-        language: system
-        args: [ "code", "test" ]
-        pass_filenames: false
+
+# Source - https://stackoverflow.com/a/66411313
+# Posted by anthony sottile
+# Retrieved 2026-03-18, License - CC BY-SA 4.0
+
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: '4d9119760056492eabc201bfad5de2f9e660b85f'
+    hooks:
+    -   id: gitlint
+
 
   # Ministry of Justice DevSecOps hooks for secret detection
   # Not supporting custom api tokens of PDA service
