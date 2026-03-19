@@ -73,3 +73,7 @@ tasks.register('checkstyleAll') {
     description = 'Runs checkstyleMain, checkstyleTest, and checkstyleIntegrationTest.'
     dependsOn tasks.matching { it.name in ['checkstyleMain', 'checkstyleTest', 'checkstyleIntegrationTest'] }
 }
+
+configurations.configureEach {
+    exclude group: "tools.jackson.core"
+}
