@@ -1,9 +1,5 @@
 # Specify java runtime base image
-<<<<<<< HEAD
-FROM amazoncorretto:25-alpine
-=======
 FROM amazoncorretto:21.0.10-alpine3.20
->>>>>>> 65f6eeb (Fix Snyk scan issues)
 
 # Set up working directory in the container
 RUN mkdir -p /opt/laa-info-and-advice-datastore/
