@@ -21,6 +21,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "fix"
     registries: "*"
     groups:
       gradle-updates:
@@ -33,6 +35,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "fix"
     groups:
       github-actions:
         patterns:

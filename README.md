@@ -27,36 +27,14 @@ Includes the following subprojects:
 - `info-and-advice-datastore-service` - example REST API service with CRUD operations interfacing a JPA repository with an in-memory database.
 
 ## Setup Instructions
-Once you've created your repository using this template, perform the following steps:
-
-### Add Repository To Snyk (TODO)
-Ensure that your repository has been added to the [Legal Aid Agency Snyk](https://app.snyk.io/org/legal-aid-agency) organisation.
-
-Also add `SNYK_TOKEN` as a repository secret.
-
-#### 5. Update GitHub workflow (TODO)
-The following workflows have been provided:
-
-* Build and test PR - `build-test-pr.yml`
-* Build and deploy after PR merged - `pr-merge-main.yml` 
-
-In the above workflow files, change all occurrences of the `spring-boot-microservice-service/build/` build path to `{application-name}-service/build/`.
-
-</details>
 
 ### Install pre-hook commits
 
 `scripts/setup-hooks.sh` to install pre-commit hooks this will run
 - Spotless on the codebase
 - checkStyle on main, test and integration test
-- snyk security scan (see setup Snyk)
 - https://github.com/ministryofjustice/devsecops-hooks to scan for any secrets that may accidentally may have been commited. 
-
-### Setup Snyk
-- Register for an account with Snyk
-- run `brew install snyk`
-- run `snyk auth` to verify you're account
-- run `synk code test` to run security tests (this runs automatically on pre-commit)
+- [gitlint](https://github.com/jorisroovers/gitlint) to ensure commit conventions are followed
 
 ### Add GitHub Token
 Generate a Github PAT (Personal Access Token) to access the required plugin, via https://github.com/settings/tokens
@@ -86,6 +64,27 @@ Go back to Github to authorize MOJ for SSO
 
 ### Run application via Docker
 `docker compose up`
+
+## Development guidelines
+
+### Commit conventions
+Please follow the (Commit Conventions)[https://www.conventionalcommits.org/en/v1.0.0/] guidelines when making commits.
+```
+feat: Short desc of feature
+
+Larger body description of feature.
+```
+
+### Dependabot
+Runs weekly to ensure our library versions are up to date.
+
+### Release-Please 
+We use release-please for generating release notes when merging into main, which is why we use the commit conventions to better integrate.
+
+## Deployment information
+- our `deploy/` folder plus github actions manage deployments to our resources.
+- resources are managed in (cloud-platform-environments)[https://github.com/ministryofjustice/cloud-platform-environments/] under `namespaces/live.cloud-platform.service.justice.gov.uk/laa-info-and-advice-datastore-{ENV}` use the ##ask-cloud-platform slack channel for change request/information.
+
 
 ## Application Endpoints
 
