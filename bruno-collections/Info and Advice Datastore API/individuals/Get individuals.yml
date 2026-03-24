@@ -1,0 +1,105 @@
+info:
+  name: Get individuals
+  type: http
+  seq: 1
+  tags:
+    - individuals
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/v0/individuals"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("should be 200 response", function () {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+        test("should be a collection", function() {
+          const items = res.getBody();
+          expect(items).to.be.an("array");
+        });
+
+        test("all items should have correct properties", function(){
+          const items = res.getBody();
+          items.forEach(item => {
+            expect(item).to.have.property("individualLegalAidNumber");
+            expect(item).to.have.property("firstName");
+            expect(item).to.have.property("lastName");
+            expect(item).to.have.property("lastNameAtBirth");
+            expect(item).to.have.property("dateOfBirth");
+            expect(item).to.have.property("niNumber");
+            expect(item).to.have.property("createdAt");
+            expect(item).to.have.property("modifiedAt");
+          });
+        });
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: 200 Response
+    description: Success
+    request:
+      url: "{{baseUrl}}/api/v0/individuals"
+      method: GET
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: |-
+          [
+            {
+              "individualLegalAidNumber": "",
+              "firstName": "",
+              "lastName": "",
+              "lastNameAtBirth": "",
+              "dateOfBirth": "",
+              "niNumber": "QQ123456B",
+              "createdAt": "",
+              "modifiedAt": ""
+            }
+          ]
+  - name: 401 Response
+    description: Unauthorized
+    request:
+      url: "{{baseUrl}}/api/v0/individuals"
+      method: GET
+    response:
+      status: 401
+      statusText: Unauthorized
+      body:
+        type: text
+        data: ""
+  - name: 403 Response
+    description: Forbidden
+    request:
+      url: "{{baseUrl}}/api/v0/individuals"
+      method: GET
+    response:
+      status: 403
+      statusText: Forbidden
+      body:
+        type: text
+        data: ""
+  - name: 500 Response
+    description: Internal server error
+    request:
+      url: "{{baseUrl}}/api/v0/individuals"
+      method: GET
+    response:
+      status: 500
+      statusText: Internal Server Error
+      body:
+        type: text
+        data: ""

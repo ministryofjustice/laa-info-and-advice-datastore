@@ -1,6 +1,23 @@
 services:
-  app:
+  info-and-advice-api:
+    container_name: info-and-advice-api
     build:
       context: .
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    depends_on: 
+      - postgres
+      
+  postgres:
+    image: postgres:18
+    container_name: laa-info-and-advice-datastore
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: laa_info_advice_datastore
+      POSTGRES_USER: laa_user
+      POSTGRES_PASSWORD: laa_password
+    volumes:
+      - /var/lib/postgresql/18/docker
