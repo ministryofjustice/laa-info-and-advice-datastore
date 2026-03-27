@@ -5,7 +5,7 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-/** Postfres Test container setup. */
+/** Postgres test container setup. */
 public class PostgresContainerInitializer
     implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 

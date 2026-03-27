@@ -5,4 +5,5 @@ public class TestConstants {
   private TestConstants() {}
 
   public static final String GetIndividualsApi = "/api/v0/individuals";
+  public static final String GetIndividualApi = "/api/v0/individuals/{id}";
 }

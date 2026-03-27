@@ -1,9 +1,12 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +26,7 @@ public class IndividualServiceTest {
   @InjectMocks private IndividualService sut;
 
   @Test
-  void shouldGetAllItems() {
+  void shouldGetAllIndividuals() {
     // Arrange
     IndividualEntity entity1 = IndividualEntity.builder().id(UUID.randomUUID()).build();
     IndividualEntity entity2 = IndividualEntity.builder().id(UUID.randomUUID()).build();
@@ -38,5 +41,32 @@ public class IndividualServiceTest {
 
     // Assert
     assertThat(result).hasSize(2).contains(individual1, individual2);
+  }
+
+  @Test
+  void shouldGetIndividual() {
+    // Arrange
+    IndividualEntity entity = IndividualEntity.builder().id(UUID.randomUUID()).build();
+    Individual individual = Individual.builder().individualLegalAidNumber(entity.getId()).build();
+    when(repo.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(mapper.toIndividual(entity)).thenReturn(individual);
+
+    // Act
+    Individual result = sut.getIndividual(entity.getId()).orElseThrow();
+
+    // Assert
+    assertThat(result).isEqualTo(individual);
+  }
+
+  @Test
+  void shouldReturnEmptyOptional_whenIndividualDoesNotExist() {
+    // Arrange
+    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+
+    // Act
+    Optional<Individual> result = sut.getIndividual(UUID.randomUUID());
+
+    // Assert
+    assertTrue(result.isEmpty());
   }
 }

@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,5 +21,13 @@ public class IndividualsController implements IndividualsApi {
   @Override
   public ResponseEntity<List<Individual>> getIndividuals() {
     return ResponseEntity.ok(service.getAllIndividuals());
+  }
+
+  @Override
+  public ResponseEntity<Individual> getIndividual(UUID id) {
+    return service
+        .getIndividual(id)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
   }
 }
