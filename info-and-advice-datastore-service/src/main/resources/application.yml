@@ -4,10 +4,10 @@ spring:
 
   # example database
   datasource:
-    url: jdbc:h2:mem:itemsDb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
+    url: jdbc:postgresql://localhost:5432/laa_info_advice_datastore
+    driver-class-name: org.postgresql.Driver
+    username: laa_user
+    password: laa_password
   h2:
     console:
       enabled: true
@@ -16,6 +16,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 # used by actuator info endpoint
 info:

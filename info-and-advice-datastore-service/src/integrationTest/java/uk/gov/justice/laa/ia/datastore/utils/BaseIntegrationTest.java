@@ -1,0 +1,28 @@
+package uk.gov.justice.laa.ia.datastore.utils;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
+
+/** For shared integration test behaviours. */
+@ActiveProfiles("test")
+@AutoConfigureMockMvc
+@SpringBootTest(classes = SpringBootMicroserviceApplication.class)
+@ContextConfiguration(initializers = PostgresContainerInitializer.class)
+@ExtendWith(SpringExtension.class)
+@Transactional
+public abstract class BaseIntegrationTest {
+  @PersistenceContext protected EntityManager entityManager;
+
+  public void clearCache() {
+    entityManager.flush();
+    entityManager.clear();
+  }
+}

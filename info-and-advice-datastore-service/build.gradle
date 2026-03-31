@@ -47,7 +47,12 @@ dependencies {
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 
-    runtimeOnly 'com.h2database:h2'
+    implementation("org.springframework.boot:spring-boot-starter-flyway:4.0.1")
+    implementation("org.flywaydb:flyway-database-postgresql")
+    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly "org.flywaydb:flyway-database-postgresql"
+    testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.1"
+    testImplementation 'org.testcontainers:postgresql:1.21.3'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
