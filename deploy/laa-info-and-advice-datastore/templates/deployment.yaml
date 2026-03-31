@@ -96,8 +96,8 @@ spec:
                 secretKeyRef:
                   name: rds-postgresql-instance-output
                   key: database_name
-          - name: SPRING_DATASOURCE_URL
-            value: jdbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME)
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME)
       {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
