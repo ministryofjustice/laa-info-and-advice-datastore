@@ -81,20 +81,28 @@ spec:
               value: "{{ .Values.env.RATE_WINDOW_MS }}"
             - name: NODE_ENV
               value: "{{ .Values.env.NODE_ENV }}"
-            - name: DB_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: rds-postgresql-instance-output
-                  key: rds_instance_endpoint
-            - name: DB_PORT
-              value: "5432"
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
                   name: rds-postgresql-instance-output
                   key: database_name
-            - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://$(DB_HOST):$(DB_PORT)/$(DB_NAME)
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rds-postgresql-instance-output
+                  key: database_username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rds-postgresql-instance-output
+                  key: database_password
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: rds-postgresql-instance-output
+                  key: rds_instance_endpoint
+            - name: DB_URL
+              value: "jdbc:postgresql://$(DB_HOST)/$(DB_NAME)"
       {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
