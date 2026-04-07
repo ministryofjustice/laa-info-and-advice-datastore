@@ -75,3 +75,23 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Individual"
+
+    Address:
+      properties:
+        clientHasHomeAddress:
+          type: boolean
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        townOrCity:
+          type: string
+        postCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
+        
