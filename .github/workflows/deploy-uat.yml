@@ -23,7 +23,7 @@ jobs:
           distribution: "corretto"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run build
         run: ./gradlew build
@@ -97,7 +97,7 @@ jobs:
           distribution: "corretto"
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build app jar with gradle
         run: ./gradlew build
