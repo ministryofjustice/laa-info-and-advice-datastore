@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import uk.gov.justice.laa.ia.datastore.entity.IndividualEntity;
 
-/** Repository for managing item entities. */
+/** Repository for managing individual entities. */
 @Repository
 public interface IndividualRepository extends JpaRepository<IndividualEntity, UUID> {}

@@ -4,12 +4,15 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
+import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.repository.IndividualRepository;
 
 /** For shared integration test behaviours. */
 @ActiveProfiles("test")
@@ -20,6 +23,9 @@ import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
 @Transactional
 public abstract class BaseIntegrationTest {
   @PersistenceContext protected EntityManager entityManager;
+
+  @Autowired protected IndividualRepository individualRepository;
+  @Autowired protected ApplicationRepository applicationRepository;
 
   public void clearCache() {
     entityManager.flush();
