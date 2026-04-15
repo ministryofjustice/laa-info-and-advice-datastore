@@ -157,9 +157,42 @@ components:
           format: date-time
         modifiedBy:
           type: string
-        
+
+    EvidenceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        referenceNumber:
+          type: string
+          format: uuid
+        evidenceStatus:
+          $ref: "#/components/schemas/EvidenceStatus"
+        payeIncomeEvidence:
+          type: boolean
+        otherIncomeEvidence:
+          type: boolean
+        housingCostsEvidence:
+          type: boolean
+        capitalEvidence:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+        modifiedBy:
+          type: string
 
     ClientCaseDetailsStatus:
+      type: string
+      enum:
+        - DRAFT
+    EvidenceStatus:
       type: string
       enum:
         - DRAFT

@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 import uk.gov.justice.laa.ia.datastore.entity.IndividualEntity;
-import uk.gov.justice.laa.ia.datastore.generators.IndividualEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.IndividualEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for the IndividualRepository. */

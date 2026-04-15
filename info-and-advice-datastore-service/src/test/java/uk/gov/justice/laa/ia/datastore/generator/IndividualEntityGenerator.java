@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.ia.datastore.generators;
+package uk.gov.justice.laa.ia.datastore.generator;
 
 import java.time.LocalDate;
 import java.util.UUID;
