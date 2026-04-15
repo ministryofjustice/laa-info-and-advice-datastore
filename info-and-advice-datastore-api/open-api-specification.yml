@@ -158,6 +158,31 @@ components:
         modifiedBy:
           type: string
 
+    DeclarationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        referenceNumber:
+          type: string
+          format: uuid
+        clientDeclarationStatus:
+          $ref: "#/components/schemas/ClientDeclarationStatus"
+        declarationStatement:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+        modifiedBy:
+          type: string
+        
+
     EvidenceResponse:
       type: object
       properties:
@@ -189,6 +214,11 @@ components:
           type: string
 
     ClientCaseDetailsStatus:
+      type: string
+      enum:
+        - DRAFT
+
+    ClientDeclarationStatus:
       type: string
       enum:
         - DRAFT
