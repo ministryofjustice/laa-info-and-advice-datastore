@@ -94,4 +94,76 @@ components:
         modifiedAt:
           type: string
           format: date-time
+    
+    ApplicationResponse:
+      type: object
+      required:
+        - referenceNumber
+        - individualLegalAidNumber
+        - providerFirmId
+        - providerOfficeId
+        - createdAt
+        - createdBy
+        - modifiedAt
+        - modifiedBy
+      properties:
+        referenceNumber:
+          type: string
+          format: uuid
+          example: 
+        individualLegalAidNumber:
+          type: string
+          format: uuid
+          example:
+          description:
+        providerFirmId:
+          type: string 
+          format: uuid
+          example:
+          description:
+        providerOfficeId:
+          type: string 
+          format: uuid
+          example: 
+          description:
+        eligibilityResult:
+          type: string
+          format: uuid
+          example:
+          description:
+        clientCaseDetailsStatus:
+          $ref: "#/components/schemas/ClientCaseDetailsStatus"
+        meansAssessmentStatus:
+          type: string
+          format: uuid
+        evidenceStatus:
+          type: string
+          format: uuid
+        clientDeclarationStatus:
+          type: string
+          format: uuid
+        overallApplicationStatus:
+          $ref: "#/components/schemas/OverallApplicationStatus"
+        uniqueFileNumber:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+        modifiedBy:
+          type: string
         
+
+    ClientCaseDetailsStatus:
+      type: string
+      enum:
+        - DRAFT
+    OverallApplicationStatus:
+      type: string
+      enum:
+        - DRAFT
