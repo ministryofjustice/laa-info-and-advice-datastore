@@ -8,6 +8,9 @@ build/
 
 info-and-advice-datastore-api/generated
 
+info-and-advice-datastore-api/bin
+info-and-advice-datastore-service/bin
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
