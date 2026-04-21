@@ -158,6 +158,36 @@ components:
         modifiedBy:
           type: string
 
+    CaseDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        referenceNumber:
+          type: string
+          format: uuid
+        requireEcf:
+          type: boolean
+        hasPreviousLegalAid:
+          type: boolean
+        hasSixMonthsLegalHelp:
+          type: boolean
+        meansAssessmentRequired:
+          type: boolean
+        typeNonMeansTested:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+        modifiedBy:
+          type: string
+
     DeclarationResponse:
       type: object
       properties:
