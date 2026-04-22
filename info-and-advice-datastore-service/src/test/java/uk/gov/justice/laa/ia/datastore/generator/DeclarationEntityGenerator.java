@@ -13,8 +13,8 @@ public class DeclarationEntityGenerator {
    * source that will generate the Id.
    */
   public static DeclarationEntity createWithId(
-      UUID applicationId, Consumer<DeclarationEntity.DeclarationEntityBuilder> customizer) {
-    return createDeclaration(applicationId, customizer)
+      Consumer<DeclarationEntity.DeclarationEntityBuilder> customizer) {
+    return createDeclaration(customizer)
         .id(UUID.randomUUID())
         .createdAt(Instant.now())
         .modifiedAt(Instant.now())
@@ -26,15 +26,14 @@ public class DeclarationEntityGenerator {
    * that will generate the Id.
    */
   public static DeclarationEntity createWithoutId(
-      UUID applicationId, Consumer<DeclarationEntity.DeclarationEntityBuilder> customizer) {
-    return createDeclaration(applicationId, customizer).build();
+      Consumer<DeclarationEntity.DeclarationEntityBuilder> customizer) {
+    return createDeclaration(customizer).build();
   }
 
   private static DeclarationEntity.DeclarationEntityBuilder createDeclaration(
-      UUID applicationId, Consumer<DeclarationEntity.DeclarationEntityBuilder> customizer) {
+      Consumer<DeclarationEntity.DeclarationEntityBuilder> customizer) {
     var builder =
         DeclarationEntity.builder()
-            .referenceNumber(applicationId)
             .clientDeclarationStatus(ClientDeclarationStatus.DRAFT)
             .declarationStatement(false)
             .createdBy("Joe Bloggs")

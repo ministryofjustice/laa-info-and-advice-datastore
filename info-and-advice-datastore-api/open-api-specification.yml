@@ -43,6 +43,23 @@ paths:
         '403' : { description: 'Forbidden' }
         '404' : { description: 'Not found' }
         '500' : { description: 'Internal server error' }
+  /api/v0/applications:start-case:
+    post:
+      tags:
+        - application
+      operationId: startCase
+      summary: Start an application/case for a client
+      requestBody:
+        required: true
+        description: Information required to start an application/case
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/StartCaseCommand'
+      responses:
+        '201' : { description: Created }
+        '400' : { description: Bad request }
+        '500' : { description: Internal server error }
 
 components:
   schemas:
@@ -164,9 +181,6 @@ components:
         id:
           type: string
           format: uuid
-        referenceNumber:
-          type: string
-          format: uuid
         requireEcf:
           type: boolean
         hasPreviousLegalAid:
@@ -194,9 +208,6 @@ components:
         id:
           type: string
           format: uuid
-        referenceNumber:
-          type: string
-          format: uuid
         clientDeclarationStatus:
           $ref: "#/components/schemas/ClientDeclarationStatus"
         declarationStatement:
@@ -217,9 +228,6 @@ components:
       type: object
       properties:
         id:
-          type: string
-          format: uuid
-        referenceNumber:
           type: string
           format: uuid
         evidenceStatus:
@@ -260,3 +268,78 @@ components:
       type: string
       enum:
         - DRAFT
+
+    StartCaseCommand:
+      type: object
+      required:
+        - client
+        - caseDetails
+      properties:
+        client: 
+          $ref: '#/components/schemas/CreateClientCommand'
+        caseDetails:
+          $ref : '#/components/schemas/CreateCaseDetailsCommand'
+            
+    CreateClientCommand:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - dateOfBirth
+        - placeOfBirth
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string 
+        dateOfBirth:
+           type: string
+           format: date
+        placeOfBirth:
+          type: string
+        nationalInsuranceNumber:
+          type: string
+          pattern: '/[A-CEGHJ-NOPR-TW-Z]{2}[0-9]{6}[ABCDs]{1}/'
+          example: AC123456D
+        createAddressCommand:
+          $ref: '#/components/schemas/CreateAddressCommand'
+
+    CreateAddressCommand:
+      type: object
+      properties:
+        line1:
+          type: string
+          example: 10 Downing Street
+        line2:
+          type: string
+        city:
+          type: string
+          example: London
+        postCode:
+          type: string 
+          example: SW1A 2AA
+
+        country:
+          type: string
+          example: England
+
+    CreateCaseDetailsCommand:
+      type: object
+      required:
+        - requiresEcf
+        - hasPreviousLegalAid
+        - hasLegalHelpLastSixMonths
+        - meansAssessmentRequired
+        - isTypeNonMeansTested
+      properties:
+        requiresEcf:
+          type: boolean
+        hasPreviousLegalAid:
+           type: boolean
+        hasLegalHelpLastSixMonths:
+          type: boolean
+        meansAssessmentRequired:
+          type: boolean
+        isTypeNonMeansTested:
+          type: boolean
+          

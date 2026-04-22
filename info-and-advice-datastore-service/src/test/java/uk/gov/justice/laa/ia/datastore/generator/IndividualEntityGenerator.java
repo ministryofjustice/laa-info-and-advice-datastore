@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.generator;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -13,7 +14,11 @@ public class IndividualEntityGenerator {
    */
   public static IndividualEntity createWithId(
       Consumer<IndividualEntity.IndividualEntityBuilder> customizer) {
-    return createIndividual(customizer).id(UUID.randomUUID()).build();
+    return createIndividual(customizer)
+        .id(UUID.randomUUID())
+        .createdAt(Instant.now())
+        .modifiedAt(Instant.now())
+        .build();
   }
 
   /**

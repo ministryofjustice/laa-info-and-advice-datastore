@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 
 /** Service class for handling Applications. */
@@ -15,6 +16,15 @@ import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 public class ApplicationService {
   private final ApplicationRepository repository;
   private final ApplicationMapper applicationMapper;
+
+  /**
+   * Create an application.
+   *
+   * @return ID of newly created application.
+   */
+  public UUID createApplication(StartCaseCommand startCase) {
+    return null;
+  }
 
   /**
    * Gets all the Applications.

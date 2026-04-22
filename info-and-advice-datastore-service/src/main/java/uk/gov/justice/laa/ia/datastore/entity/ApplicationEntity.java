@@ -1,10 +1,13 @@
 package uk.gov.justice.laa.ia.datastore.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -30,9 +33,6 @@ public class ApplicationEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "individual_legal_aid_number", nullable = false)
-  private UUID individualLegalAidNumber;
-
   @Column(name = "provider_firm_id", nullable = false)
   private UUID providerFirmId;
 
@@ -51,14 +51,30 @@ public class ApplicationEntity {
   @Column(name = "evidence_status_id", nullable = true)
   private UUID evidenceStatusId;
 
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "evidence_id", nullable = true)
+  private EvidenceEntity evidence;
+
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "case_details_id", nullable = false)
+  private CaseDetailsEntity caseDetails;
+
   @Column(name = "client_declaration_status_id", nullable = true)
   private UUID clientDeclarationStatusId;
+
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "", nullable = true)
+  private DeclarationEntity declaration;
 
   @Column(name = "overall_application_status", nullable = false)
   private OverallApplicationStatus overallApplicationStatus;
 
   @Column(name = "unique_file_number", nullable = false)
   private UUID uniqueFileNumber;
+
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "individual_id", nullable = false)
+  private IndividualEntity individual;
 
   @Column(name = "created_at", nullable = false)
   @CreationTimestamp

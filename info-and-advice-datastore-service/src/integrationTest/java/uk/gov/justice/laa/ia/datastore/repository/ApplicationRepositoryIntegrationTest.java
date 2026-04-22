@@ -2,11 +2,14 @@ package uk.gov.justice.laa.ia.datastore.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.CaseDetailsEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EvidenceEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.IndividualEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
@@ -15,10 +18,19 @@ import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldGetApplication() {
-    final UUID individualId =
-        individualRepository.save(IndividualEntityGenerator.createWithoutId(null)).getId();
-    final ApplicationEntity entity = ApplicationEntityGenerator.createWithoutId(individualId, null);
-    final ApplicationEntity savedEntity = applicationRepository.save(entity);
+    final ApplicationEntity entity =
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> {
+              builder.individual(
+                  IndividualEntityGenerator.createWithoutId(
+                      individualBuilder -> {
+                        individualBuilder.address(AddressEntityGenerator.createWithoutId(null));
+                      }));
+              builder.evidence(EvidenceEntityGenerator.createWithoutId(null));
+              builder.caseDetails(CaseDetailsEntityGenerator.createWithoutId(null));
+              builder.declaration(DeclarationEntityGenerator.createWithoutId(null));
+            });
+    final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
     clearCache();
     final ApplicationEntity getEntity =
         applicationRepository.findById(savedEntity.getId()).orElseThrow();

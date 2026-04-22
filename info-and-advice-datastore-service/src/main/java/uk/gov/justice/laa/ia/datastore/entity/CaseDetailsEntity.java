@@ -27,9 +27,6 @@ public class CaseDetailsEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "reference_number", nullable = false)
-  private UUID referenceNumber;
-
   @Column(name = "require_ecf", nullable = true)
   private Boolean requireEcf;
 

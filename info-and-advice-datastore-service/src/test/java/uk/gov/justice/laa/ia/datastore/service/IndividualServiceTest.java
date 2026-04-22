@@ -3,6 +3,8 @@ package uk.gov.justice.laa.ia.datastore.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -14,7 +16,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.entity.IndividualEntity;
+import uk.gov.justice.laa.ia.datastore.generator.CreateAddressCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.CreateClientCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.IndividualEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.mapper.IndividualMapper;
+import uk.gov.justice.laa.ia.datastore.model.CreateClientCommand;
 import uk.gov.justice.laa.ia.datastore.model.Individual;
 import uk.gov.justice.laa.ia.datastore.repository.IndividualRepository;
 
@@ -23,6 +29,7 @@ import uk.gov.justice.laa.ia.datastore.repository.IndividualRepository;
 public class IndividualServiceTest {
   @Mock private IndividualRepository repo;
   @Mock private IndividualMapper mapper;
+  @Mock private AddressService addressService;
   @InjectMocks private IndividualService sut;
 
   @Test
@@ -68,5 +75,32 @@ public class IndividualServiceTest {
 
     // Assert
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void shouldSavedIndividual() {
+    testCreateClientBehaviour(CreateClientCommandGenerator.create(null));
+  }
+
+  @Test
+  void givenIndividualWithAddress_whenSave_thenShouldSaveAddress() {
+    final CreateClientCommand cmd =
+        CreateClientCommandGenerator.create(
+            builder -> {
+              builder.createAddressCommand(CreateAddressCommandGenerator.create(null));
+            });
+    testCreateClientBehaviour(cmd);
+    verify(addressService, times(1)).createAddress(cmd.getCreateAddressCommand());
+  }
+
+  private void testCreateClientBehaviour(CreateClientCommand cmd) {
+    final IndividualEntity entity = IndividualEntityGenerator.createWithId(null);
+    when(mapper.toIndividualEntity(cmd)).thenReturn(entity);
+    when(repo.save(entity)).thenReturn(entity);
+
+    sut.handleCreateCommand(cmd);
+
+    verify(mapper, times(1)).toIndividualEntity(cmd);
+    verify(repo, times(1)).save(entity);
   }
 }

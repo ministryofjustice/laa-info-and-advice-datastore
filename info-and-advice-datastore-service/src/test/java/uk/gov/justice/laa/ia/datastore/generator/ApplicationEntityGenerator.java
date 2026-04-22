@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.generator;
 
+import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Consumer;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -14,8 +15,12 @@ public class ApplicationEntityGenerator {
    * source that will generate the Id.
    */
   public static ApplicationEntity createWithId(
-      UUID individualId, Consumer<ApplicationEntity.ApplicationEntityBuilder> customizer) {
-    return createApplication(individualId, customizer).id(UUID.randomUUID()).build();
+      Consumer<ApplicationEntity.ApplicationEntityBuilder> customizer) {
+    return createApplication(customizer)
+        .id(UUID.randomUUID())
+        .createdAt(Instant.now())
+        .modifiedAt(Instant.now())
+        .build();
   }
 
   /**
@@ -23,15 +28,14 @@ public class ApplicationEntityGenerator {
    * that will generate the Id.
    */
   public static ApplicationEntity createWithoutId(
-      UUID individualId, Consumer<ApplicationEntity.ApplicationEntityBuilder> customizer) {
-    return createApplication(individualId, customizer).build();
+      Consumer<ApplicationEntity.ApplicationEntityBuilder> customizer) {
+    return createApplication(customizer).build();
   }
 
   private static ApplicationEntity.ApplicationEntityBuilder createApplication(
-      UUID individualId, Consumer<ApplicationEntity.ApplicationEntityBuilder> customizer) {
+      Consumer<ApplicationEntity.ApplicationEntityBuilder> customizer) {
     var builder =
         ApplicationEntity.builder()
-            .individualLegalAidNumber(individualId)
             .providerFirmId(UUID.randomUUID())
             .providerOfficeId(UUID.randomUUID())
             .eligibilityResultId(UUID.randomUUID())
