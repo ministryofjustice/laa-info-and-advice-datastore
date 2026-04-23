@@ -1,5 +1,5 @@
 plugins {
-    id 'io.freefair.lombok' version '9.2.0'
+    id 'io.freefair.lombok' version '9.4.0'
     id 'uk.gov.laa.springboot.laa-spring-boot-gradle-plugin'
     id 'com.diffplug.spotless' version "8.4.0"
 }
@@ -51,7 +51,7 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly "org.flywaydb:flyway-database-postgresql"
-    testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.4"
+    testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.5"
     testImplementation 'org.testcontainers:postgresql:1.21.4'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
