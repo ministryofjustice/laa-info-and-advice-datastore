@@ -14,8 +14,8 @@ public class EvidenceEntityGenerator {
    * source that will generate the Id.
    */
   public static EvidenceEntity createWithId(
-      UUID applicationId, Consumer<EvidenceEntity.EvidenceEntityBuilder> customizer) {
-    return createEvidence(applicationId, customizer)
+      Consumer<EvidenceEntity.EvidenceEntityBuilder> customizer) {
+    return createEvidence(customizer)
         .id(UUID.randomUUID())
         .createdAt(Instant.now())
         .modifiedAt(Instant.now())
@@ -27,15 +27,14 @@ public class EvidenceEntityGenerator {
    * that will generate the Id.
    */
   public static EvidenceEntity createWithoutId(
-      UUID applicationId, Consumer<EvidenceEntity.EvidenceEntityBuilder> customizer) {
-    return createEvidence(applicationId, customizer).build();
+      Consumer<EvidenceEntity.EvidenceEntityBuilder> customizer) {
+    return createEvidence(customizer).build();
   }
 
   private static EvidenceEntity.EvidenceEntityBuilder createEvidence(
-      UUID applicationId, Consumer<EvidenceEntity.EvidenceEntityBuilder> customizer) {
+      Consumer<EvidenceEntity.EvidenceEntityBuilder> customizer) {
     var builder =
         EvidenceEntity.builder()
-            .referenceNumber(applicationId)
             .evidenceStatus(EvidenceStatus.DRAFT)
             .payeIncomeEvidence(false)
             .otherIncomeEvidence(false)

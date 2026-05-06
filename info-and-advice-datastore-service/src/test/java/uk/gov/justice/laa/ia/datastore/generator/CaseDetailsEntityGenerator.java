@@ -12,8 +12,8 @@ public class CaseDetailsEntityGenerator {
    * source that will generate the Id.
    */
   public static CaseDetailsEntity createWithId(
-      UUID applicationId, Consumer<CaseDetailsEntity.CaseDetailsEntityBuilder> customizer) {
-    return createCaseDetails(applicationId, customizer)
+      Consumer<CaseDetailsEntity.CaseDetailsEntityBuilder> customizer) {
+    return createCaseDetails(customizer)
         .id(UUID.randomUUID())
         .createdAt(Instant.now())
         .createdBy("Joe Bloggs")
@@ -27,15 +27,14 @@ public class CaseDetailsEntityGenerator {
    * that will generate the Id.
    */
   public static CaseDetailsEntity createWithoutId(
-      UUID applicationId, Consumer<CaseDetailsEntity.CaseDetailsEntityBuilder> customizer) {
-    return createCaseDetails(applicationId, customizer).build();
+      Consumer<CaseDetailsEntity.CaseDetailsEntityBuilder> customizer) {
+    return createCaseDetails(customizer).build();
   }
 
   private static CaseDetailsEntity.CaseDetailsEntityBuilder createCaseDetails(
-      UUID applicationId, Consumer<CaseDetailsEntity.CaseDetailsEntityBuilder> customizer) {
+      Consumer<CaseDetailsEntity.CaseDetailsEntityBuilder> customizer) {
     var builder =
         CaseDetailsEntity.builder()
-            .referenceNumber(applicationId)
             .requireEcf(false)
             .hasPreviousLegalAid(false)
             .hasSixMonthsLegalHelp(false)

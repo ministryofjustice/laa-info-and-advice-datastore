@@ -28,9 +28,6 @@ public class DeclarationEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "reference_number", nullable = false)
-  private UUID referenceNumber;
-
   @Column(name = "client_declaration_status", nullable = false)
   private ClientDeclarationStatus clientDeclarationStatus;
 

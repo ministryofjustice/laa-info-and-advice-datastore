@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.mapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Instant;
@@ -8,17 +9,21 @@ import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.entity.IndividualEntity;
+import uk.gov.justice.laa.ia.datastore.generator.CreateAddressCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.CreateClientCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.model.CreateClientCommand;
 import uk.gov.justice.laa.ia.datastore.model.Individual;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-public class IndividualMapperTest {
-  @InjectMocks private final IndividualMapper sut = new IndividualMapperImpl();
-  @Spy private final DateTimeMapper dateTimeMapper = new DateTimeMapperImpl();
+public class IndividualMapperTest extends BaseMapperTest {
+  private final IndividualMapper sut;
+
+  IndividualMapperTest() {
+    sut = individualMapper;
+  }
 
   @Test
   void toIndividual_shouldMapAllProperties() {
@@ -47,6 +52,22 @@ public class IndividualMapperTest {
   @Test
   void toIndividual_whenNull_thenReturnNull() {
     assertNull(sut.toIndividual(null));
+  }
+
+  @Test
+  void createClientCommand_toIndividual_shouldMapProperties() {
+    final CreateClientCommand cmd =
+        CreateClientCommandGenerator.create(
+            builder -> {
+              builder.createAddressCommand(CreateAddressCommandGenerator.create(null));
+            });
+    final IndividualEntity mappedModel = sut.toIndividualEntity(cmd);
+
+    assertEquals(cmd.getNationalInsuranceNumber(), mappedModel.getNiNumber());
+    assertEquals(cmd.getFirstName(), mappedModel.getFirstName());
+    assertEquals(cmd.getLastName(), mappedModel.getLastName());
+    assertEquals(cmd.getDateOfBirth(), mappedModel.getDateOfBirth());
+    assertNotNull(mappedModel.getAddress());
   }
 
   private IndividualEntity.IndividualEntityBuilder createIndividual() {

@@ -7,17 +7,20 @@ import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
+import uk.gov.justice.laa.ia.datastore.generator.CreateAddressCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.Address;
+import uk.gov.justice.laa.ia.datastore.model.CreateAddressCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-public class AddressMapperTest {
-  @InjectMocks private final AddressMapper sut = new AddressMapperImpl();
-  @Spy private final DateTimeMapper dateTimeMapper = new DateTimeMapperImpl();
+public class AddressMapperTest extends BaseMapperTest {
+  private final AddressMapper sut;
+
+  AddressMapperTest() {
+    sut = addressMapper;
+  }
 
   @Test
   void toAddress_shouldMapAllProperties() {
@@ -53,6 +56,17 @@ public class AddressMapperTest {
   @Test
   void toAddress_whenNull_thenReturnNull() {
     assertNull(sut.toAddress(null));
+  }
+
+  @Test
+  void createAddressCommand_toAddressEntity_shouldMapAllProperties() {
+    final CreateAddressCommand cmd = CreateAddressCommandGenerator.create(null);
+    final AddressEntity address = sut.toAddressEntity(cmd);
+
+    assertEquals(cmd.getLine1(), address.getAddressLine1());
+    assertEquals(cmd.getLine2(), address.getAddressLine2());
+    assertEquals(cmd.getCity(), address.getTownOrCity());
+    assertEquals(cmd.getPostCode(), address.getPostCode());
   }
 
   private AddressEntity.AddressEntityBuilder createAddress() {

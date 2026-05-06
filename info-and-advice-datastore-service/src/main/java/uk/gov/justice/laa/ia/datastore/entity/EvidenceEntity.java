@@ -28,9 +28,6 @@ public class EvidenceEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "reference_number", nullable = false)
-  private UUID referenceNumber;
-
   @Column(name = "evidence_status", nullable = false)
   private EvidenceStatus evidenceStatus;
 
