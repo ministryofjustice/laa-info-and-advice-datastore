@@ -63,7 +63,7 @@ public class ApplicationEntity {
   private UUID clientDeclarationStatusId;
 
   @OneToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = "", nullable = true)
+  @JoinColumn(name = "declaration_id", nullable = true)
   private DeclarationEntity declaration;
 
   @Column(name = "overall_application_status", nullable = false)

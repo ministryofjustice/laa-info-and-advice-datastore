@@ -10,16 +10,25 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 /** The mapper between Application and ApplicationEntity. */
 @Mapper(
     componentModel = "spring",
-    uses = {DateTimeMapper.class, IndividualMapper.class, CaseDetailsMapper.class},
+    uses = {
+      DateTimeMapper.class,
+      IndividualMapper.class,
+      CaseDetailsMapper.class,
+      DeclarationMapper.class,
+      EvidenceMapper.class
+    },
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface ApplicationMapper {
-  /** Maps an {@link ApplicationEntity} to an {@link Application}. */
+  /** Maps an {@link ApplicationEntity} to an {@link ApplicationEntity}. */
   @Mapping(source = "id", target = "referenceNumber")
   @Mapping(source = "eligibilityResultId", target = "eligibilityResult")
   @Mapping(source = "meansAssessmentStatusId", target = "meansAssessmentStatus")
   @Mapping(source = "evidenceStatusId", target = "evidenceStatus")
   @Mapping(source = "clientDeclarationStatusId", target = "clientDeclarationStatus")
   @Mapping(source = "individual.id", target = "individualLegalAidNumber")
+  @Mapping(source = "caseDetails", target = "caseDetails")
+  @Mapping(source = "declaration", target = "declaration")
+  @Mapping(source = "evidence", target = "evidence")
   ApplicationResponse toApplication(ApplicationEntity entity);
 
   /** Maps an {@link StartCaseCommand} to an {@link ApplicationEntity}. */
