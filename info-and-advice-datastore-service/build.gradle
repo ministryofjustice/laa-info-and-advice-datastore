@@ -49,7 +49,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-flyway:4.0.6")
     implementation("org.flywaydb:flyway-database-postgresql")
-    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'org.postgresql:postgresql:42.7.11'
     runtimeOnly "org.flywaydb:flyway-database-postgresql"
     testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.5"
     testImplementation 'org.testcontainers:postgresql:1.21.4'
