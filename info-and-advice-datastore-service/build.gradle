@@ -1,5 +1,5 @@
 plugins {
-    id 'io.freefair.lombok' version '9.2.0'
+    id 'io.freefair.lombok' version '9.5.0'
     id 'uk.gov.laa.springboot.laa-spring-boot-gradle-plugin'
     id 'com.diffplug.spotless' version "8.4.0"
 }
@@ -27,7 +27,7 @@ jacocoTestCoverageVerification {
 
 dependencies {
     implementation project(':info-and-advice-datastore-api')
-    implementation platform("com.fasterxml.jackson:jackson-bom:2.21.2")
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.21.3")
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -37,21 +37,21 @@ dependencies {
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
 
-    implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.21'
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.22'
 
     implementation 'org.apache.commons:commons-lang3:3.20.0'
 
     // fix https://security.snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-15365924
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.21.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.21.3'
 
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 
-    implementation("org.springframework.boot:spring-boot-starter-flyway:4.0.5")
+    implementation("org.springframework.boot:spring-boot-starter-flyway:4.0.6")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly "org.flywaydb:flyway-database-postgresql"
-    testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.4"
+    testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.5"
     testImplementation 'org.testcontainers:postgresql:1.21.4'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
