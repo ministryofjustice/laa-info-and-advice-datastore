@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -14,6 +15,9 @@ import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 @RequiredArgsConstructor
 @Service
 public class ApplicationService {
+
+  private static final int DEFAULT_PAGE_SIZE = 25;
+
   private final ApplicationRepository repository;
   private final ApplicationMapper applicationMapper;
 
@@ -31,8 +35,14 @@ public class ApplicationService {
    *
    * @return list of {@link ApplicationResponse}
    */
-  public List<ApplicationResponse> getAllApplications() {
-    return repository.findAll().stream().map(applicationMapper::toApplication).toList();
+  public List<ApplicationResponse> getAllApplications(Integer page, Integer size) {
+
+    int resolvedPage = page != null ? page : 0;
+    int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
+
+    return repository.findAll(PageRequest.of(resolvedPage, resolvedSize)).stream()
+        .map(applicationMapper::toApplication)
+        .toList();
   }
 
   /**

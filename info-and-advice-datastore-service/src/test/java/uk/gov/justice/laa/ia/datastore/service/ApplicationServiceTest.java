@@ -37,16 +37,17 @@ public class ApplicationServiceTest {
         ApplicationResponse.builder().referenceNumber(entity1.getId()).build();
     final ApplicationResponse application2 =
         ApplicationResponse.builder().referenceNumber(entity2.getId()).build();
-    when(repo.findAll()).thenReturn(List.of(entity1, entity2));
+    when(repo.findAll(any(org.springframework.data.domain.Pageable.class)))
+        .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
     when(mapper.toApplication(entity1)).thenReturn(application1);
     when(mapper.toApplication(entity2)).thenReturn(application2);
 
     // Act
-    final List<ApplicationResponse> result = sut.getAllApplications();
+    final List<ApplicationResponse> result = sut.getAllApplications(null, null);
 
     // Assert
     assertThat(result).hasSize(2).contains(application1, application2);
-    verify(repo, times(1)).findAll();
+    verify(repo, times(1)).findAll(any(org.springframework.data.domain.Pageable.class));
     verify(mapper, times(2)).toApplication(any());
   }
 
