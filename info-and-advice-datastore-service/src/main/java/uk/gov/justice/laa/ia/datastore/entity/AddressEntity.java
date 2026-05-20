@@ -28,9 +28,6 @@ public class AddressEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "client_has_home_address", nullable = false)
-  private boolean clientHasHomeAddress;
-
   @Column(name = "address_line_1")
   private String addressLine1;
 

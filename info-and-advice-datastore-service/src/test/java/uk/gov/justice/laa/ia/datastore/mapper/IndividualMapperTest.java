@@ -27,14 +27,11 @@ public class IndividualMapperTest extends BaseMapperTest {
 
   @Test
   void toIndividual_shouldMapAllProperties() {
-    IndividualEntity entity =
-        createIndividual().lastNameAtBirth("Smith").niNumber("AD123456Q").build();
+    IndividualEntity entity = createIndividual().niNumber("AD123456Q").build();
 
     Individual mappedModel = sut.toIndividual(entity);
     assertEquals(entity.getId(), mappedModel.getIndividualLegalAidNumber());
-    assertEquals(entity.getFirstName(), mappedModel.getFirstName());
-    assertEquals(entity.getLastName(), mappedModel.getLastName());
-    assertEquals(entity.getLastNameAtBirth(), mappedModel.getLastNameAtBirth());
+    assertEquals(entity.getFullName(), mappedModel.getFullName());
     assertEquals(entity.getDateOfBirth(), mappedModel.getDateOfBirth());
     assertEquals(entity.getNiNumber(), mappedModel.getNiNumber());
     assertEquals(entity.getCreatedAt(), mappedModel.getCreatedAt().toInstant());
@@ -45,7 +42,6 @@ public class IndividualMapperTest extends BaseMapperTest {
   void toIndividual_whenOptionalFieldsAreNull_thenShouldMapNull() {
     IndividualEntity entity = createIndividual().build();
     Individual mappedModel = sut.toIndividual(entity);
-    assertNull(mappedModel.getLastNameAtBirth());
     assertNull(mappedModel.getNiNumber());
   }
 
@@ -64,8 +60,7 @@ public class IndividualMapperTest extends BaseMapperTest {
     final IndividualEntity mappedModel = sut.toIndividualEntity(cmd);
 
     assertEquals(cmd.getNationalInsuranceNumber(), mappedModel.getNiNumber());
-    assertEquals(cmd.getFirstName(), mappedModel.getFirstName());
-    assertEquals(cmd.getLastName(), mappedModel.getLastName());
+    assertEquals(cmd.getFullName(), mappedModel.getFullName());
     assertEquals(cmd.getDateOfBirth(), mappedModel.getDateOfBirth());
     assertNotNull(mappedModel.getAddress());
   }
@@ -73,8 +68,7 @@ public class IndividualMapperTest extends BaseMapperTest {
   private IndividualEntity.IndividualEntityBuilder createIndividual() {
     return IndividualEntity.builder()
         .id(UUID.randomUUID())
-        .firstName("Joe")
-        .lastName("Bloggs")
+        .fullName("Joe Bloggs")
         .dateOfBirth(LocalDate.of(1990, 01, 01))
         .createdAt(Instant.now())
         .modifiedAt(Instant.now());
