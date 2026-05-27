@@ -13,7 +13,6 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
     uses = {
       DateTimeMapper.class,
       IndividualMapper.class,
-      CaseDetailsMapper.class,
       DeclarationMapper.class,
       EvidenceMapper.class
     },
@@ -26,7 +25,6 @@ public interface ApplicationMapper {
   @Mapping(source = "evidenceStatusId", target = "evidenceStatus")
   @Mapping(source = "clientDeclarationStatusId", target = "clientDeclarationStatus")
   @Mapping(source = "individual.id", target = "individualLegalAidNumber")
-  @Mapping(source = "caseDetails", target = "caseDetails")
   @Mapping(source = "declaration", target = "declaration")
   @Mapping(source = "evidence", target = "evidence")
   ApplicationResponse toApplication(ApplicationEntity entity);

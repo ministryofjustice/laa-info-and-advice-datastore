@@ -55,10 +55,6 @@ public class ApplicationEntity {
   @JoinColumn(name = "evidence_id", nullable = true)
   private EvidenceEntity evidence;
 
-  @OneToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = "case_details_id", nullable = false)
-  private CaseDetailsEntity caseDetails;
-
   @Column(name = "client_declaration_status_id", nullable = true)
   private UUID clientDeclarationStatusId;
 

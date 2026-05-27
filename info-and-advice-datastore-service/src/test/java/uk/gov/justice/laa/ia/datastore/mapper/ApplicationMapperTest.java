@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.CaseDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.IndividualEntityGenerator;
@@ -38,7 +37,6 @@ public class ApplicationMapperTest extends BaseMapperTest {
                         individualBuilder.address(AddressEntityGenerator.createWithId(null));
                       }));
               builder.evidence(EvidenceEntityGenerator.createWithId(null));
-              builder.caseDetails(CaseDetailsEntityGenerator.createWithId(null));
               builder.declaration(DeclarationEntityGenerator.createWithId(null));
             });
 
@@ -97,7 +95,6 @@ public class ApplicationMapperTest extends BaseMapperTest {
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
 
     assertNotNull(mappedModel);
-    assertNotNull(mappedModel.getCaseDetails());
     assertNotNull(mappedModel.getIndividual());
   }
 }

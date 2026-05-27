@@ -187,8 +187,6 @@ components:
           format: uuid
         overallApplicationStatus:
           $ref: "#/components/schemas/OverallApplicationStatus"
-        caseDetails:
-          $ref: "#/components/schemas/CaseDetailsResponse"
         declaration:
           $ref: "#/components/schemas/DeclarationResponse"
         evidence:
@@ -212,33 +210,6 @@ components:
       items:
         $ref: "#/components/schemas/ApplicationResponse"
 
-    CaseDetailsResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        requireEcf:
-          type: boolean
-        hasPreviousLegalAid:
-          type: boolean
-        hasSixMonthsLegalHelp:
-          type: boolean
-        meansAssessmentRequired:
-          type: boolean
-        typeNonMeansTested:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        createdBy:
-          type: string
-        modifiedAt:
-          type: string
-          format: date-time
-        modifiedBy:
-          type: string
-
     DeclarationResponse:
       type: object
       properties:
@@ -259,7 +230,6 @@ components:
           format: date-time
         modifiedBy:
           type: string
-        
 
     EvidenceResponse:
       type: object
@@ -314,8 +284,6 @@ components:
       properties:
         client: 
           $ref: '#/components/schemas/CreateClientCommand'
-        caseDetails:
-          $ref : '#/components/schemas/CreateCaseDetailsCommand'
             
     CreateClientCommand:
       type: object
@@ -356,24 +324,4 @@ components:
         country:
           type: string
           example: England
-
-    CreateCaseDetailsCommand:
-      type: object
-      required:
-        - requiresEcf
-        - hasPreviousLegalAid
-        - hasLegalHelpLastSixMonths
-        - meansAssessmentRequired
-        - isTypeNonMeansTested
-      properties:
-        requiresEcf:
-          type: boolean
-        hasPreviousLegalAid:
-           type: boolean
-        hasLegalHelpLastSixMonths:
-          type: boolean
-        meansAssessmentRequired:
-          type: boolean
-        isTypeNonMeansTested:
-          type: boolean
           
