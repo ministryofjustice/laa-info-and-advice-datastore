@@ -7,14 +7,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 
-/** Unit tests for the {@link IndividualEntity}. */
+/** Unit tests for the {@link ClientDetailsEntity}. */
 @ExtendWith(MockitoExtension.class)
-public class IndividualEntityTests {
+public class ClientDetailsEntityTests {
 
   @Test
-  void givenIndividualEntityWithNoAddress_thenHasFixedAddressReturnsFalse() {
+  void givenClientDetailsEntityWithNoAddress_thenHasFixedAddressReturnsFalse() {
     // Arrange
-    final IndividualEntity entity = new IndividualEntity();
+    final ClientDetailsEntity entity = new ClientDetailsEntity();
 
     // Act
     final boolean hasFixedAddress = entity.hasFixedAddress();
@@ -24,10 +24,10 @@ public class IndividualEntityTests {
   }
 
   @Test
-  void givenIndividualEntityWithAddress_thenHasFixedAddressReturnsTrue() {
+  void givenClientDetailsEntityWithAddress_thenHasFixedAddressReturnsTrue() {
     // Arrange
-    final IndividualEntity entity =
-        IndividualEntity.builder().address(AddressEntityGenerator.createWithId(null)).build();
+    final ClientDetailsEntity entity =
+        ClientDetailsEntity.builder().address(AddressEntityGenerator.createWithId(null)).build();
 
     // Act
     final boolean hasFixedAddress = entity.hasFixedAddress();

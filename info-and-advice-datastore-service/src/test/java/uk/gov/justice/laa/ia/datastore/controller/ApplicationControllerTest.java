@@ -35,14 +35,14 @@ public class ApplicationControllerTest {
     // Arrange
     ApplicationResponse application1 =
         ApplicationResponse.builder()
-            .referenceNumber(UUID.randomUUID())
+            .id(UUID.randomUUID())
             .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
             .evidence(EvidenceResponse.builder().id(UUID.randomUUID()).build())
             .build();
 
     ApplicationResponse application2 =
         ApplicationResponse.builder()
-            .referenceNumber(UUID.randomUUID())
+            .id(UUID.randomUUID())
             .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
             .evidence(EvidenceResponse.builder().id(UUID.randomUUID()).build())
             .build();
@@ -56,7 +56,7 @@ public class ApplicationControllerTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.*", hasSize(2)))
-        .andExpect(jsonPath("$[0].referenceNumber").exists())
+        .andExpect(jsonPath("$[0].id").exists())
         .andExpect(jsonPath("$[0].declaration").exists())
         .andExpect(jsonPath("$[0].evidence").exists());
   }

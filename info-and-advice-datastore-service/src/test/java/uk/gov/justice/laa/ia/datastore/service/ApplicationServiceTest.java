@@ -34,9 +34,9 @@ public class ApplicationServiceTest {
     final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
     final ApplicationEntity entity2 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
     final ApplicationResponse application1 =
-        ApplicationResponse.builder().referenceNumber(entity1.getId()).build();
+        ApplicationResponse.builder().id(entity1.getId()).build();
     final ApplicationResponse application2 =
-        ApplicationResponse.builder().referenceNumber(entity2.getId()).build();
+        ApplicationResponse.builder().id(entity2.getId()).build();
     when(repo.findAll(any(org.springframework.data.domain.Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
     when(mapper.toApplication(entity1)).thenReturn(application1);
@@ -56,7 +56,7 @@ public class ApplicationServiceTest {
     // Arrange
     final ApplicationEntity entity = ApplicationEntity.builder().id(UUID.randomUUID()).build();
     final ApplicationResponse application =
-        ApplicationResponse.builder().referenceNumber(entity.getId()).build();
+        ApplicationResponse.builder().id(entity.getId()).build();
     when(repo.findById(entity.getId())).thenReturn(Optional.of(entity));
     when(mapper.toApplication(entity)).thenReturn(application);
 

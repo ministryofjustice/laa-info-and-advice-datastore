@@ -4,6 +4,5 @@ package uk.gov.justice.laa.ia.datastore.utils;
 public class TestConstants {
   private TestConstants() {}
 
-  public static final String GetIndividualsApi = "/api/v0/individuals";
-  public static final String GetIndividualApi = "/api/v0/individuals/{id}";
+  public static final String GetClientDetails = "/api/v0/client-details/{id}";
 }

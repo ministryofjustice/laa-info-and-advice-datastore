@@ -16,7 +16,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 
-/** Entity to represent an individuals address. */
+/** Entity to represent a client declaration. */
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor

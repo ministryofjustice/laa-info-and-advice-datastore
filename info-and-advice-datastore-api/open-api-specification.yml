@@ -35,28 +35,12 @@ paths:
           description: Forbidden
         '500':
           description: Internal server error
-  /api/v0/individuals:
+  /api/v0/client-details/{id}:
     get:
       tags:
-        - individuals
-      summary: Get individuals
-      operationId: getIndividuals
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Individuals"
-        '401': { description: 'Unauthorized' }
-        '403': { description: 'Forbidden' }
-        '500': { description: 'Internal server error' }
-  /api/v0/individuals/{id}:
-    get:
-      tags:
-        - individuals
-      summary: Get individual
-      operationId: getIndividual
+        - client-details
+      summary: Get client details by ID
+      operationId: getClientDetails
       parameters:
         - name: id
           in: path
@@ -70,7 +54,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Individual"
+                $ref: "#/components/schemas/ClientDetails"
         '401' : { description: 'Unauthorized' }
         '403' : { description: 'Forbidden' }
         '404' : { description: 'Not found' }
@@ -95,7 +79,7 @@ paths:
 
 components:
   schemas:
-    Individual:
+    ClientDetails:
       properties:
         individualLegalAidNumber:
           type: string
@@ -116,10 +100,6 @@ components:
         modifiedAt:
           type: string
           format: date-time
-    Individuals:
-      type: array
-      items:
-        $ref: "#/components/schemas/Individual"
 
     Address:
       properties:
@@ -141,7 +121,7 @@ components:
     ApplicationResponse:
       type: object
       required:
-        - referenceNumber
+        - id
         - individualLegalAidNumber
         - providerFirmId
         - providerOfficeId
@@ -150,7 +130,7 @@ components:
         - modifiedAt
         - modifiedBy
       properties:
-        referenceNumber:
+        id:
           type: string
           format: uuid
           example: 
@@ -169,31 +149,27 @@ components:
           format: uuid
           example: 
           description:
-        eligibilityResult:
-          type: string
-          format: uuid
-          example:
-          description:
-        clientCaseDetailsStatus:
-          $ref: "#/components/schemas/ClientCaseDetailsStatus"
         meansAssessmentStatus:
           type: string
           format: uuid
-        evidenceStatus:
-          type: string
-          format: uuid
-        clientDeclarationStatus:
-          type: string
-          format: uuid
-        overallApplicationStatus:
-          $ref: "#/components/schemas/OverallApplicationStatus"
+        applicationState:
+          $ref: "#/components/schemas/ApplicationState"
         declaration:
           $ref: "#/components/schemas/DeclarationResponse"
         evidence:
           $ref: "#/components/schemas/EvidenceResponse"
-        uniqueFileNumber:
+        reasonForReapplication:
           type: string
-          format: uuid
+        meansAssessmentRequired:
+          type: boolean
+        typeOfNonMeans:
+          type: boolean
+        ecfFlag:
+          type: boolean
+        contribution:
+          type: string
+        applicationType:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -258,11 +234,6 @@ components:
         modifiedBy:
           type: string
 
-    ClientCaseDetailsStatus:
-      type: string
-      enum:
-        - DRAFT
-
     ClientDeclarationStatus:
       type: string
       enum:
@@ -271,7 +242,7 @@ components:
       type: string
       enum:
         - DRAFT
-    OverallApplicationStatus:
+    ApplicationState:
       type: string
       enum:
         - DRAFT
@@ -280,10 +251,15 @@ components:
       type: object
       required:
         - client
-        - caseDetails
+        - applicationType
       properties:
         client: 
           $ref: '#/components/schemas/CreateClientCommand'
+        applicationType:
+          type: string
+          enum:
+            - RCW
+            - CLA
             
     CreateClientCommand:
       type: object

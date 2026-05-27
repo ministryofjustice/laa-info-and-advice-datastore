@@ -5,7 +5,7 @@ public class BaseMapperTest {
 
   protected DateTimeMapper dtMapper;
   protected AddressMapper addressMapper;
-  protected IndividualMapper individualMapper;
+  protected ClientDetailsMapper clientDetailsMapper;
   protected DeclarationMapper declarationMapper;
   protected EvidenceMapper evidenceMapper;
   protected ApplicationMapper applicationMapper;
@@ -13,11 +13,11 @@ public class BaseMapperTest {
   protected BaseMapperTest() {
     dtMapper = new DateTimeMapperImpl();
     addressMapper = new AddressMapperImpl(dtMapper);
-    individualMapper = new IndividualMapperImpl(dtMapper, addressMapper);
+    clientDetailsMapper = new ClientDetailsMapperImpl(dtMapper, addressMapper);
     declarationMapper = new DeclarationMapperImpl(dtMapper);
     evidenceMapper = new EvidenceMapperImpl(dtMapper);
 
     applicationMapper =
-        new ApplicationMapperImpl(dtMapper, individualMapper, declarationMapper, evidenceMapper);
+        new ApplicationMapperImpl(dtMapper, clientDetailsMapper, declarationMapper, evidenceMapper);
   }
 }
