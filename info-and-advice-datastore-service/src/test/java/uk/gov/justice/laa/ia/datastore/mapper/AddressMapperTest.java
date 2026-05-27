@@ -34,7 +34,6 @@ public class AddressMapperTest extends BaseMapperTest {
 
     var mappedModel = sut.toAddress(addressEntity);
 
-    assertEquals(addressEntity.isClientHasHomeAddress(), mappedModel.getClientHasHomeAddress());
     assertEquals(addressEntity.getAddressLine1(), mappedModel.getAddressLine1());
     assertEquals(addressEntity.getAddressLine2(), mappedModel.getAddressLine2());
     assertEquals(addressEntity.getTownOrCity(), mappedModel.getTownOrCity());
@@ -72,7 +71,6 @@ public class AddressMapperTest extends BaseMapperTest {
   private AddressEntity.AddressEntityBuilder createAddress() {
     return AddressEntity.builder()
         .id(UUID.randomUUID())
-        .clientHasHomeAddress(true)
         .createdAt(Instant.now())
         .modifiedAt(Instant.now());
   }

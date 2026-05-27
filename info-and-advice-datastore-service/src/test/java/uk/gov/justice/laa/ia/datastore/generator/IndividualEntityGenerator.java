@@ -34,9 +34,7 @@ public class IndividualEntityGenerator {
       Consumer<IndividualEntity.IndividualEntityBuilder> customizer) {
     var builder =
         IndividualEntity.builder()
-            .firstName("Joe")
-            .lastName("Bloggs")
-            .lastNameAtBirth("Smith")
+            .fullName("Joe Bloggs")
             .niNumber("AB123456Q")
             .dateOfBirth(LocalDate.of(1990, 01, 01));
     if (customizer != null) {

@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -31,14 +32,8 @@ public class IndividualEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "first_name", nullable = false)
-  private String firstName;
-
-  @Column(name = "last_name", nullable = false)
-  private String lastName;
-
-  @Column(name = "last_name_at_birth")
-  private String lastNameAtBirth;
+  @Column(name = "full_name", nullable = false)
+  private String fullName;
 
   @Column(name = "date_of_birth", nullable = false)
   private LocalDate dateOfBirth;
@@ -49,6 +44,11 @@ public class IndividualEntity {
   @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "address_id", nullable = true)
   private AddressEntity address;
+
+  @Transient
+  public boolean hasFixedAddress() {
+    return address != null;
+  }
 
   @Column(name = "created_at")
   @CreationTimestamp
