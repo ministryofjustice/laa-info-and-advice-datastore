@@ -3,7 +3,9 @@ package uk.gov.justice.laa.ia.datastore.repository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
@@ -18,17 +20,8 @@ import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldGetApplication() {
-    final ApplicationEntity entity =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.clientDetails(
-                  ClientDetailsEntityGenerator.createWithoutId(
-                      clientDetailsBuilder -> {
-                        clientDetailsBuilder.address(AddressEntityGenerator.createWithoutId(null));
-                      }));
-              builder.evidence(EvidenceEntityGenerator.createWithoutId(null));
-              builder.declaration(DeclarationEntityGenerator.createWithoutId(null));
-            });
+    final ApplicationEntity entity = createApplication();
+    ;
     final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
     clearCache();
     final ApplicationEntity getEntity =
@@ -44,5 +37,29 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
     assertTrue(getEntity.getReferenceNumber().matches(referenceNumberRegex));
   }
 
+  @Test
+  void shouldGetAllApplications() {
+    final List<ApplicationEntity> entities =
+        List.of(createApplication(), createApplication(), createApplication());
+    applicationRepository.saveAllAndFlush(entities);
+    clearCache();
+    final var getEntities = applicationRepository.findAll(Pageable.ofSize(3)).getContent();
+
+    assertThat(getEntities).hasSize(3);
+  }
+
   private final String referenceNumberRegex = "L-\\w{3}-\\w{3}";
+
+  private ApplicationEntity createApplication() {
+    return ApplicationEntityGenerator.createWithoutId(
+        builder -> {
+          builder.clientDetails(
+              ClientDetailsEntityGenerator.createWithoutId(
+                  clientDetailsBuilder -> {
+                    clientDetailsBuilder.address(AddressEntityGenerator.createWithoutId(null));
+                  }));
+          builder.evidence(EvidenceEntityGenerator.createWithoutId(null));
+          builder.declaration(DeclarationEntityGenerator.createWithoutId(null));
+        });
+  }
 }
