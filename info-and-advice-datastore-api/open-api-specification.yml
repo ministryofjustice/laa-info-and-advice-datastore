@@ -107,10 +107,19 @@ components:
           type: string
         addressLine2:
           type: string
+        addressLine3:
+          type: string
+        addressLine4:
+          type: string
         townOrCity:
           type: string
         postCode:
           type: string
+        county:
+          type: string
+        country:
+          type: string
+          maxLength: 2
         createdAt:
           type: string
           format: date-time
@@ -284,20 +293,28 @@ components:
 
     CreateAddressCommand:
       type: object
+      required:
+        - addressLine1
       properties:
-        line1:
+        addressLine1:
           type: string
           example: 10 Downing Street
-        line2:
+        addressLine2:
           type: string
-        city:
+        addressLine3:
+          type: string
+        addressLine4:
+          type: string
+        townOrCity:
           type: string
           example: London
         postCode:
           type: string 
           example: SW1A 2AA
-
+        county:
+          type: string
         country:
           type: string
-          example: England
+          maxLength: 2
+          example: GB
           

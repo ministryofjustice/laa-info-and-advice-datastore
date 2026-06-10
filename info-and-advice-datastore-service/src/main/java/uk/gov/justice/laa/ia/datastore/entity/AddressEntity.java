@@ -28,17 +28,29 @@ public class AddressEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "address_line_1")
+  @Column(name = "address_line_1", nullable = false)
   private String addressLine1;
 
   @Column(name = "address_line_2")
   private String addressLine2;
+
+  @Column(name = "address_line_3")
+  private String addressLine3;
+
+  @Column(name = "address_line_4")
+  private String addressLine4;
 
   @Column(name = "town_or_city")
   private String townOrCity;
 
   @Column(name = "post_code")
   private String postCode;
+
+  @Column(name = "county")
+  private String county;
+
+  @Column(name = "country", length = 2)
+  private String country;
 
   @Column(name = "created_at")
   @CreationTimestamp
