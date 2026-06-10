@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.justice.laa.ia.datastore.repository.AddressRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
-import uk.gov.justice.laa.ia.datastore.repository.IndividualRepository;
+import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
 
 @SpringBootTest(properties = {"feature.disable-jpa-auditing=true"})
 @ImportAutoConfiguration(
@@ -18,7 +18,7 @@ import uk.gov.justice.laa.ia.datastore.repository.IndividualRepository;
     })
 class SpringBootMicroserviceApplicationTests {
 
-  @MockitoBean private IndividualRepository individualRepository;
+  @MockitoBean private ClientDetailsRepository clientDetailsRepository;
   @MockitoBean private ApplicationRepository applicationRepository;
   @MockitoBean private AddressRepository addressRepository;
 

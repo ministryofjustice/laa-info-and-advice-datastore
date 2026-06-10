@@ -17,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
-import uk.gov.justice.laa.ia.datastore.model.CaseDetailsResponse;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
 import uk.gov.justice.laa.ia.datastore.model.EvidenceResponse;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
@@ -36,16 +35,14 @@ public class ApplicationControllerTest {
     // Arrange
     ApplicationResponse application1 =
         ApplicationResponse.builder()
-            .referenceNumber(UUID.randomUUID())
-            .caseDetails(CaseDetailsResponse.builder().id(UUID.randomUUID()).build())
+            .id(UUID.randomUUID())
             .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
             .evidence(EvidenceResponse.builder().id(UUID.randomUUID()).build())
             .build();
 
     ApplicationResponse application2 =
         ApplicationResponse.builder()
-            .referenceNumber(UUID.randomUUID())
-            .caseDetails(CaseDetailsResponse.builder().id(UUID.randomUUID()).build())
+            .id(UUID.randomUUID())
             .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
             .evidence(EvidenceResponse.builder().id(UUID.randomUUID()).build())
             .build();
@@ -59,8 +56,7 @@ public class ApplicationControllerTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.*", hasSize(2)))
-        .andExpect(jsonPath("$[0].referenceNumber").exists())
-        .andExpect(jsonPath("$[0].caseDetails").exists())
+        .andExpect(jsonPath("$[0].id").exists())
         .andExpect(jsonPath("$[0].declaration").exists())
         .andExpect(jsonPath("$[0].evidence").exists());
   }

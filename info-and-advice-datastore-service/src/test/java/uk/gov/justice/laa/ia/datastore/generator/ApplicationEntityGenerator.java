@@ -4,8 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Consumer;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.model.ClientCaseDetailsStatus;
-import uk.gov.justice.laa.ia.datastore.model.OverallApplicationStatus;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 
 /** Generator for setting for an ApplicationEntity for tests. */
 public class ApplicationEntityGenerator {
@@ -38,13 +37,10 @@ public class ApplicationEntityGenerator {
         ApplicationEntity.builder()
             .providerFirmId(UUID.randomUUID())
             .providerOfficeId(UUID.randomUUID())
-            .eligibilityResultId(UUID.randomUUID())
-            .clientCaseDetailsStatus(ClientCaseDetailsStatus.DRAFT)
-            .meansAssessmentStatusId(UUID.randomUUID())
-            .evidenceStatusId(UUID.randomUUID())
-            .clientDeclarationStatusId(UUID.randomUUID())
-            .overallApplicationStatus(OverallApplicationStatus.DRAFT)
-            .uniqueFileNumber(UUID.randomUUID())
+            .meansAssessmentId(UUID.randomUUID())
+            .applicationState(ApplicationState.DRAFT)
+            .referenceNumber("L-56C-FTQ")
+            .applicationType("RCW")
             .createdBy("Joe Bloggs")
             .modifiedBy("Joe Bloggs");
     if (customizer != null) {

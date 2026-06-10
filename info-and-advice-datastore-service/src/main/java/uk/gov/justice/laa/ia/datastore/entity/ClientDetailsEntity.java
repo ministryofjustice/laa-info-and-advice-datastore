@@ -20,14 +20,14 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-/** The entity class for Individual. */
+/** The entity class for ClientDetails. */
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "Individuals")
-public class IndividualEntity {
+@Table(name = "client_details")
+public class ClientDetailsEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;

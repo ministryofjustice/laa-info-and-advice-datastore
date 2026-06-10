@@ -12,7 +12,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
-import uk.gov.justice.laa.ia.datastore.repository.IndividualRepository;
+import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
 
 /** For shared integration test behaviours. */
 @ActiveProfiles("test")
@@ -24,7 +24,7 @@ import uk.gov.justice.laa.ia.datastore.repository.IndividualRepository;
 public abstract class BaseIntegrationTest {
   @PersistenceContext protected EntityManager entityManager;
 
-  @Autowired protected IndividualRepository individualRepository;
+  @Autowired protected ClientDetailsRepository clientDeatilsRepository;
   @Autowired protected ApplicationRepository applicationRepository;
 
   public void clearCache() {
