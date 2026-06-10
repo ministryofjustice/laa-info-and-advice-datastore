@@ -43,6 +43,21 @@ dependencies {
 
     // fix https://security.snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-15365924
     implementation 'com.fasterxml.jackson.core:jackson-core:2.22.0'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-17255206
+    implementation 'org.springframework:spring-core:7.0.8'
+    //fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-17253311
+    implementation 'org.springframework:spring-expression:7.0.8'
+    //fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-17253520
+    implementation 'org.springframework:spring-web:7.0.8'
+    /* fixes https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-17254116
+             https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-17254527
+             https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-17254544
+    */
+    implementation 'org.springframework:spring-webmvc:7.0.8'
+    //fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKDATA-17279540
+    implementation 'org.springframework.data:spring-data-commons:4.0.6'
+    //fix https://security.snyk.io/vuln/SNYK-JAVA-IOMICROMETER-17260885
+    implementation 'io.micrometer:micrometer-core:1.16.6'
 
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
