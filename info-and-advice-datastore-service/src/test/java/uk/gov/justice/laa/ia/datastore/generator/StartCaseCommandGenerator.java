@@ -8,7 +8,9 @@ public class StartCaseCommandGenerator {
   /** Creates a default StartCaseCommand. */
   public static StartCaseCommand create(Consumer<StartCaseCommand.Builder> customizer) {
     StartCaseCommand.Builder builder =
-        StartCaseCommand.builder().client(CreateClientCommandGenerator.create(null));
+        StartCaseCommand.builder()
+            .client(CreateClientCommandGenerator.create(null))
+            .applicationType(StartCaseCommand.ApplicationTypeEnum.RCW);
 
     if (customizer != null) {
       customizer.accept(builder);

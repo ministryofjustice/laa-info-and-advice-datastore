@@ -277,7 +277,7 @@ components:
           type: string
         nationalInsuranceNumber:
           type: string
-          pattern: '/[A-CEGHJ-NOPR-TW-Z]{2}[0-9]{6}[ABCDs]{1}/'
+          pattern: '[A-CEGHJ-NOPR-TW-Z]{2}[0-9]{6}[ABCDs]{1}'
           example: AC123456D
         createAddressCommand:
           $ref: '#/components/schemas/CreateAddressCommand'
