@@ -23,7 +23,6 @@ public class ApplicationController implements ApplicationApi {
 
   @Override
   public ResponseEntity<Void> startCase(@Valid StartCaseCommand startCaseCommand) {
-    log.info("Starting a new case for client: {}", startCaseCommand.getClient().getFullName());
     UUID id = service.createApplication(startCaseCommand);
 
     return ResponseEntity.status(HttpStatus.CREATED)
