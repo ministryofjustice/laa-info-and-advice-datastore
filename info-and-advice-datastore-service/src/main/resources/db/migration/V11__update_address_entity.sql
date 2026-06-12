@@ -1,0 +1,8 @@
+ALTER TABLE addresses
+ALTER COLUMN address_line_1 SET NOT NULL;
+
+ALTER TABLE addresses
+ADD COLUMN county VARCHAR NULL,
+ADD COLUMN country VARCHAR(2) NULL,
+ADD COLUMN address_line_3 VARCHAR NULL,
+ADD COLUMN address_line_4 VARCHAR NULL;

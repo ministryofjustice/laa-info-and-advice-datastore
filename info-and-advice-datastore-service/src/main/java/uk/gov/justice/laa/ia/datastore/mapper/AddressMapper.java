@@ -17,9 +17,6 @@ public interface AddressMapper {
   Address toAddress(AddressEntity entity);
 
   /** Maps a {@link CreateAddressCommand} to an {@link AddressEntity}. */
-  @Mapping(source = "line1", target = "addressLine1")
-  @Mapping(source = "line2", target = "addressLine2")
-  @Mapping(source = "city", target = "townOrCity")
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "modifiedAt", ignore = true)
