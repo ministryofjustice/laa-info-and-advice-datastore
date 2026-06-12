@@ -33,6 +33,16 @@ public interface ApplicationMapper {
   @Mapping(target = "modifiedBy", ignore = true)
   @Mapping(target = "providerFirmId", ignore = true)
   @Mapping(target = "providerOfficeId", ignore = true)
+  @Mapping(target = "applicationState", ignore = true)
+  @Mapping(target = "referenceNumber", ignore = true)
+  @Mapping(target = "meansAssessmentId", ignore = true)
+  @Mapping(target = "evidence", ignore = true)
+  @Mapping(target = "declaration", ignore = true)
+  @Mapping(target = "reasonForReapplication", ignore = true)
+  @Mapping(target = "meansAssessmentRequired", ignore = true)
+  @Mapping(target = "typeOfNonMeans", ignore = true)
+  @Mapping(target = "ecfFlag", ignore = true)
+  @Mapping(target = "contribution", ignore = true)
   @Mapping(source = "client", target = "clientDetails")
   ApplicationEntity toApplicationEntity(StartCaseCommand cmd);
 }
