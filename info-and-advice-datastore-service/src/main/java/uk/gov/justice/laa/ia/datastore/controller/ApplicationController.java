@@ -2,8 +2,10 @@ package uk.gov.justice.laa.ia.datastore.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.justice.laa.ia.datastore.api.ApplicationApi;
@@ -21,7 +23,11 @@ public class ApplicationController implements ApplicationApi {
 
   @Override
   public ResponseEntity<Void> startCase(@Valid StartCaseCommand startCaseCommand) {
-    throw new UnsupportedOperationException("Unimplemented method 'startCase'");
+    UUID id = service.createApplication(startCaseCommand);
+
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .header("X-Application-ID", id.toString())
+        .build();
   }
 
   @Override

@@ -15,9 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 
 /** Unit tests for the {@link ApplicationService}. */
@@ -25,8 +28,45 @@ import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
   @Mock private ApplicationMapper mapper;
+  @Mock private UserContext userContext;
 
   @InjectMocks private ApplicationService sut;
+
+  @Test
+  void shouldCreateApplication() {
+    // Arrange
+    final StartCaseCommand cmd = new StartCaseCommand();
+    final ApplicationEntity entity = new ApplicationEntity();
+    final UUID generatedId = UUID.randomUUID();
+    final UUID firmId = UUID.randomUUID();
+    final UUID officeId = UUID.randomUUID();
+    final String user = "TEST_USER";
+
+    when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
+    when(userContext.getProviderFirmId()).thenReturn(firmId);
+    when(userContext.getProviderOfficeId()).thenReturn(officeId);
+    when(userContext.getCurrentUser()).thenReturn(user);
+    when(repo.save(any(ApplicationEntity.class)))
+        .thenAnswer(
+            invocation -> {
+              ApplicationEntity saved = invocation.getArgument(0);
+              saved.setId(generatedId);
+              return saved;
+            });
+
+    // Act
+    final UUID result = sut.createApplication(cmd);
+
+    // Assert
+    assertThat(result).isEqualTo(generatedId);
+    assertThat(entity.getProviderFirmId()).isEqualTo(firmId);
+    assertThat(entity.getProviderOfficeId()).isEqualTo(officeId);
+    assertThat(entity.getApplicationState()).isEqualTo(ApplicationState.DRAFT);
+    assertThat(entity.getCreatedBy()).isEqualTo(user);
+    assertThat(entity.getModifiedBy()).isEqualTo(user);
+
+    verify(repo, times(1)).save(entity);
+  }
 
   @Test
   void shouldGetAllApplications() {

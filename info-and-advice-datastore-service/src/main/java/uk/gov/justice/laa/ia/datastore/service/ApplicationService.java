@@ -1,13 +1,17 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
+import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 
@@ -20,14 +24,26 @@ public class ApplicationService {
 
   private final ApplicationRepository repository;
   private final ApplicationMapper applicationMapper;
+  private final UserContext userContext;
 
   /**
    * Create an application.
    *
    * @return ID of newly created application.
    */
+  @Transactional
   public UUID createApplication(StartCaseCommand startCase) {
-    return null;
+    ApplicationEntity entity = applicationMapper.toApplicationEntity(startCase);
+
+    // Set default/system values from context
+    entity.setProviderFirmId(userContext.getProviderFirmId());
+    entity.setProviderOfficeId(userContext.getProviderOfficeId());
+    entity.setApplicationState(ApplicationState.DRAFT);
+    entity.setCreatedBy(userContext.getCurrentUser());
+    entity.setModifiedBy(userContext.getCurrentUser());
+
+    ApplicationEntity saved = repository.save(entity);
+    return saved.getId();
   }
 
   /**
