@@ -24,8 +24,6 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .permitAll())
-        // this is the default CSRF configuration, but we're using it explicitly here so Snyk can
-        // see it
         .csrf((csrf) -> csrf.csrfTokenRepository(new HttpSessionCsrfTokenRepository()))
         .build();
   }

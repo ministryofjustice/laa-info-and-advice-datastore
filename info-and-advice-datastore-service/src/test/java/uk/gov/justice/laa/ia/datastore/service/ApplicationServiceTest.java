@@ -98,6 +98,7 @@ public class ApplicationServiceTest {
     final ApplicationResponse application =
         ApplicationResponse.builder().id(entity.getId()).build();
     when(repo.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(userContext.canAccessApplication(entity)).thenReturn(true);
     when(mapper.toApplication(entity)).thenReturn(application);
 
     // Act
@@ -107,6 +108,22 @@ public class ApplicationServiceTest {
     assertThat(result).isEqualTo(application);
     verify(repo, times(1)).findById(entity.getId());
     verify(mapper, times(1)).toApplication(entity);
+  }
+
+  @Test
+  void shouldReturnEmptyOptional_whenAccessDenied() {
+    // Arrange
+    final ApplicationEntity entity = ApplicationEntity.builder().id(UUID.randomUUID()).build();
+    when(repo.findById(entity.getId())).thenReturn(Optional.of(entity));
+    when(userContext.canAccessApplication(entity)).thenReturn(false);
+
+    // Act
+    Optional<ApplicationResponse> result = sut.getApplication(entity.getId());
+
+    // Assert
+    assertThat(result).isEmpty();
+    verify(repo, times(1)).findById(entity.getId());
+    verify(mapper, times(0)).toApplication(any());
   }
 
   @Test

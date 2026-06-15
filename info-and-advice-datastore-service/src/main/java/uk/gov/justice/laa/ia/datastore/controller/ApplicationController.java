@@ -35,4 +35,12 @@ public class ApplicationController implements ApplicationApi {
 
     return ResponseEntity.ok(service.getAllApplications(page, size));
   }
+
+  @Override
+  public ResponseEntity<ApplicationResponse> getApplication(UUID id) {
+    return service
+        .getApplication(id)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
+  }
 }
