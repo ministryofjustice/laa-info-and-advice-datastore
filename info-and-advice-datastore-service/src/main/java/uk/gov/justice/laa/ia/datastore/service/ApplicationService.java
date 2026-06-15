@@ -67,6 +67,9 @@ public class ApplicationService {
    * @return {@link ApplicationResponse}
    */
   public Optional<ApplicationResponse> getApplication(UUID applicationId) {
-    return repository.findById(applicationId).map(applicationMapper::toApplication);
+    return repository
+        .findById(applicationId)
+        .filter(userContext::canAccessApplication)
+        .map(applicationMapper::toApplication);
   }
 }

@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,6 +12,9 @@ import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+  @Value("${spring.security.csrf.disabled:false}")
+  private boolean csrfDisabled;
 
   /** Configures the security behaviour. */
   @Bean
@@ -26,7 +30,14 @@ public class SecurityConfig {
                     .permitAll())
         // this is the default CSRF configuration, but we're using it explicitly here so Snyk can
         // see it
-        .csrf((csrf) -> csrf.csrfTokenRepository(new HttpSessionCsrfTokenRepository()))
+        .csrf(
+            (csrf) -> {
+              if (csrfDisabled) {
+                csrf.disable();
+              } else {
+                csrf.csrfTokenRepository(new HttpSessionCsrfTokenRepository());
+              }
+            })
         .build();
   }
 }
