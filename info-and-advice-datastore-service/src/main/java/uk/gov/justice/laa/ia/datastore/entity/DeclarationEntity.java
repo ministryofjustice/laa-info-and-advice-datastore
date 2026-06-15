@@ -31,8 +31,8 @@ public class DeclarationEntity {
   @Column(name = "client_declaration_status", nullable = false)
   private ClientDeclarationStatus clientDeclarationStatus;
 
-  @Column(name = "declaration_statement", nullable = false)
-  private boolean declarationStatement;
+  @Column(name = "declaration_confirmation", nullable = false)
+  private boolean declarationConfirmation;
 
   @Column(name = "created_at", nullable = false)
   @CreationTimestamp

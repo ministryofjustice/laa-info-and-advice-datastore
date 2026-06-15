@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -25,6 +26,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
 import uk.gov.justice.laa.ia.datastore.model.EvidenceResponse;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
@@ -91,5 +93,40 @@ public class ApplicationControllerTest {
         .andExpect(jsonPath("$[0].id").exists())
         .andExpect(jsonPath("$[0].declaration").exists())
         .andExpect(jsonPath("$[0].evidence").exists());
+  }
+
+  @Test
+  void updateDeclaration_returns204_whenApplicationExists() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    DeclarationCommand declarationCommand =
+        DeclarationCommand.builder().declarationConfirmation(true).build();
+    when(applicationService.updateClientDeclaration(applicationId, declarationCommand))
+        .thenReturn(true);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}/declaration", applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(declarationCommand)))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void updateDeclaration_returns404_whenApplicationDoesNotExist() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    DeclarationCommand declarationCommand =
+        DeclarationCommand.builder().declarationConfirmation(true).build();
+    when(applicationService.updateClientDeclaration(any(UUID.class), any())).thenReturn(false);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}/declaration", applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(declarationCommand)))
+        .andExpect(status().isNotFound());
   }
 }

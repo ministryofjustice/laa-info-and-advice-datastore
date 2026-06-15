@@ -1,12 +1,15 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,9 +20,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
+import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
+import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
+import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 
@@ -28,6 +37,7 @@ import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
   @Mock private ApplicationMapper mapper;
+  @Mock private DeclarationMapper declarationMapper;
   @Mock private UserContext userContext;
 
   @InjectMocks private ApplicationService sut;
@@ -136,5 +146,106 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void updateDeclaration_shouldCreateDeclaration_whenApplicationHasNoDeclaration() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final DeclarationCommand declarationCommand =
+        DeclarationCommand.builder().declarationConfirmation(true).build();
+    final DeclarationEntity declarationEntity =
+        DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
+    final ApplicationEntity applicationEntity = new ApplicationEntity();
+    when(repo.findById(applicationId)).thenReturn(Optional.of(applicationEntity));
+    when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
+
+    // Act
+    final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
+
+    // Assert
+    assertTrue(result);
+    assertThat(applicationEntity.getDeclaration()).isNotNull();
+    assertThat(applicationEntity.getDeclaration().isDeclarationConfirmation()).isTrue();
+    assertThat(applicationEntity.getDeclaration().getClientDeclarationStatus())
+        .isEqualTo(ClientDeclarationStatus.DRAFT);
+    assertThat(applicationEntity.getCreatedBy()).isEqualTo(userContext.getCurrentUser());
+    assertThat(applicationEntity.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
+    verify(repo, times(1)).save(applicationEntity);
+  }
+
+  @Test
+  void updateDeclaration_shouldUpdateDeclaration_whenApplicationHasExistingDeclaration() {
+    // Arrange
+    final UUID originalDeclarationId = UUID.randomUUID();
+    final String originalUser = "Original creator";
+    Instant originalCreatedTime = Instant.now().minusSeconds(3600);
+    final UUID applicationId = UUID.randomUUID();
+    final DeclarationCommand declarationCommand =
+        DeclarationCommand.builder().declarationConfirmation(true).build();
+    final DeclarationEntity declarationEntity =
+        DeclarationEntityGenerator.createWithoutId(
+            builder -> builder.declarationConfirmation(true).clientDeclarationStatus(null));
+    when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
+    final ApplicationEntity applicationEntity =
+        ApplicationEntityGenerator.createWithId(
+            builder -> {
+              builder.declaration(
+                  DeclarationEntityGenerator.createWithoutId(
+                      declarationBuilder -> {
+                        declarationBuilder
+                            .declarationConfirmation(false)
+                            .clientDeclarationStatus(null)
+                            .id(originalDeclarationId)
+                            .createdAt(originalCreatedTime)
+                            .createdBy(originalUser)
+                            .modifiedAt(originalCreatedTime)
+                            .modifiedBy(originalUser);
+                      }));
+              builder.createdAt(originalCreatedTime);
+              builder.createdBy(originalUser);
+              builder.modifiedAt(originalCreatedTime);
+              builder.modifiedBy(originalUser);
+            });
+    when(repo.findById(applicationId)).thenReturn(Optional.of(applicationEntity));
+
+    assertThat(applicationEntity.getDeclaration().getCreatedAt()).isEqualTo(originalCreatedTime);
+    assertThat(applicationEntity.getDeclaration().getModifiedAt()).isEqualTo(originalCreatedTime);
+
+    // Act
+    final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
+    final DeclarationEntity declaration = applicationEntity.getDeclaration();
+
+    // Assert
+    assertTrue(result);
+    assertThat(declaration).isNotNull();
+    assertThat(declaration.isDeclarationConfirmation()).isTrue();
+    assertThat(declaration.getClientDeclarationStatus()).isEqualTo(ClientDeclarationStatus.DRAFT);
+
+    assertThat(declaration.getId()).isEqualTo(originalDeclarationId);
+    assertThat(declaration.getCreatedBy()).isEqualTo(originalUser);
+    assertThat(declaration.getCreatedAt()).isEqualTo(originalCreatedTime);
+
+    assertThat(declaration.getModifiedAt()).isNotEqualTo(originalCreatedTime);
+    assertThat(declaration.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
+
+    assertThat(applicationEntity.getModifiedAt()).isNotEqualTo(originalCreatedTime);
+    assertThat(applicationEntity.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
+
+    verify(repo, times(1)).save(applicationEntity);
+    verify(declarationMapper, times(1)).toDeclarationEntity(declarationCommand);
+  }
+
+  @Test
+  void updateDeclaration_shouldReturnFalse_whenApplicationDoesNotExist() {
+    // Arrange
+    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+
+    // Act
+    final boolean result = sut.updateClientDeclaration(UUID.randomUUID(), null);
+
+    // Assert
+    assertFalse(result);
+    verify(repo, never()).save(any(ApplicationEntity.class));
   }
 }
