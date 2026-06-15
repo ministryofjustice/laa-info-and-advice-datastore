@@ -12,7 +12,6 @@ services:
       - DB_URL=jdbc:postgresql://postgres:5432/laa_info_advice_datastore
       - DB_USERNAME=laa_user
       - DB_PASSWORD=laa_password
-      - SPRING_SECURITY_CSRF_DISABLED=${SPRING_SECURITY_CSRF_DISABLED:-false}
       
   postgres:
     image: postgres:18
