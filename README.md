@@ -39,6 +39,8 @@ Includes the following subprojects:
 ### Add GitHub Token
 Generate a Github PAT (Personal Access Token) to access the required plugin, via https://github.com/settings/tokens
 
+Create a classic PAT token with `repo`, `read:packages` and `write:packages`
+
 Specify the Note field, e.g. “Token to allow access to LAA Gradle plugin”
 
 If you don't already have one, create a `gradle.properties` file in your home directory at `~/.gradle/gradle.properties`.
@@ -55,6 +57,12 @@ Go back to Github to authorize MOJ for SSO
 
 ### Build application
 `./gradlew clean build`
+
+### Apply formatting
+`./gradlew spotlessApply`
+
+### Check formatting conforms
+`./gradlew checkStyleAll`
 
 ### Run integration tests
 `./gradlew integrationTest`
