@@ -43,4 +43,10 @@ public class ApplicationController implements ApplicationApi {
         .map(ResponseEntity::ok)
         .orElse(ResponseEntity.notFound().build());
   }
+
+  @Override
+  public ResponseEntity<Void> updateMeansData(UUID id, Object body) {
+    service.updateMeansData(id, body);
+    return ResponseEntity.ok().build();
+  }
 }

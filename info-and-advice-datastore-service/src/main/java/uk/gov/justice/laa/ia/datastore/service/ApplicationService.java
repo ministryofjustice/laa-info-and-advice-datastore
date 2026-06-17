@@ -72,4 +72,14 @@ public class ApplicationService {
         .filter(userContext::canAccessApplication)
         .map(applicationMapper::toApplication);
   }
+
+  /**
+   * Update means data for an application.
+   *
+   * @param applicationId the application ID
+   * @param body the means data
+   */
+  public void updateMeansData(UUID applicationId, Object body) {
+    // Stub implementation
+  }
 }

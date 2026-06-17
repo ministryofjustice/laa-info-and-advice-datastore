@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -91,5 +92,20 @@ public class ApplicationControllerTest {
         .andExpect(jsonPath("$[0].id").exists())
         .andExpect(jsonPath("$[0].declaration").exists())
         .andExpect(jsonPath("$[0].evidence").exists());
+  }
+
+  @Test
+  void updateMeansData_returnsOkStatus() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"some\":\"data\"}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isOk());
   }
 }
