@@ -104,6 +104,35 @@ paths:
         '201' : { description: Created }
         '400' : { description: Bad request }
         '500' : { description: Internal server error }
+  /api/v0/applications/{id}/declaration:
+    put:
+      tags:
+        - application
+      summary: Update declaration for an application
+      operationId: updateDeclaration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Confirmation of the declaration statement for the application.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclarationCommand'
+      responses:
+        '204':
+          description: Success
+        '400':
+          description: Bad request
+        '404':
+          description: Application not found
+        '500':
+          description: Internal server error
 
 components:
   schemas:
@@ -231,7 +260,7 @@ components:
           format: uuid
         clientDeclarationStatus:
           $ref: "#/components/schemas/ClientDeclarationStatus"
-        declarationStatement:
+        declarationConfirmation:
           type: boolean
         createdAt:
           type: string
@@ -345,4 +374,11 @@ components:
           type: string
           maxLength: 2
           example: GB
+    DeclarationCommand:
+      type: object
+      required:
+        - declarationConfirmation
+      properties:
+        declarationConfirmation:
+          type: boolean
           

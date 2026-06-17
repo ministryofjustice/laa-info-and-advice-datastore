@@ -44,5 +44,27 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
     assertTrue(getEntity.getReferenceNumber().matches(referenceNumberRegex));
   }
 
+  @Test
+  void shouldSaveDeclarationWhenSavingApplication() {
+    final ApplicationEntity entity =
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> {
+              builder.clientDetails(
+                  ClientDetailsEntityGenerator.createWithoutId(
+                      clientDetailsBuilder -> {
+                        clientDetailsBuilder.address(AddressEntityGenerator.createWithoutId(null));
+                      }));
+              builder.declaration(
+                  DeclarationEntityGenerator.createWithoutId(
+                      declarationBuilder -> declarationBuilder.declarationConfirmation(true)));
+            });
+    final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
+    clearCache();
+    final ApplicationEntity getEntity =
+        applicationRepository.findById(savedEntity.getId()).orElseThrow();
+
+    assertThat(getEntity.getDeclaration().isDeclarationConfirmation()).isTrue();
+  }
+
   private final String referenceNumberRegex = "L-\\w{3}-\\w{3}";
 }
