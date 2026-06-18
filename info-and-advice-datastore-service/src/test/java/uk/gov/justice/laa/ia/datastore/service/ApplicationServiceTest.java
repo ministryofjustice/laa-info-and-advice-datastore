@@ -7,28 +7,35 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
 /** Unit tests for the {@link ApplicationService}. */
 @ExtendWith(MockitoExtension.class)
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
+  @Mock private EligibilityResultRepository eligibilityResultRepository;
   @Mock private ApplicationMapper mapper;
   @Mock private UserContext userContext;
+  @Mock private ObjectMapper objectMapper;
 
   @InjectMocks private ApplicationService sut;
 
@@ -136,5 +143,34 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void shouldUpdateMeansData() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application = ApplicationEntity.builder().id(applicationId).build();
+    final Object body = new Object();
+    final JsonNode jsonNode = new ObjectMapper().createObjectNode();
+    final String user = "TEST_USER";
+
+    when(repo.findById(applicationId)).thenReturn(Optional.of(application));
+    when(userContext.canAccessApplication(application)).thenReturn(true);
+    when(userContext.getCurrentUser()).thenReturn(user);
+    when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
+
+    // Act
+    sut.updateMeansData(applicationId, body);
+
+    // Assert
+    verify(eligibilityResultRepository, times(1)).save(any(EligibilityResultEntity.class));
+    verify(repo, times(1)).save(application);
+    assertThat(application.getModifiedBy()).isEqualTo(user);
+
+    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityResultEntity.class);
+    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
+    assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(jsonNode);
   }
 }

@@ -77,6 +77,9 @@ public class ApplicationEntity {
   @Column(name = "application_type", nullable = false)
   private String applicationType;
 
+  @Column(name = "determination_id", nullable = true)
+  private UUID determinationId;
+
   @Column(name = "created_at", nullable = false)
   @CreationTimestamp
   private Instant createdAt;

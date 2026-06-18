@@ -1,5 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -9,11 +11,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
 /** Service class for handling Applications. */
 @RequiredArgsConstructor
@@ -23,8 +27,10 @@ public class ApplicationService {
   private static final int DEFAULT_PAGE_SIZE = 25;
 
   private final ApplicationRepository repository;
+  private final EligibilityResultRepository eligibilityResultRepository;
   private final ApplicationMapper applicationMapper;
   private final UserContext userContext;
+  private final ObjectMapper objectMapper;
 
   /**
    * Create an application.
@@ -79,7 +85,34 @@ public class ApplicationService {
    * @param applicationId the application ID
    * @param body the means data
    */
+  @Transactional
   public void updateMeansData(UUID applicationId, Object body) {
-    // Stub implementation
+    ApplicationEntity application =
+        repository
+            .findById(applicationId)
+            .filter(userContext::canAccessApplication)
+            .orElseThrow(() -> new RuntimeException("Application not found"));
+
+    JsonNode jsonNode = objectMapper.valueToTree(body);
+
+    // Save the result to the new table
+    EligibilityResultEntity resultEntity =
+        EligibilityResultEntity.builder().applicationId(applicationId).resultJson(jsonNode).build();
+
+    eligibilityResultRepository.save(resultEntity);
+
+    // Update application fields if present in the JSON
+    if (jsonNode.has("meansAssessmentId")) {
+      application.setMeansAssessmentId(UUID.fromString(jsonNode.get("meansAssessmentId").asText()));
+    }
+    if (jsonNode.has("determinationId")) {
+      application.setDeterminationId(UUID.fromString(jsonNode.get("determinationId").asText()));
+    }
+    if (jsonNode.has("meansAssessmentRequired")) {
+      application.setMeansAssessmentRequired(jsonNode.get("meansAssessmentRequired").asBoolean());
+    }
+
+    application.setModifiedBy(userContext.getCurrentUser());
+    repository.save(application);
   }
 }

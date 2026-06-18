@@ -237,6 +237,9 @@ components:
           type: string
         applicationType:
           type: string
+        determinationId:
+          type: string
+          format: uuid
         createdAt:
           type: string
           format: date-time
