@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.justice.laa.ia.datastore.api.ApplicationApi;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 
@@ -48,5 +49,15 @@ public class ApplicationController implements ApplicationApi {
   public ResponseEntity<Void> updateMeansData(UUID id, Object body) {
     service.updateMeansData(id, body);
     return ResponseEntity.ok().build();
+  }
+
+  @Override
+  public ResponseEntity<Void> updateDeclaration(
+      UUID id, @Valid DeclarationCommand declarationCommand) {
+    if (service.updateClientDeclaration(id, declarationCommand)) {
+      return ResponseEntity.noContent().build();
+    } else {
+      return ResponseEntity.notFound().build();
+    }
   }
 }

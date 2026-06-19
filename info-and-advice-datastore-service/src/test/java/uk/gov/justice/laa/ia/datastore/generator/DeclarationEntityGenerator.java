@@ -14,11 +14,7 @@ public class DeclarationEntityGenerator {
    */
   public static DeclarationEntity createWithId(
       Consumer<DeclarationEntity.DeclarationEntityBuilder> customizer) {
-    return createDeclaration(customizer)
-        .id(UUID.randomUUID())
-        .createdAt(Instant.now())
-        .modifiedAt(Instant.now())
-        .build();
+    return createDeclaration(customizer).id(UUID.randomUUID()).build();
   }
 
   /**
@@ -35,7 +31,9 @@ public class DeclarationEntityGenerator {
     var builder =
         DeclarationEntity.builder()
             .clientDeclarationStatus(ClientDeclarationStatus.DRAFT)
-            .declarationStatement(false)
+            .declarationConfirmation(false)
+            .createdAt(Instant.now())
+            .modifiedAt(Instant.now())
             .createdBy("Joe Bloggs")
             .modifiedBy("James Bloggs");
     if (customizer != null) {

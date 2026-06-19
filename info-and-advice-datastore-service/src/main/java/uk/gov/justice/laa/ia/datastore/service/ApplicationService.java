@@ -3,6 +3,7 @@ package uk.gov.justice.laa.ia.datastore.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,10 +12,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
+import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
+import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
@@ -29,6 +34,7 @@ public class ApplicationService {
   private final ApplicationRepository repository;
   private final EligibilityResultRepository eligibilityResultRepository;
   private final ApplicationMapper applicationMapper;
+  private final DeclarationMapper declarationMapper;
   private final UserContext userContext;
   private final ObjectMapper objectMapper;
 
@@ -114,5 +120,41 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
+  }
+
+  /**
+   * Update application client declaration..
+   *
+   * @return true if application updated, false if not found.
+   */
+  public boolean updateClientDeclaration(
+      UUID applicationId, DeclarationCommand declarationConfirmation) {
+    final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
+    if (applicationOpt.isEmpty()) {
+      return false;
+    }
+
+    DeclarationEntity declarationEntity =
+        declarationMapper.toDeclarationEntity(declarationConfirmation);
+    // TODO: declaration status is currently undefined
+    declarationEntity.setClientDeclarationStatus(ClientDeclarationStatus.DRAFT);
+    Instant modifiedAt = Instant.now();
+
+    ApplicationEntity application = applicationOpt.get();
+    if (application.getDeclaration() != null) {
+      declarationEntity.setId(application.getDeclaration().getId());
+      declarationEntity.setCreatedAt(application.getDeclaration().getCreatedAt());
+      declarationEntity.setCreatedBy(application.getDeclaration().getCreatedBy());
+    } else {
+      declarationEntity.setCreatedBy(userContext.getCurrentUser());
+    }
+    declarationEntity.setModifiedBy(userContext.getCurrentUser());
+    declarationEntity.setModifiedAt(modifiedAt);
+    application.setDeclaration(declarationEntity);
+    application.setModifiedBy(userContext.getCurrentUser());
+    application.setModifiedAt(modifiedAt);
+
+    repository.save(application);
+    return true;
   }
 }
