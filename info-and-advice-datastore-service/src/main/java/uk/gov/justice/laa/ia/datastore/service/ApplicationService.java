@@ -90,14 +90,17 @@ public class ApplicationService {
    *
    * @param applicationId the application ID
    * @param body the means data
+   * @return true if application updated, false if not found
    */
   @Transactional
-  public void updateMeansData(UUID applicationId, Object body) {
-    ApplicationEntity application =
-        repository
-            .findById(applicationId)
-            .filter(userContext::canAccessApplication)
-            .orElseThrow(() -> new RuntimeException("Application not found"));
+  public boolean updateMeansData(UUID applicationId, Object body) {
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findById(applicationId).filter(userContext::canAccessApplication);
+    if (applicationOpt.isEmpty()) {
+      return false;
+    }
+
+    ApplicationEntity application = applicationOpt.get();
 
     JsonNode jsonNode = objectMapper.valueToTree(body);
 
@@ -120,6 +123,7 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
+    return true;
   }
 
   /**

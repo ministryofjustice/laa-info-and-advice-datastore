@@ -170,9 +170,10 @@ public class ApplicationServiceTest {
     when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
 
     // Act
-    sut.updateMeansData(applicationId, body);
+    boolean result = sut.updateMeansData(applicationId, body);
 
     // Assert
+    assertTrue(result);
     verify(eligibilityResultRepository, times(1)).save(any(EligibilityResultEntity.class));
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
@@ -182,6 +183,22 @@ public class ApplicationServiceTest {
     verify(eligibilityResultRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
     assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(jsonNode);
+  }
+
+  @Test
+  void shouldReturnFalse_whenUpdatingMeansDataForUnknownApplication() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final Object body = new Object();
+    when(repo.findById(applicationId)).thenReturn(Optional.empty());
+
+    // Act
+    boolean result = sut.updateMeansData(applicationId, body);
+
+    // Assert
+    assertFalse(result);
+    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
   @Test
