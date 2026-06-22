@@ -1,7 +1,7 @@
 plugins {
     id 'io.freefair.lombok' version '9.5.0'
     id 'uk.gov.laa.springboot.laa-spring-boot-gradle-plugin'
-    id 'com.diffplug.spotless' version "8.6.0"
+    id 'com.diffplug.spotless' version "8.7.0"
 }
 
 test {
@@ -55,9 +55,9 @@ dependencies {
     */
     implementation 'org.springframework:spring-webmvc:7.0.8'
     //fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKDATA-17279540
-    implementation 'org.springframework.data:spring-data-commons:4.0.6'
+    implementation 'org.springframework.data:spring-data-commons:4.1.0'
     //fix https://security.snyk.io/vuln/SNYK-JAVA-IOMICROMETER-17260885
-    implementation 'io.micrometer:micrometer-core:1.16.6'
+    implementation 'io.micrometer:micrometer-core:1.17.0'
 
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
