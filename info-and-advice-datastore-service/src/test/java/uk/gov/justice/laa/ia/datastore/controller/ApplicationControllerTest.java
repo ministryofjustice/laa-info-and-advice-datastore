@@ -25,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.UpdateEvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
@@ -159,6 +160,38 @@ public class ApplicationControllerTest {
             put("/api/v0/applications/{id}/declaration", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void updateEvidence_returns204_whenApplicationExists() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    var updateEvidenceCommand = UpdateEvidenceGenerator.createUpdateEvidenceCommand(null);
+    when(applicationService.updateEvidence(applicationId, updateEvidenceCommand)).thenReturn(true);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}/evidence", applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateEvidenceCommand)))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void updateEvidence_returns404_whenApplicationDoesNotExist() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    var updateEvidenceCommand = UpdateEvidenceGenerator.createUpdateEvidenceCommand(null);
+    when(applicationService.updateEvidence(any(UUID.class), any())).thenReturn(false);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}/evidence", applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateEvidenceCommand)))
         .andExpect(status().isNotFound());
   }
 }

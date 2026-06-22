@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -15,6 +16,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,8 +27,12 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EvidenceEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.UpdateEvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -39,6 +45,7 @@ import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
 /** Unit tests for the {@link ApplicationService}. */
 @ExtendWith(MockitoExtension.class)
+@ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
   @Mock private EligibilityResultRepository eligibilityResultRepository;
@@ -309,5 +316,126 @@ public class ApplicationServiceTest {
     // Assert
     assertFalse(result);
     verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateEvidence_shouldReturnFalse_whenApplicationDoesNotExist() {
+    // Arrange
+    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+
+    // Act
+    final boolean result = sut.updateEvidence(UUID.randomUUID(), null);
+
+    // Assert
+    assertFalse(result);
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateEvidence_whenNoEvidenceOnApplication_shouldCreateNewEvidence() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity applicationEntity =
+        ApplicationEntityGenerator.createWithId(
+            builder -> builder.withDefaultClientDetails().evidence(null));
+    when(repo.findById(applicationId)).thenReturn(Optional.of(applicationEntity));
+
+    // Act
+    final boolean result =
+        sut.updateEvidence(
+            applicationId,
+            UpdateEvidenceGenerator.createUpdateEvidenceCommand(
+                builder -> {
+                  builder
+                      .capitalEvidence(true)
+                      .housingCostsEvidence(true)
+                      .payeIncomeEvidence(true)
+                      .otherIncomeEvidence(true);
+                }));
+
+    // Assert
+    assertTrue(result);
+    assertThat(applicationEntity.getEvidence()).isNotNull();
+    assertTrue(applicationEntity.getEvidence().isCapitalEvidence());
+    assertTrue(applicationEntity.getEvidence().isHousingCostsEvidence());
+    assertTrue(applicationEntity.getEvidence().isPayeIncomeEvidence());
+    assertTrue(applicationEntity.getEvidence().isOtherIncomeEvidence());
+    assertThat(applicationEntity.getEvidence().getModifiedAt()).isNotNull();
+    assertThat(applicationEntity.getEvidence().getModifiedBy())
+        .isEqualTo(userContext.getCurrentUser());
+    assertThat(applicationEntity.getEvidence().getCreatedBy())
+        .isEqualTo(userContext.getCurrentUser());
+    assertThat(applicationEntity.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
+    verify(repo, times(1)).save(applicationEntity);
+  }
+
+  @Test
+  void updateEvidence_whenEvidenceExistsOnApplication_shouldUpdateExistingEvidence() {
+    final Instant originalCreatedTime = Instant.now().minusSeconds(3600);
+    final String originalCreator = "Original creator";
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final UUID evidenceId = UUID.randomUUID();
+    final ApplicationEntity applicationEntity =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .id(applicationId)
+                    .createdAt(originalCreatedTime)
+                    .createdBy(originalCreator)
+                    .modifiedAt(originalCreatedTime)
+                    .modifiedBy(originalCreator)
+                    .evidence(
+                        EvidenceEntityGenerator.createWithoutId(
+                            evidenceBuilder -> {
+                              evidenceBuilder
+                                  .id(evidenceId)
+                                  .capitalEvidence(true)
+                                  .housingCostsEvidence(true)
+                                  .payeIncomeEvidence(true)
+                                  .otherIncomeEvidence(true)
+                                  .createdBy(originalCreator)
+                                  .createdAt(originalCreatedTime)
+                                  .modifiedAt(originalCreatedTime)
+                                  .modifiedBy(originalCreator);
+                            })));
+    final EvidenceEntity existingEvidence = applicationEntity.getEvidence();
+    when(repo.findById(applicationId)).thenReturn(Optional.of(applicationEntity));
+
+    // Act
+    final boolean result =
+        sut.updateEvidence(
+            applicationId,
+            UpdateEvidenceGenerator.createUpdateEvidenceCommand(
+                builder -> {
+                  builder
+                      .capitalEvidence(false)
+                      .housingCostsEvidence(false)
+                      .payeIncomeEvidence(false)
+                      .otherIncomeEvidence(false);
+                }));
+
+    // Assert
+    assertTrue(result);
+    assertThat(applicationEntity.getEvidence()).isNotNull();
+
+    assertSame(existingEvidence, applicationEntity.getEvidence());
+    assertFalse(applicationEntity.getEvidence().isCapitalEvidence());
+    assertFalse(applicationEntity.getEvidence().isHousingCostsEvidence());
+    assertFalse(applicationEntity.getEvidence().isPayeIncomeEvidence());
+    assertFalse(applicationEntity.getEvidence().isOtherIncomeEvidence());
+
+    assertThat(applicationEntity.getEvidence().getCreatedAt()).isEqualTo(originalCreatedTime);
+    assertThat(applicationEntity.getEvidence().getCreatedBy()).isEqualTo(originalCreator);
+    assertThat(applicationEntity.getEvidence().getModifiedAt()).isNotEqualTo(originalCreatedTime);
+    assertThat(applicationEntity.getEvidence().getModifiedBy())
+        .isEqualTo(userContext.getCurrentUser());
+
+    assertThat(applicationEntity.getModifiedAt()).isNotEqualTo(originalCreatedTime);
+    assertThat(applicationEntity.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
+    assertThat(applicationEntity.getCreatedAt()).isEqualTo(originalCreatedTime);
+
+    verify(repo, times(1)).save(applicationEntity);
   }
 }

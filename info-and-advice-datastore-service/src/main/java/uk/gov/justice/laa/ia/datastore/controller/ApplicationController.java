@@ -12,6 +12,7 @@ import uk.gov.justice.laa.ia.datastore.api.ApplicationApi;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 
 /** Controller for handling Application. */
@@ -58,6 +59,16 @@ public class ApplicationController implements ApplicationApi {
   public ResponseEntity<Void> updateDeclaration(
       UUID id, @Valid DeclarationCommand declarationCommand) {
     if (service.updateClientDeclaration(id, declarationCommand)) {
+      return ResponseEntity.noContent().build();
+    } else {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  @Override
+  public ResponseEntity<Void> updateEvidence(
+      UUID id, @Valid UpdateEvidenceCommand updateEvidenceCommand) {
+    if (service.updateEvidence(id, updateEvidenceCommand)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();
