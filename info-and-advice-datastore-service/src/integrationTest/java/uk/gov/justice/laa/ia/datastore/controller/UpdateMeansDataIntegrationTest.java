@@ -27,7 +27,6 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldUpdateMeansDataSuccessfully() throws Exception {
     // Arrange
-    final UUID meansAssessmentId = UUID.randomUUID();
     final UUID determinationId = UUID.randomUUID();
     final UUID applicationId =
         applicationRepository
@@ -41,13 +40,12 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     final String payload =
         """
         {
-          "meansAssessmentId": "%s",
           "determinationId": "%s",
           "meansAssessmentRequired": true,
           "status": "ELIGIBLE"
         }
         """
-            .formatted(meansAssessmentId, determinationId);
+            .formatted(determinationId);
 
     // Act
     mockMvc
@@ -68,7 +66,6 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
             .filter(result -> result.getApplicationId().equals(applicationId))
             .toList();
 
-    assertThat(updatedApplication.getMeansAssessmentId()).isEqualTo(meansAssessmentId);
     assertThat(updatedApplication.getDeterminationId()).isEqualTo(determinationId);
     assertThat(updatedApplication.getMeansAssessmentRequired()).isTrue();
 

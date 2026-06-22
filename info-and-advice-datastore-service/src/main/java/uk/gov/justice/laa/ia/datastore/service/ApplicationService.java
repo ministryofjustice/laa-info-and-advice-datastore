@@ -111,9 +111,6 @@ public class ApplicationService {
     eligibilityResultRepository.save(resultEntity);
 
     // Update application fields if present in the JSON
-    if (jsonNode.has("meansAssessmentId")) {
-      application.setMeansAssessmentId(UUID.fromString(jsonNode.get("meansAssessmentId").asText()));
-    }
     if (jsonNode.has("determinationId")) {
       application.setDeterminationId(UUID.fromString(jsonNode.get("determinationId").asText()));
     }
@@ -121,6 +118,7 @@ public class ApplicationService {
       application.setMeansAssessmentRequired(jsonNode.get("meansAssessmentRequired").asBoolean());
     }
 
+    application.setModifiedAt(Instant.now());
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
     return true;

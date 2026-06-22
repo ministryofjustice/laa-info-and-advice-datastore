@@ -159,7 +159,14 @@ public class ApplicationServiceTest {
   void shouldUpdateMeansData() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
-    final ApplicationEntity application = ApplicationEntity.builder().id(applicationId).build();
+    final Instant originalModifiedAt = Instant.now().minusSeconds(60);
+    final UUID originalMeansAssessmentId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .meansAssessmentId(originalMeansAssessmentId)
+            .modifiedAt(originalModifiedAt)
+            .build();
     final Object body = new Object();
     final JsonNode jsonNode = new ObjectMapper().createObjectNode();
     final String user = "TEST_USER";
@@ -177,12 +184,14 @@ public class ApplicationServiceTest {
     verify(eligibilityResultRepository, times(1)).save(any(EligibilityResultEntity.class));
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
+    assertThat(application.getModifiedAt()).isAfter(originalModifiedAt);
 
     ArgumentCaptor<EligibilityResultEntity> resultCaptor =
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
     assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(jsonNode);
+    assertThat(application.getMeansAssessmentId()).isEqualTo(originalMeansAssessmentId);
   }
 
   @Test
