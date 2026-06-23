@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
 /** For shared integration test behaviours. */
 @ActiveProfiles("test")
@@ -30,6 +31,7 @@ public abstract class BaseIntegrationTest {
 
   @Autowired protected ClientDetailsRepository clientDetailsRepository;
   @Autowired protected ApplicationRepository applicationRepository;
+  @Autowired protected EligibilityResultRepository eligibilityResultRepository;
   @Autowired protected MockMvc mockMvc;
   private final ObjectMapper objectMapper =
       new ObjectMapper()

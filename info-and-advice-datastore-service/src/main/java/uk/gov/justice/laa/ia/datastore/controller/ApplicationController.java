@@ -46,6 +46,15 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
+  public ResponseEntity<Void> updateMeansData(UUID id, Object body) {
+    if (service.updateMeansData(id, body)) {
+      return ResponseEntity.ok().build();
+    } else {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  @Override
   public ResponseEntity<Void> updateDeclaration(
       UUID id, @Valid DeclarationCommand declarationCommand) {
     if (service.updateClientDeclaration(id, declarationCommand)) {

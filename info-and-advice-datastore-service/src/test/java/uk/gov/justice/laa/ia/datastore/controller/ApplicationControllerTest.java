@@ -96,6 +96,38 @@ public class ApplicationControllerTest {
   }
 
   @Test
+  void updateMeansData_returnsOkStatus() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"some\":\"data\"}";
+    when(applicationService.updateMeansData(eq(id), any())).thenReturn(true);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void updateMeansData_returns404_whenApplicationDoesNotExist() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"some\":\"data\"}";
+    when(applicationService.updateMeansData(eq(id), any())).thenReturn(false);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
   void updateDeclaration_returns204_whenApplicationExists() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();

@@ -9,18 +9,22 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
@@ -31,14 +35,17 @@ import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
 /** Unit tests for the {@link ApplicationService}. */
 @ExtendWith(MockitoExtension.class)
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
+  @Mock private EligibilityResultRepository eligibilityResultRepository;
   @Mock private ApplicationMapper mapper;
   @Mock private DeclarationMapper declarationMapper;
   @Mock private UserContext userContext;
+  @Mock private ObjectMapper objectMapper;
 
   @InjectMocks private ApplicationService sut;
 
@@ -146,6 +153,61 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void shouldUpdateMeansData() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final Instant originalModifiedAt = Instant.now().minusSeconds(60);
+    final UUID originalMeansAssessmentId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .meansAssessmentId(originalMeansAssessmentId)
+            .modifiedAt(originalModifiedAt)
+            .build();
+    final Object body = new Object();
+    final JsonNode jsonNode = new ObjectMapper().createObjectNode();
+    final String user = "TEST_USER";
+
+    when(repo.findById(applicationId)).thenReturn(Optional.of(application));
+    when(userContext.canAccessApplication(application)).thenReturn(true);
+    when(userContext.getCurrentUser()).thenReturn(user);
+    when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
+
+    // Act
+    boolean result = sut.updateMeansData(applicationId, body);
+
+    // Assert
+    assertTrue(result);
+    verify(eligibilityResultRepository, times(1)).save(any(EligibilityResultEntity.class));
+    verify(repo, times(1)).save(application);
+    assertThat(application.getModifiedBy()).isEqualTo(user);
+    assertThat(application.getModifiedAt()).isAfter(originalModifiedAt);
+
+    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityResultEntity.class);
+    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
+    assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(jsonNode);
+    assertThat(application.getMeansAssessmentId()).isEqualTo(originalMeansAssessmentId);
+  }
+
+  @Test
+  void shouldReturnFalse_whenUpdatingMeansDataForUnknownApplication() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final Object body = new Object();
+    when(repo.findById(applicationId)).thenReturn(Optional.empty());
+
+    // Act
+    boolean result = sut.updateMeansData(applicationId, body);
+
+    // Assert
+    assertFalse(result);
+    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
   @Test

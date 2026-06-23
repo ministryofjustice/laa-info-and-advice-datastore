@@ -1,5 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -19,6 +22,7 @@ import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
 /** Service class for handling Applications. */
 @RequiredArgsConstructor
@@ -28,9 +32,11 @@ public class ApplicationService {
   private static final int DEFAULT_PAGE_SIZE = 25;
 
   private final ApplicationRepository repository;
+  private final EligibilityResultRepository eligibilityResultRepository;
   private final ApplicationMapper applicationMapper;
   private final DeclarationMapper declarationMapper;
   private final UserContext userContext;
+  private final ObjectMapper objectMapper;
 
   /**
    * Create an application.
@@ -77,6 +83,45 @@ public class ApplicationService {
         .findById(applicationId)
         .filter(userContext::canAccessApplication)
         .map(applicationMapper::toApplication);
+  }
+
+  /**
+   * Update means data for an application.
+   *
+   * @param applicationId the application ID
+   * @param body the means data
+   * @return true if application updated, false if not found
+   */
+  @Transactional
+  public boolean updateMeansData(UUID applicationId, Object body) {
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findById(applicationId).filter(userContext::canAccessApplication);
+    if (applicationOpt.isEmpty()) {
+      return false;
+    }
+
+    ApplicationEntity application = applicationOpt.get();
+
+    JsonNode jsonNode = objectMapper.valueToTree(body);
+
+    // Save the result to the new table
+    EligibilityResultEntity resultEntity =
+        EligibilityResultEntity.builder().applicationId(applicationId).resultJson(jsonNode).build();
+
+    eligibilityResultRepository.save(resultEntity);
+
+    // Update application fields if present in the JSON
+    if (jsonNode.has("determinationId")) {
+      application.setDeterminationId(UUID.fromString(jsonNode.get("determinationId").asText()));
+    }
+    if (jsonNode.has("meansAssessmentRequired")) {
+      application.setMeansAssessmentRequired(jsonNode.get("meansAssessmentRequired").asBoolean());
+    }
+
+    application.setModifiedAt(Instant.now());
+    application.setModifiedBy(userContext.getCurrentUser());
+    repository.save(application);
+    return true;
   }
 
   /**

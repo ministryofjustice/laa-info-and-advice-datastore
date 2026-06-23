@@ -43,6 +43,7 @@ public interface ApplicationMapper {
   @Mapping(target = "typeOfNonMeans", ignore = true)
   @Mapping(target = "ecfFlag", ignore = true)
   @Mapping(target = "contribution", ignore = true)
+  @Mapping(target = "determinationId", ignore = true)
   @Mapping(source = "client", target = "clientDetails")
   ApplicationEntity toApplicationEntity(StartCaseCommand cmd);
 }
