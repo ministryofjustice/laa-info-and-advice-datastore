@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import uk.gov.justice.laa.ia.datastore.api.ApplicationApi;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
-import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 
 /** Controller for handling Application. */
@@ -66,9 +66,8 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateEvidence(
-      UUID id, @Valid UpdateEvidenceCommand updateEvidenceCommand) {
-    if (service.updateEvidence(id, updateEvidenceCommand)) {
+  public ResponseEntity<Void> updateEvidence(UUID id, @Valid Map<String, Object> evidence) {
+    if (service.updateEvidence(id, evidence)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();

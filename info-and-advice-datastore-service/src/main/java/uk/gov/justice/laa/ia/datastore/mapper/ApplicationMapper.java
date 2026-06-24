@@ -10,12 +10,7 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 /** The mapper between Application and ApplicationEntity. */
 @Mapper(
     componentModel = "spring",
-    uses = {
-      DateTimeMapper.class,
-      ClientDetailsMapper.class,
-      DeclarationMapper.class,
-      EvidenceMapper.class
-    },
+    uses = {DateTimeMapper.class, ClientDetailsMapper.class, DeclarationMapper.class},
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface ApplicationMapper {
   /** Maps an {@link ApplicationEntity} to an {@link ApplicationEntity}. */

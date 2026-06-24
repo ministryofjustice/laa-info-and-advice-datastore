@@ -12,7 +12,7 @@ import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.EvidenceEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
@@ -36,7 +36,7 @@ public class ApplicationMapperTest extends BaseMapperTest {
                       clientDetailsBuilder -> {
                         clientDetailsBuilder.address(AddressEntityGenerator.createWithId(null));
                       }));
-              builder.evidence(EvidenceEntityGenerator.createWithId(null));
+              builder.evidence(EvidenceGenerator.createEvidenceMap());
               builder.declaration(DeclarationEntityGenerator.createWithId(null));
             });
 

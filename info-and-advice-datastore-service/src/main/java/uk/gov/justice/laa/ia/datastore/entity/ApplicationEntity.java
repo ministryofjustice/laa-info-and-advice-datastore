@@ -10,13 +10,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 
 /** Entity to represent an application. */
@@ -41,9 +44,9 @@ public class ApplicationEntity {
   @Column(name = "means_assessment_id", nullable = true)
   private UUID meansAssessmentId;
 
-  @OneToOne(cascade = CascadeType.ALL)
-  @JoinColumn(name = "evidence_id", nullable = true)
-  private EvidenceEntity evidence;
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "evidence", nullable = true, columnDefinition = "json")
+  private Map<String, Object> evidence;
 
   @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "declaration_id", nullable = true)

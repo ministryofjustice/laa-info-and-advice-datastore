@@ -24,14 +24,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.UpdateEvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
-import uk.gov.justice.laa.ia.datastore.model.EvidenceResponse;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
+import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 
 /** Unit testing for the {@link ApplicationController}. */
 @WebMvcTest(ApplicationController.class)
@@ -72,14 +72,14 @@ public class ApplicationControllerTest {
         ApplicationResponse.builder()
             .id(UUID.randomUUID())
             .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
-            .evidence(EvidenceResponse.builder().id(UUID.randomUUID()).build())
+            .evidence("EVIDENCE")
             .build();
 
     ApplicationResponse application2 =
         ApplicationResponse.builder()
             .id(UUID.randomUUID())
             .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
-            .evidence(EvidenceResponse.builder().id(UUID.randomUUID()).build())
+            .evidence("EVIDENCE")
             .build();
 
     when(applicationService.getAllApplications(eq(0), eq(25)))
@@ -163,17 +163,18 @@ public class ApplicationControllerTest {
         .andExpect(status().isNotFound());
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   void updateEvidence_returns204_whenApplicationExists() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();
-    var updateEvidenceCommand = UpdateEvidenceGenerator.createUpdateEvidenceCommand(null);
-    when(applicationService.updateEvidence(applicationId, updateEvidenceCommand)).thenReturn(true);
+    final var updateEvidenceCommand = EvidenceGenerator.createEvidenceMap();
+    when(applicationService.updateEvidence(any(UUID.class), any())).thenReturn(true);
 
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/evidence", applicationId)
+            put(TestConstants.UpdateEvidence, applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateEvidenceCommand)))
         .andExpect(status().isNoContent());
@@ -183,13 +184,13 @@ public class ApplicationControllerTest {
   void updateEvidence_returns404_whenApplicationDoesNotExist() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();
-    var updateEvidenceCommand = UpdateEvidenceGenerator.createUpdateEvidenceCommand(null);
+    var updateEvidenceCommand = EvidenceGenerator.createEvidenceMap();
     when(applicationService.updateEvidence(any(UUID.class), any())).thenReturn(false);
 
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/evidence", applicationId)
+            put(TestConstants.UpdateEvidence, applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateEvidenceCommand)))
         .andExpect(status().isNotFound());

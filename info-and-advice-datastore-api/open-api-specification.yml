@@ -134,7 +134,7 @@ paths:
         '201' : { description: Created }
         '400' : { description: Bad request }
         '500' : { description: Internal server error }
-  /api/v0/applications/{id}/evidence:
+  /api/v0/applications/{id}:update-evidence:
     put:
       tags:
         - application
@@ -283,7 +283,7 @@ components:
         declaration:
           $ref: "#/components/schemas/DeclarationResponse"
         evidence:
-          $ref: "#/components/schemas/EvidenceResponse"
+          type: object
         reasonForReapplication:
           type: string
         meansAssessmentRequired:
@@ -336,41 +336,11 @@ components:
         modifiedBy:
           type: string
 
-    EvidenceResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        evidenceStatus:
-          $ref: "#/components/schemas/EvidenceStatus"
-        payeIncomeEvidence:
-          type: boolean
-        otherIncomeEvidence:
-          type: boolean
-        housingCostsEvidence:
-          type: boolean
-        capitalEvidence:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        createdBy:
-          type: string
-        modifiedAt:
-          type: string
-          format: date-time
-        modifiedBy:
-          type: string
-
     ClientDeclarationStatus:
       type: string
       enum:
         - DRAFT
-    EvidenceStatus:
-      type: string
-      enum:
-        - DRAFT
+
     ApplicationState:
       type: string
       enum:
@@ -446,22 +416,5 @@ components:
           type: boolean
     UpdateEvidenceCommand:
       type: object
-      required:
-        - payeIncomeEvidence
-        - otherIncomeEvidence
-        - housingCostsEvidence
-        - capitalEvidence
-      properties:
-        payeIncomeEvidence:
-          type: boolean
-          default: false
-        otherIncomeEvidence:
-          type: boolean
-          default: false
-        housingCostsEvidence:
-          type: boolean
-          default: false
-        capitalEvidence:
-          type: boolean
-          default: false
-          
+      additionalProperties: true
+      minProperties: 1

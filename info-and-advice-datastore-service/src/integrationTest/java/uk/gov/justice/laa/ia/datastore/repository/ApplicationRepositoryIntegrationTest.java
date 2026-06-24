@@ -7,11 +7,10 @@ import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.EvidenceEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for the ApplicationRepository. */
@@ -24,7 +23,7 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
               builder.withDefaultClientDetails();
-              builder.evidence(EvidenceEntityGenerator.createWithoutId(null));
+              builder.evidence(EvidenceGenerator.createEvidenceMap());
               builder.declaration(DeclarationEntityGenerator.createWithoutId(null));
             });
     final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
@@ -62,30 +61,17 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
 
   @Test
   void shouldSaveEvidenceWhenSavingApplication() {
+    final var evidence = EvidenceGenerator.createEvidenceMap();
     final ApplicationEntity entity =
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
-              builder
-                  .withDefaultClientDetails()
-                  .evidence(
-                      EvidenceEntityGenerator.createWithoutId(
-                          evidence -> {
-                            evidence
-                                .capitalEvidence(true)
-                                .housingCostsEvidence(true)
-                                .payeIncomeEvidence(true)
-                                .otherIncomeEvidence(true);
-                          }));
+              builder.withDefaultClientDetails().evidence(evidence);
             });
     final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
     clearCache();
     final ApplicationEntity getEntity =
         applicationRepository.findById(savedEntity.getId()).orElseThrow();
-    final EvidenceEntity evidence = getEntity.getEvidence();
-    assertThat(evidence.isCapitalEvidence()).isTrue();
-    assertThat(evidence.isHousingCostsEvidence()).isTrue();
-    assertThat(evidence.isPayeIncomeEvidence()).isTrue();
-    assertThat(evidence.isOtherIncomeEvidence()).isTrue();
+    assertThat(getEntity.getEvidence()).isEqualTo(evidence);
   }
 
   private final String referenceNumberRegex = "L-\\w{3}-\\w{3}";

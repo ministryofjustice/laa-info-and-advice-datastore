@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,6 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -22,7 +22,6 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
-import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
@@ -167,29 +166,15 @@ public class ApplicationService {
    *
    * @return true if application updated, false if not found.
    */
-  public boolean updateEvidence(UUID applicationId, UpdateEvidenceCommand updateEvidence) {
+  public boolean updateEvidence(UUID applicationId, Map<String, Object> evidence) {
 
     final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
     if (applicationOpt.isEmpty()) {
       return false;
     }
     final ApplicationEntity application = applicationOpt.get();
-    EvidenceEntity evidence = application.getEvidence();
-    if (evidence == null) {
-      evidence = new EvidenceEntity();
-      evidence.setCreatedBy(userContext.getCurrentUser());
-    }
-    evidence.setPayeIncomeEvidence(updateEvidence.getPayeIncomeEvidence());
-    evidence.setOtherIncomeEvidence(updateEvidence.getOtherIncomeEvidence());
-    evidence.setHousingCostsEvidence(updateEvidence.getHousingCostsEvidence());
-    evidence.setCapitalEvidence(updateEvidence.getCapitalEvidence());
-
-    final Instant modifiedAt = Instant.now();
-    evidence.setModifiedBy(userContext.getCurrentUser());
-    evidence.setModifiedAt(modifiedAt);
-    application.setModifiedAt(modifiedAt);
     application.setModifiedBy(userContext.getCurrentUser());
-
+    application.setModifiedAt(Instant.now());
     application.setEvidence(evidence);
     repository.save(application);
     return true;
