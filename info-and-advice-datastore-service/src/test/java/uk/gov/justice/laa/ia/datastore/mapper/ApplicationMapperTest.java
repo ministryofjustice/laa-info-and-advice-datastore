@@ -58,6 +58,15 @@ public class ApplicationMapperTest extends BaseMapperTest {
     assertEquals(application.getModifiedAt(), mappedModel.getModifiedAt().toInstant());
     assertEquals(application.getModifiedBy(), mappedModel.getModifiedBy());
     assertEquals(application.getClientDetails().getId(), mappedModel.getIndividualLegalAidNumber());
+    assertNotNull(mappedModel.getClient());
+    assertEquals(
+        application.getClientDetails().getFullName(), mappedModel.getClient().getFullName());
+    assertEquals(
+        application.getClientDetails().getDateOfBirth(), mappedModel.getClient().getDateOfBirth());
+    assertNotNull(mappedModel.getClient().getAddress());
+    assertEquals(
+        application.getClientDetails().getAddress().getAddressLine1(),
+        mappedModel.getClient().getAddress().getAddressLine1());
   }
 
   @Test
