@@ -6,7 +6,6 @@ import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfigur
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import uk.gov.justice.laa.ia.datastore.repository.AddressRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
@@ -21,7 +20,6 @@ class SpringBootMicroserviceApplicationTests {
 
   @MockitoBean private ClientDetailsRepository clientDetailsRepository;
   @MockitoBean private ApplicationRepository applicationRepository;
-  @MockitoBean private AddressRepository addressRepository;
   @MockitoBean private EligibilityResultRepository eligibilityResultRepository;
 
   @Test
