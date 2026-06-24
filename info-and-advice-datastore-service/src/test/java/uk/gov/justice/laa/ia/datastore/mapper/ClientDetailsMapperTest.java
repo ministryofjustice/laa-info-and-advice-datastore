@@ -27,7 +27,12 @@ public class ClientDetailsMapperTest extends BaseMapperTest {
 
   @Test
   void toClientDetails_shouldMapAllProperties() {
-    ClientDetailsEntity entity = createClientDetails().niNumber("AD123456Q").build();
+    ClientDetailsEntity entity =
+        createClientDetails()
+            .niNumber("AD123456Q")
+            .address(
+                uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator.createWithId(null))
+            .build();
 
     ClientDetails mappedModel = sut.toClientDetails(entity);
     assertEquals(entity.getId(), mappedModel.getIndividualLegalAidNumber());
@@ -36,6 +41,8 @@ public class ClientDetailsMapperTest extends BaseMapperTest {
     assertEquals(entity.getNiNumber(), mappedModel.getNiNumber());
     assertEquals(entity.getCreatedAt(), mappedModel.getCreatedAt().toInstant());
     assertEquals(entity.getModifiedAt(), mappedModel.getModifiedAt().toInstant());
+    assertNotNull(mappedModel.getAddress());
+    assertEquals(entity.getAddress().getAddressLine1(), mappedModel.getAddress().getAddressLine1());
   }
 
   @Test

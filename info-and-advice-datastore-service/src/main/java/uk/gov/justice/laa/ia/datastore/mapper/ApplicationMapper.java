@@ -21,6 +21,7 @@ public interface ApplicationMapper {
   /** Maps an {@link ApplicationEntity} to an {@link ApplicationEntity}. */
   @Mapping(source = "meansAssessmentId", target = "meansAssessmentStatus")
   @Mapping(source = "clientDetails.id", target = "individualLegalAidNumber")
+  @Mapping(source = "clientDetails", target = "client")
   @Mapping(source = "declaration", target = "declaration")
   @Mapping(source = "evidence", target = "evidence")
   ApplicationResponse toApplication(ApplicationEntity entity);
