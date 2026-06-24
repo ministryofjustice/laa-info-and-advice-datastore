@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,8 +26,10 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -39,6 +42,7 @@ import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
 /** Unit tests for the {@link ApplicationService}. */
 @ExtendWith(MockitoExtension.class)
+@ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
   @Mock private EligibilityResultRepository eligibilityResultRepository;
@@ -309,5 +313,62 @@ public class ApplicationServiceTest {
     // Assert
     assertFalse(result);
     verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateEvidence_shouldReturnFalse_whenApplicationDoesNotExist() {
+    // Arrange
+    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+
+    // Act
+    final boolean result = sut.updateEvidence(UUID.randomUUID(), null);
+
+    // Assert
+    assertFalse(result);
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateEvidence_shouldUpdateEvidence_whenApplicationExistsAndEvidenceDoesNotExist() {
+    // Arrange
+    final var evidence = EvidenceGenerator.createEvidenceMap();
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
+
+    when(userContext.getCurrentUser()).thenReturn("TEST_USER");
+    when(repo.findById(application.getId())).thenReturn(Optional.of(application));
+
+    // Act
+    final boolean result = sut.updateEvidence(application.getId(), evidence);
+
+    // Assert
+    assertTrue(result);
+    assertThat(application.getEvidence()).isSameAs(evidence);
+    assertThat(application.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
+    assertThat(application.getModifiedAt()).isNotNull();
+    verify(repo, times(1)).save(application);
+  }
+
+  @Test
+  void updateEvidence_shouldUpdateEvidence_whenApplicationExistsAndEvidenceExists() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> builder.evidence(EvidenceGenerator.createEvidenceMap()));
+    final var originalEvidence = application.getEvidence();
+    final var evidence = EvidenceGenerator.createEvidenceMap();
+    when(userContext.getCurrentUser()).thenReturn("TEST_USER");
+    when(repo.findById(application.getId())).thenReturn(Optional.of(application));
+
+    // Act
+    final boolean result = sut.updateEvidence(application.getId(), evidence);
+
+    // Assert
+    assertTrue(result);
+    assertThat(application.getEvidence()).isSameAs(evidence);
+    assertThat(application.getEvidence()).isNotSameAs(originalEvidence);
+    assertThat(application.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
+    assertThat(application.getModifiedAt()).isNotNull();
+    verify(repo, times(1)).save(application);
   }
 }

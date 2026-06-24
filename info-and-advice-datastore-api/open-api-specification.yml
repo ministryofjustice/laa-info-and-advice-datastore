@@ -111,6 +111,36 @@ paths:
         '201' : { description: Created }
         '400' : { description: Bad request }
         '500' : { description: Internal server error }
+  /api/v0/applications/{id}:update-evidence:
+    put:
+      tags:
+        - application
+      summary: Update evidence for an application
+      operationId: updateEvidence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        description: Confirmation of the evidence statement for the application.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEvidenceCommand'
+      responses:
+        '204':
+          description: Success
+        '400':
+          description: Bad request
+        '404':
+          description: Application not found
+        '500':
+          description: Internal server error
+
   /api/v0/applications/{id}/declaration:
     put:
       tags:
@@ -235,7 +265,7 @@ components:
         declaration:
           $ref: "#/components/schemas/DeclarationResponse"
         evidence:
-          $ref: "#/components/schemas/EvidenceResponse"
+          type: object
         reasonForReapplication:
           type: string
         meansAssessmentRequired:
@@ -288,41 +318,11 @@ components:
         modifiedBy:
           type: string
 
-    EvidenceResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        evidenceStatus:
-          $ref: "#/components/schemas/EvidenceStatus"
-        payeIncomeEvidence:
-          type: boolean
-        otherIncomeEvidence:
-          type: boolean
-        housingCostsEvidence:
-          type: boolean
-        capitalEvidence:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        createdBy:
-          type: string
-        modifiedAt:
-          type: string
-          format: date-time
-        modifiedBy:
-          type: string
-
     ClientDeclarationStatus:
       type: string
       enum:
         - DRAFT
-    EvidenceStatus:
-      type: string
-      enum:
-        - DRAFT
+
     ApplicationState:
       type: string
       enum:
@@ -396,4 +396,7 @@ components:
       properties:
         declarationConfirmation:
           type: boolean
-          
+    UpdateEvidenceCommand:
+      type: object
+      additionalProperties: true
+      minProperties: 1

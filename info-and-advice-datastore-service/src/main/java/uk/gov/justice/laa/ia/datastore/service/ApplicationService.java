@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -156,6 +157,25 @@ public class ApplicationService {
     application.setModifiedBy(userContext.getCurrentUser());
     application.setModifiedAt(modifiedAt);
 
+    repository.save(application);
+    return true;
+  }
+
+  /**
+   * Update application evidence.
+   *
+   * @return true if application updated, false if not found.
+   */
+  public boolean updateEvidence(UUID applicationId, Map<String, Object> evidence) {
+
+    final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
+    if (applicationOpt.isEmpty()) {
+      return false;
+    }
+    final ApplicationEntity application = applicationOpt.get();
+    application.setModifiedBy(userContext.getCurrentUser());
+    application.setModifiedAt(Instant.now());
+    application.setEvidence(evidence);
     repository.save(application);
     return true;
   }
