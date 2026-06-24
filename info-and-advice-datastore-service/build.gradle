@@ -58,6 +58,8 @@ dependencies {
     implementation 'org.springframework.data:spring-data-commons:4.1.0'
     //fix https://security.snyk.io/vuln/SNYK-JAVA-IOMICROMETER-17260885
     implementation 'io.micrometer:micrometer-core:1.17.0'
+    //fix https://security.snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-17440366]
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.4'
 
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
