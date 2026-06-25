@@ -4,17 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityResultResponse;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 
 /** Tests for the mapper behaviour. */
@@ -38,6 +43,10 @@ public class ApplicationMapperTest extends BaseMapperTest {
                       }));
               builder.evidence(EvidenceGenerator.createEvidenceMap());
               builder.declaration(DeclarationEntityGenerator.createWithId(null));
+              builder.eligibilityResults(
+                  Set.of(
+                      EligibilityResultEntityGenerator.createEligibilityResult(
+                          UUID.randomUUID(), "ELIGIBLE", 100)));
             });
 
     final ApplicationResponse mappedModel = sut.toApplication(application);
@@ -45,7 +54,6 @@ public class ApplicationMapperTest extends BaseMapperTest {
     assertEquals(application.getId(), mappedModel.getId());
     assertEquals(application.getProviderFirmId(), mappedModel.getProviderFirmId());
     assertEquals(application.getProviderOfficeId(), mappedModel.getProviderOfficeId());
-    assertEquals(application.getMeansAssessmentId(), mappedModel.getMeansAssessmentStatus());
     assertEquals(application.getApplicationState(), mappedModel.getApplicationState());
     assertEquals(application.getReasonForReapplication(), mappedModel.getReasonForReapplication());
     assertEquals(
@@ -67,23 +75,8 @@ public class ApplicationMapperTest extends BaseMapperTest {
     assertEquals(
         application.getClientDetails().getAddress().getAddressLine1(),
         mappedModel.getClient().getAddress().getAddressLine1());
-  }
-
-  @Test
-  void toApplication_whenOptionalFieldsAreNull_thenShouldMapNull() {
-    final ApplicationResponse mappedModel =
-        sut.toApplication(
-            ApplicationEntityGenerator.createWithId(
-                builder -> {
-                  builder.clientDetails(
-                      ClientDetailsEntityGenerator.createWithId(
-                          clientDetailsBuilder -> {
-                            clientDetailsBuilder.address(AddressEntityGenerator.createWithId(null));
-                          }));
-                  builder.meansAssessmentId(null);
-                }));
-
-    assertNull(mappedModel.getMeansAssessmentStatus());
+    assertEligibiltyEquals(
+        application.getMostRecentEligibilityResult(), mappedModel.getEligibilityResult());
   }
 
   @Test
@@ -99,5 +92,13 @@ public class ApplicationMapperTest extends BaseMapperTest {
 
     assertNotNull(mappedModel);
     assertNotNull(mappedModel.getClientDetails());
+  }
+
+  private static void assertEligibiltyEquals(
+      EligibilityResultEntity expected, EligibilityResultResponse model) {
+    assertEquals(expected.getEligibilityResultId(), model.getEligibilityResultId());
+    assertEquals(expected.getApplicationId(), model.getApplicationId());
+    assertEquals(expected.getCreatedAt(), model.getCreatedAt().toInstant());
+    assertEquals(expected.getResultJson(), model.getEligibilityResult());
   }
 }

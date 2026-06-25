@@ -71,6 +71,6 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
     assertThat(eligibilityResults).hasSize(1);
     assertThat(eligibilityResults.getFirst().getResultJson()).isEqualTo(expectedJson);
-    assertThat(eligibilityResults.getFirst().getCreatedDate()).isNotNull();
+    assertThat(eligibilityResults.getFirst().getCreatedAt()).isNotNull();
   }
 }
