@@ -6,14 +6,17 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.justice.laa.ia.datastore.api.ApplicationApi;
+import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
+import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
 /** Controller for handling Application. */
 @RestController
@@ -33,9 +36,10 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<List<ApplicationResponse>> getApplications(Integer page, Integer size) {
-
-    return ResponseEntity.ok(service.getAllApplications(page, size));
+  public ResponseEntity<List<ApplicationResponse>> getApplications(
+      Integer page, Integer size, UUID officeId) {
+    final Specification<ApplicationEntity> filterBy = ApplicationSpecification.filterBy(officeId);
+    return ResponseEntity.ok(service.getAllApplications(filterBy, page, size));
   }
 
   @Override

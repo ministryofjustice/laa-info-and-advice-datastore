@@ -22,6 +22,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
@@ -98,18 +100,42 @@ public class ApplicationServiceTest {
         ApplicationResponse.builder().id(entity1.getId()).build();
     final ApplicationResponse application2 =
         ApplicationResponse.builder().id(entity2.getId()).build();
-    when(repo.findAll(any(org.springframework.data.domain.Pageable.class)))
+    when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
     when(mapper.toApplication(entity1)).thenReturn(application1);
     when(mapper.toApplication(entity2)).thenReturn(application2);
 
     // Act
-    final List<ApplicationResponse> result = sut.getAllApplications(null, null);
+    final List<ApplicationResponse> result = sut.getAllApplications(null, null, null);
 
     // Assert
     assertThat(result).hasSize(2).contains(application1, application2);
-    verify(repo, times(1)).findAll(any(org.springframework.data.domain.Pageable.class));
+    verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
     verify(mapper, times(2)).toApplication(any());
+  }
+
+  @Test
+  void shouldPassSpecificationToRepository_whenGettingAllApplications() {
+    // Arrange
+    final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
+    final ApplicationResponse application1 =
+        ApplicationResponse.builder().id(entity1.getId()).build();
+    when(repo.findAll(any(Specification.class), any(Pageable.class)))
+        .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1)));
+    when(mapper.toApplication(entity1)).thenReturn(application1);
+
+    // Act
+    final List<ApplicationResponse> result =
+        sut.getAllApplications(
+            (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("id"), entity1.getId()),
+            0,
+            10);
+
+    // Assert
+    assertThat(result).hasSize(1).contains(application1);
+    verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
+    verify(mapper, times(1)).toApplication(any());
   }
 
   @Test
