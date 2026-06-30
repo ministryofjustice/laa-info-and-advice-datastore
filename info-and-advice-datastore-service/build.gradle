@@ -4,6 +4,15 @@ plugins {
     id 'com.diffplug.spotless' version "8.7.0"
 }
 
+configurations.configureEach {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'ch.qos.logback' && details.requested.name == 'logback-core') {
+            details.useVersion '1.5.36'
+            details.because 'CVE fix: Expression Injection in logback-core < 1.5.36'
+        }
+    }
+}
+
 test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
