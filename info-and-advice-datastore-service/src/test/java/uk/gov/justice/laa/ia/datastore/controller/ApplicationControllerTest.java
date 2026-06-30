@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
@@ -35,6 +36,14 @@ import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 
 /** Unit testing for the {@link ApplicationController}. */
 @WebMvcTest(ApplicationController.class)
+@TestPropertySource(
+    properties = {
+      "spring.autoconfigure.exclude="
+          + "org.springframework.boot.security.oauth2.server.resource"
+          + ".autoconfigure.OAuth2ResourceServerAutoConfiguration,"
+          + "org.springframework.boot.security.oauth2.server.resource"
+          + ".autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration"
+    })
 public class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
