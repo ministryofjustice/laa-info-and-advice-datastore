@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.generator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
@@ -32,5 +33,16 @@ public class EligibilityResultEntityGenerator {
     }
 
     return builder.build();
+  }
+
+  /** Create a basic EligibilityResultEntity. */
+  public static EligibilityResultEntity createEligibilityResult(
+      UUID applicationId, String status, int score) {
+    JsonNode resultJson =
+        new ObjectMapper().createObjectNode().put("status", status).put("score", score);
+    return EligibilityResultEntityGenerator.createWithoutId(
+        builder -> {
+          builder.applicationId(applicationId).resultJson(resultJson).createdAt(Instant.now());
+        });
   }
 }

@@ -7,10 +7,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,9 +42,6 @@ public class ApplicationEntity {
 
   @Column(name = "provider_office_id", nullable = false)
   private UUID providerOfficeId;
-
-  @Column(name = "means_assessment_id", nullable = true)
-  private UUID meansAssessmentId;
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "evidence", nullable = true, columnDefinition = "json")
@@ -82,6 +81,20 @@ public class ApplicationEntity {
 
   @Column(name = "determination_id", nullable = true)
   private UUID determinationId;
+
+  @OneToMany(cascade = CascadeType.ALL)
+  @JoinColumn(name = "application_id", referencedColumnName = "id")
+  private Set<EligibilityResultEntity> eligibilityResults;
+
+  /** Returns the most recent eligibility result for this application. */
+  public EligibilityResultEntity getMostRecentEligibilityResult() {
+    if (eligibilityResults == null || eligibilityResults.isEmpty()) {
+      return null;
+    }
+    return eligibilityResults.stream()
+        .max((er1, er2) -> er1.getCreatedAt().compareTo(er2.getCreatedAt()))
+        .orElse(null);
+  }
 
   @Column(name = "created_at", nullable = false)
   @CreationTimestamp

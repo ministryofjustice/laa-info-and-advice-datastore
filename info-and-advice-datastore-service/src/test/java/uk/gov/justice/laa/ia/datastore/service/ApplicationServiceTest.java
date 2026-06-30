@@ -164,13 +164,8 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final Instant originalModifiedAt = Instant.now().minusSeconds(60);
-    final UUID originalMeansAssessmentId = UUID.randomUUID();
     final ApplicationEntity application =
-        ApplicationEntity.builder()
-            .id(applicationId)
-            .meansAssessmentId(originalMeansAssessmentId)
-            .modifiedAt(originalModifiedAt)
-            .build();
+        ApplicationEntity.builder().id(applicationId).modifiedAt(originalModifiedAt).build();
     final Object body = new Object();
     final JsonNode jsonNode = new ObjectMapper().createObjectNode();
     final String user = "TEST_USER";
@@ -195,7 +190,6 @@ public class ApplicationServiceTest {
     verify(eligibilityResultRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
     assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(jsonNode);
-    assertThat(application.getMeansAssessmentId()).isEqualTo(originalMeansAssessmentId);
   }
 
   @Test

@@ -37,7 +37,6 @@ public class ApplicationEntityGenerator {
         ApplicationEntity.builder()
             .providerFirmId(UUID.randomUUID())
             .providerOfficeId(UUID.randomUUID())
-            .meansAssessmentId(UUID.randomUUID())
             .applicationState(ApplicationState.DRAFT)
             .referenceNumber("L-56C-FTQ")
             .applicationType("RCW")

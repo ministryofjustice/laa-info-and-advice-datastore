@@ -8,13 +8,17 @@ public class BaseMapperTest {
   protected ClientDetailsMapper clientDetailsMapper;
   protected DeclarationMapper declarationMapper;
   protected ApplicationMapper applicationMapper;
+  protected EligibilityMapper eligibilityMapper;
 
   protected BaseMapperTest() {
     dtMapper = new DateTimeMapperImpl();
     addressMapper = new AddressMapperImpl(dtMapper);
     clientDetailsMapper = new ClientDetailsMapperImpl(dtMapper, addressMapper);
     declarationMapper = new DeclarationMapperImpl(dtMapper);
+    eligibilityMapper = new EligibilityMapperImpl(dtMapper);
 
-    applicationMapper = new ApplicationMapperImpl(dtMapper, clientDetailsMapper, declarationMapper);
+    applicationMapper =
+        new ApplicationMapperImpl(
+            dtMapper, clientDetailsMapper, declarationMapper, eligibilityMapper);
   }
 }

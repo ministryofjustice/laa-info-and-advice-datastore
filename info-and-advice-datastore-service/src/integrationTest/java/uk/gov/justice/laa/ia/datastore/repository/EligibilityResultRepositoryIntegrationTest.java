@@ -2,20 +2,20 @@ package uk.gov.justice.laa.ia.datastore.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
-import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for the EligibilityResultRepository. */
 @WithMockUser()
+@ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class EligibilityResultRepositoryIntegrationTest extends BaseIntegrationTest {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -26,23 +26,13 @@ public class EligibilityResultRepositoryIntegrationTest extends BaseIntegrationT
     ApplicationEntity application =
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
-              builder.clientDetails(
-                  ClientDetailsEntityGenerator.createWithoutId(
-                      clientDetailsBuilder -> {
-                        clientDetailsBuilder.address(AddressEntityGenerator.createWithoutId(null));
-                      }));
+              builder.withDefaultClientDetails();
             });
     ApplicationEntity savedApplication = applicationRepository.saveAndFlush(application);
-
     // Arrange: Create eligibility result
-    JsonNode resultJson =
-        objectMapper.createObjectNode().put("status", "ELIGIBLE").put("score", 100);
     EligibilityResultEntity entity =
-        EligibilityResultEntityGenerator.createWithoutId(
-            builder -> {
-              builder.applicationId(savedApplication.getId());
-              builder.resultJson(resultJson);
-            });
+        EligibilityResultEntityGenerator.createEligibilityResult(
+            savedApplication.getId(), "ELIGIBLE", 100);
 
     // Act
     EligibilityResultEntity savedEntity = eligibilityResultRepository.saveAndFlush(entity);
@@ -54,7 +44,39 @@ public class EligibilityResultRepositoryIntegrationTest extends BaseIntegrationT
 
     assertThat(retrievedEntity.getEligibilityResultId()).isNotNull();
     assertThat(retrievedEntity.getApplicationId()).isEqualTo(savedApplication.getId());
-    assertThat(retrievedEntity.getResultJson()).isEqualTo(resultJson);
-    assertThat(retrievedEntity.getCreatedDate()).isNotNull();
+    assertThat(retrievedEntity.getResultJson()).isEqualTo(entity.getResultJson());
+    assertThat(retrievedEntity.getCreatedAt()).isNotNull();
+  }
+
+  @Test
+  void shouldRetrieveMultipleEligibilityResultsForApplication() {
+    // Arrange: Create and save an application first (for the foreign key)
+    ApplicationEntity application =
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> {
+              builder.withDefaultClientDetails();
+            });
+    ApplicationEntity savedApplication = applicationRepository.saveAndFlush(application);
+
+    // Arrange: Create multiple eligibility results
+    EligibilityResultEntity entity1 =
+        EligibilityResultEntityGenerator.createEligibilityResult(
+            savedApplication.getId(), "ELIGIBLE", 100);
+    EligibilityResultEntity entity2 =
+        EligibilityResultEntityGenerator.createEligibilityResult(
+            savedApplication.getId(), "INELIGIBLE", 50);
+
+    eligibilityResultRepository.saveAndFlush(entity1);
+    eligibilityResultRepository.saveAndFlush(entity2);
+    clearCache();
+
+    // Act
+    final ApplicationEntity getApplication =
+        applicationRepository.findById(savedApplication.getId()).orElseThrow();
+
+    // Assert
+    assertThat(getApplication.getEligibilityResults()).hasSize(2);
+    assertThat(getApplication.getEligibilityResults()).contains(entity1);
+    assertThat(getApplication.getEligibilityResults()).contains(entity2);
   }
 }
