@@ -10,15 +10,20 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 /** The mapper between Application and ApplicationEntity. */
 @Mapper(
     componentModel = "spring",
-    uses = {DateTimeMapper.class, ClientDetailsMapper.class, DeclarationMapper.class},
+    uses = {
+      DateTimeMapper.class,
+      ClientDetailsMapper.class,
+      DeclarationMapper.class,
+      EligibilityMapper.class
+    },
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface ApplicationMapper {
   /** Maps an {@link ApplicationEntity} to an {@link ApplicationEntity}. */
-  @Mapping(source = "meansAssessmentId", target = "meansAssessmentStatus")
   @Mapping(source = "clientDetails.id", target = "individualLegalAidNumber")
   @Mapping(source = "clientDetails", target = "client")
   @Mapping(source = "declaration", target = "declaration")
   @Mapping(source = "evidence", target = "evidence")
+  @Mapping(source = "mostRecentEligibilityResult", target = "eligibilityResult")
   ApplicationResponse toApplication(ApplicationEntity entity);
 
   /** Maps an {@link StartCaseCommand} to an {@link ApplicationEntity}. */
@@ -31,7 +36,6 @@ public interface ApplicationMapper {
   @Mapping(target = "providerOfficeId", ignore = true)
   @Mapping(target = "applicationState", ignore = true)
   @Mapping(target = "referenceNumber", ignore = true)
-  @Mapping(target = "meansAssessmentId", ignore = true)
   @Mapping(target = "evidence", ignore = true)
   @Mapping(target = "declaration", ignore = true)
   @Mapping(target = "reasonForReapplication", ignore = true)
@@ -41,5 +45,6 @@ public interface ApplicationMapper {
   @Mapping(target = "contribution", ignore = true)
   @Mapping(target = "determinationId", ignore = true)
   @Mapping(source = "client", target = "clientDetails")
+  @Mapping(target = "eligibilityResults", ignore = true)
   ApplicationEntity toApplicationEntity(StartCaseCommand cmd);
 }

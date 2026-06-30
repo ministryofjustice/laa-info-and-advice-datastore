@@ -13,6 +13,12 @@ import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 public interface ApplicationRepository extends JpaRepository<ApplicationEntity, UUID> {
 
   @Override
-  @EntityGraph(attributePaths = {"clientDetails", "declaration", "evidence"})
+  @EntityGraph(
+      attributePaths = {
+        "clientDetails",
+        "clientDetails.address",
+        "declaration",
+        "eligibilityResults"
+      })
   Page<ApplicationEntity> findAll(Pageable pageable);
 }

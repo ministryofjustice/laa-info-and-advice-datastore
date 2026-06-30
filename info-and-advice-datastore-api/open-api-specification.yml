@@ -257,9 +257,6 @@ components:
           format: uuid
           example: 
           description:
-        meansAssessmentStatus:
-          type: string
-          format: uuid
         applicationState:
           $ref: "#/components/schemas/ApplicationState"
         declaration:
@@ -281,6 +278,8 @@ components:
         determinationId:
           type: string
           format: uuid
+        eligibilityResult:
+          $ref: "#/components/schemas/EligibilityResultResponse"
         createdAt:
           type: string
           format: date-time
@@ -400,3 +399,18 @@ components:
       type: object
       additionalProperties: true
       minProperties: 1
+
+    EligibilityResultResponse:
+      type: object
+      properties:
+        eligibilityResultId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        eligibilityResult:
+          type: object
+        createdAt:
+          type: string
+          format: date-time

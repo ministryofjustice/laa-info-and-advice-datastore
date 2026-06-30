@@ -38,7 +38,7 @@ public class EligibilityResultEntity {
   @Column(name = "result_json", nullable = false)
   private JsonNode resultJson;
 
-  @Column(name = "created_date", nullable = false, updatable = false)
+  @Column(name = "created_at", nullable = false, updatable = false)
   @CreationTimestamp
-  private Instant createdDate;
+  private Instant createdAt;
 }
