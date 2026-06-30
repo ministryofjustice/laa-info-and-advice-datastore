@@ -4,6 +4,15 @@ plugins {
     id 'com.diffplug.spotless' version "8.7.0"
 }
 
+configurations.configureEach {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'ch.qos.logback' && details.requested.name == 'logback-core') {
+            details.useVersion '1.5.36'
+            details.because 'CVE fix: Expression Injection in logback-core < 1.5.36'
+        }
+    }
+}
+
 test {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
@@ -34,6 +43,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'uk.gov.laa.springboot:laa-spring-boot-starter-oauth2'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
 
@@ -54,6 +64,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.security:spring-security-oauth2-jose'
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 

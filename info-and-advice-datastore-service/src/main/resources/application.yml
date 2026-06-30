@@ -34,3 +34,33 @@ management:
     web:
       exposure:
         include: health
+
+laa:
+  springboot.starter:
+    oauth2:
+      resourceserver:
+        jwt:
+          tenants:
+            - issuer-uri: ${LAA_OAUTH2_ISSUER_URI:https://placeholder.issuer.uri/v2.0}
+              audiences:
+                - ${LAA_OAUTH2_AUDIENCE:api://placeholder-audience}
+      # Scope names are placeholders — update to match Entra app registration delegated permissions
+      authorized-scopes: '[
+        {
+          "name": "applications:read",
+          "uris": [
+            {"method":["GET"],"uri":"/api/v0/applications"},
+            {"method":["GET"],"uri":"/api/v0/applications/**"}
+          ]
+        },
+        {
+          "name": "applications:write",
+          "uris": [
+            {"method":["POST"],"uri":"/api/v0/applications:start-case"},
+            {"method":["PUT"],"uri":"/api/v0/applications/**"}
+          ]
+        }
+      ]'
+      unprotected-uris: [ "/actuator/**", "/swagger-ui.html",
+                          "/swagger-ui/**", "/v3/api-docs/**", "/favicon.ico",
+                          "/open-api-specification.yml" ]
