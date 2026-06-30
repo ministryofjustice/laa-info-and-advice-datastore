@@ -67,6 +67,9 @@ Go back to Github to authorize MOJ for SSO
 ### Run integration tests
 `./gradlew integrationTest`
 
+### Run application locally ignoring auth requirements
+`./gradlew bootRunLocal`
+
 ### Run application
 `./gradlew bootRun`
 
