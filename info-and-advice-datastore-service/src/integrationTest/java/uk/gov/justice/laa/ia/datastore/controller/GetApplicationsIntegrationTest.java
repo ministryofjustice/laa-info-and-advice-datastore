@@ -16,10 +16,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
+import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
 /** Integration test for getting applications. */
 @WithMockUser
-@ExtensionMethod(ApplicationEntityBuilderExtensions.class)
+@ExtensionMethod({
+  ApplicationEntityBuilderExtensions.class,
+  MockHttpServletRequestBuilderExtensions.class
+})
 public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
@@ -44,7 +48,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     setupApplications();
     // Act & Assert
     mockMvc
-        .perform(get("/api/v0/applications"))
+        .perform(get("/api/v0/applications").withBearerReadToken())
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.*", hasSize(DEFAULT_NUMBER_OF_APPLICATIONS)));
@@ -64,7 +68,10 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     clearCache();
     // Act & Assert
     mockMvc
-        .perform(get("/api/v0/applications").param("officeId", officeId.toString()))
+        .perform(
+            get("/api/v0/applications")
+                .param("officeId", officeId.toString())
+                .withBearerReadToken())
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.*", hasSize(2)));

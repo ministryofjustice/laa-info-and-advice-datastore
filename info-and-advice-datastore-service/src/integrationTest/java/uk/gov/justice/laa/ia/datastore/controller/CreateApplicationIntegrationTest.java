@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
+import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
@@ -13,9 +14,10 @@ import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
-import uk.gov.justice.laa.ia.datastore.utils.TestJwtConfig;
+import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
 /** Integration test for creating an application. */
+@ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
 
   @Test
@@ -28,7 +30,7 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
         mockMvc
             .perform(
                 post("/api/v0/applications:start-case")
-                    .header("Authorization", "Bearer " + TestJwtConfig.WRITE_TOKEN)
+                    .withBearerWriteToken()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(toJson(command)))
             .andExpect(status().isCreated())

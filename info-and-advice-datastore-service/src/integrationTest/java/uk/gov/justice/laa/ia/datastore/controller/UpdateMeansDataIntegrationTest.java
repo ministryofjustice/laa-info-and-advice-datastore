@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
+import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -15,9 +16,10 @@ import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
-import uk.gov.justice.laa.ia.datastore.utils.TestJwtConfig;
+import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
 /** Integration test for updating means data on an application. */
+@ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -49,7 +51,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     mockMvc
         .perform(
             put("/api/v0/applications/{id}:update-means-data", applicationId)
-                .header("Authorization", "Bearer " + TestJwtConfig.WRITE_TOKEN)
+                .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isOk());
