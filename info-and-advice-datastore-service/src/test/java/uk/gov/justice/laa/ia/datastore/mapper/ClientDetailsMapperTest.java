@@ -36,7 +36,8 @@ public class ClientDetailsMapperTest extends BaseMapperTest {
 
     ClientDetails mappedModel = sut.toClientDetails(entity);
     assertEquals(entity.getId(), mappedModel.getIndividualLegalAidNumber());
-    assertEquals(entity.getFullName(), mappedModel.getFullName());
+    assertEquals(entity.getFirstName(), mappedModel.getFirstName());
+    assertEquals(entity.getLastName(), mappedModel.getLastName());
     assertEquals(entity.getDateOfBirth(), mappedModel.getDateOfBirth());
     assertEquals(entity.getNiNumber(), mappedModel.getNiNumber());
     assertEquals(entity.getCreatedAt(), mappedModel.getCreatedAt().toInstant());
@@ -67,15 +68,17 @@ public class ClientDetailsMapperTest extends BaseMapperTest {
     final ClientDetailsEntity mappedModel = sut.toClientDetailsEntity(cmd);
 
     assertEquals(cmd.getNationalInsuranceNumber(), mappedModel.getNiNumber());
-    assertEquals(cmd.getFullName(), mappedModel.getFullName());
+    assertEquals(cmd.getFirstName(), mappedModel.getFirstName());
+    assertEquals(cmd.getLastName(), mappedModel.getLastName());
     assertEquals(cmd.getDateOfBirth(), mappedModel.getDateOfBirth());
     assertNotNull(mappedModel.getAddress());
   }
 
-  private ClientDetailsEntity.ClientDetailsEntityBuilder createClientDetails() {
+  private static ClientDetailsEntity.ClientDetailsEntityBuilder createClientDetails() {
     return ClientDetailsEntity.builder()
         .id(UUID.randomUUID())
-        .fullName("Joe Bloggs")
+        .firstName("Joe")
+        .lastName("Bloggs")
         .dateOfBirth(LocalDate.of(1990, 01, 01))
         .createdAt(Instant.now())
         .modifiedAt(Instant.now());

@@ -10,7 +10,8 @@ public class CreateClientCommandGenerator {
   public static CreateClientCommand create(Consumer<CreateClientCommand.Builder> customizer) {
     var builder =
         CreateClientCommand.builder()
-            .fullName("Joe Bloggs")
+            .firstName("Joe")
+            .lastName("Bloggs")
             .dateOfBirth(LocalDate.of(1990, 1, 1))
             .placeOfBirth("London")
             .nationalInsuranceNumber("AC123456D");
