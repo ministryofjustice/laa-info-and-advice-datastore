@@ -48,8 +48,10 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
     clearCache();
     ApplicationEntity savedEntity = applicationRepository.findById(applicationId).orElseThrow();
 
-    assertThat(savedEntity.getClientDetails().getFullName())
-        .isEqualTo(command.getClient().getFullName());
+    assertThat(savedEntity.getClientDetails().getFirstName())
+        .isEqualTo(command.getClient().getFirstName());
+    assertThat(savedEntity.getClientDetails().getLastName())
+        .isEqualTo(command.getClient().getLastName());
     assertThat(savedEntity.getReferenceNumber()).isNotNull();
     assertThat(savedEntity.getReferenceNumber()).matches("L-\\w{3}-\\w{3}");
     assertThat(savedEntity.getCreatedBy()).isEqualTo("SYSTEM");

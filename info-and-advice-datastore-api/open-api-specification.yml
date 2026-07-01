@@ -180,54 +180,10 @@ paths:
 components:
   schemas:
     ClientDetails:
-      properties:
-        individualLegalAidNumber:
-          type: string
-          format: uuid
-        fullName:
-          type: string
-        dateOfBirth:
-          type: string
-          format: date
-        niNumber:
-          type: string
-          example: QQ123456B
-          minLength: 9
-          maxLength: 9
-        address:
-          $ref: "#/components/schemas/Address"
-        createdAt:
-          type: string
-          format: date-time
-        modifiedAt:
-          type: string
-          format: date-time
+      $ref: "./open-api-applications/client-details-components.yml#/components/schemas/ClientDetails"
 
     Address:
-      properties:
-        addressLine1:
-          type: string
-        addressLine2:
-          type: string
-        addressLine3:
-          type: string
-        addressLine4:
-          type: string
-        townOrCity:
-          type: string
-        postCode:
-          type: string
-        county:
-          type: string
-        country:
-          type: string
-          maxLength: 2
-        createdAt:
-          type: string
-          format: date-time
-        modifiedAt:
-          type: string
-          format: date-time
+      $ref: "./open-api-applications/client-details-components.yml#/components/schemas/Address"
     
     ApplicationResponse:
       type: object
@@ -340,60 +296,14 @@ components:
         - applicationType
       properties:
         client: 
-          $ref: '#/components/schemas/CreateClientCommand'
+          $ref: "./open-api-applications/client-details-components.yml#/components/schemas/CreateClientCommand"
         applicationType:
           type: string
           enum:
             - RCW
             - CLA
             
-    CreateClientCommand:
-      type: object
-      required:
-        - fullName
-        - dateOfBirth
-        - placeOfBirth
-      properties:
-        fullName:
-          type: string
-        dateOfBirth:
-           type: string
-           format: date
-        placeOfBirth:
-          type: string
-        nationalInsuranceNumber:
-          type: string
-          pattern: '[A-CEGHJ-NOPR-TW-Z]{2}[0-9]{6}[ABCDs]{1}'
-          example: AC123456D
-        createAddressCommand:
-          $ref: '#/components/schemas/CreateAddressCommand'
 
-    CreateAddressCommand:
-      type: object
-      required:
-        - addressLine1
-      properties:
-        addressLine1:
-          type: string
-          example: 10 Downing Street
-        addressLine2:
-          type: string
-        addressLine3:
-          type: string
-        addressLine4:
-          type: string
-        townOrCity:
-          type: string
-          example: London
-        postCode:
-          type: string 
-          example: SW1A 2AA
-        county:
-          type: string
-        country:
-          type: string
-          maxLength: 2
-          example: GB
     DeclarationCommand:
       type: object
       required:
