@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -62,14 +63,23 @@ public class ApplicationService {
   /**
    * Gets all the Applications.
    *
+   * @param specification the specification to filter applications, if null will use unrestricted
+   *     specification.
+   * @param page the page number to retrieve, if null will use default page 0.
+   * @param size the page size, if null will use default page size.
    * @return list of {@link ApplicationResponse}
    */
-  public List<ApplicationResponse> getAllApplications(Integer page, Integer size) {
+  public List<ApplicationResponse> getAllApplications(
+      Specification<ApplicationEntity> specification, Integer page, Integer size) {
 
     int resolvedPage = page != null ? page : 0;
     int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
+    Specification<ApplicationEntity> resolvedSpecification =
+        specification != null ? specification : Specification.unrestricted();
 
-    return repository.findAll(PageRequest.of(resolvedPage, resolvedSize)).stream()
+    return repository
+        .findAll(resolvedSpecification, PageRequest.of(resolvedPage, resolvedSize))
+        .stream()
         .map(applicationMapper::toApplication)
         .toList();
   }

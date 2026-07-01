@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
+import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
@@ -11,9 +12,10 @@ import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
-import uk.gov.justice.laa.ia.datastore.utils.TestJwtConfig;
+import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
 /** Integration test for updating evidence on an application. */
+@ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
   // 204
   @Test
@@ -34,7 +36,7 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
-                .header("Authorization", "Bearer " + TestJwtConfig.WRITE_TOKEN)
+                .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNoContent())
@@ -48,7 +50,7 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
-                .header("Authorization", "Bearer " + TestJwtConfig.WRITE_TOKEN)
+                .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNotFound());

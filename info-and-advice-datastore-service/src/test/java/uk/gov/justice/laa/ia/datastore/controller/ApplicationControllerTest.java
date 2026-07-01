@@ -3,6 +3,8 @@ package uk.gov.justice.laa.ia.datastore.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -21,10 +23,12 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -91,7 +95,8 @@ public class ApplicationControllerTest {
             .evidence("EVIDENCE")
             .build();
 
-    when(applicationService.getAllApplications(eq(0), eq(25)))
+    when(applicationService.getAllApplications(
+            eq(Specification.<ApplicationEntity>unrestricted()), eq(0), eq(25)))
         .thenReturn(List.of(application1, application2));
 
     // Act + Assert
@@ -103,6 +108,44 @@ public class ApplicationControllerTest {
         .andExpect(jsonPath("$[0].id").exists())
         .andExpect(jsonPath("$[0].declaration").exists())
         .andExpect(jsonPath("$[0].evidence").exists());
+  }
+
+  @Test
+  void filterApplications_returnsOkStatus_andFilteredApplications() throws Exception {
+    // Arrange
+    final UUID officeId = UUID.fromString("019f1461-02ae-71f8-b731-c6d63bb59e6d");
+    ApplicationResponse application1 =
+        ApplicationResponse.builder()
+            .id(UUID.randomUUID())
+            .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
+            .evidence("EVIDENCE")
+            .build();
+
+    ApplicationResponse application2 =
+        ApplicationResponse.builder()
+            .id(UUID.randomUUID())
+            .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
+            .evidence("EVIDENCE")
+            .build();
+
+    when(applicationService.getAllApplications(any(), any(), any()))
+        .thenReturn(List.of(application1, application2));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            get("/api/v0/applications")
+                .param("page", "0")
+                .param("size", "25")
+                .param("officeId", officeId.toString()))
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.*", hasSize(2)))
+        .andExpect(jsonPath("$[0].id").exists())
+        .andExpect(jsonPath("$[0].declaration").exists())
+        .andExpect(jsonPath("$[0].evidence").exists());
+    verify(applicationService, never())
+        .getAllApplications(eq(Specification.<ApplicationEntity>unrestricted()), eq(0), eq(25));
   }
 
   @Test
