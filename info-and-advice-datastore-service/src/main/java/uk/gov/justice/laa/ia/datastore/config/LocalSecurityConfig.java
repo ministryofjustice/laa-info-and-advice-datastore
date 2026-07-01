@@ -22,6 +22,7 @@ public class LocalSecurityConfig {
   @Bean("oauth2SecurityFilterChain")
   public SecurityFilterChain localSecurityFilterChain(HttpSecurity http) throws Exception {
     return http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+        .csrf(csrf -> csrf.ignoringRequestMatchers(request -> true))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .build();
