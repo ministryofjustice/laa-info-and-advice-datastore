@@ -32,8 +32,11 @@ public class ClientDetailsEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
 
-  @Column(name = "full_name", nullable = false)
-  private String fullName;
+  @Column(name = "first_name", nullable = false)
+  private String firstName;
+
+  @Column(name = "last_name", nullable = false)
+  private String lastName;
 
   @Column(name = "date_of_birth", nullable = false)
   private LocalDate dateOfBirth;

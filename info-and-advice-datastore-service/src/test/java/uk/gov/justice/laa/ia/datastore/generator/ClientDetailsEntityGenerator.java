@@ -34,7 +34,8 @@ public class ClientDetailsEntityGenerator {
       Consumer<ClientDetailsEntity.ClientDetailsEntityBuilder> customizer) {
     var builder =
         ClientDetailsEntity.builder()
-            .fullName("Joe Bloggs")
+            .firstName("Joe")
+            .lastName("Bloggs")
             .niNumber("AB123456Q")
             .dateOfBirth(LocalDate.of(1990, 01, 01));
     if (customizer != null) {
