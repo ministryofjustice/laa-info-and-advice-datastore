@@ -23,6 +23,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
@@ -95,19 +97,24 @@ public class ApplicationControllerTest {
             .evidence("EVIDENCE")
             .build();
 
+    Page<ApplicationResponse> page = new PageImpl<>(List.of(application1, application2));
     when(applicationService.getAllApplications(
             eq(Specification.<ApplicationEntity>unrestricted()), eq(0), eq(25)))
-        .thenReturn(List.of(application1, application2));
+        .thenReturn(page);
 
     // Act + Assert
     mockMvc
         .perform(get("/api/v0/applications").param("page", "0").param("size", "25"))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.*", hasSize(2)))
-        .andExpect(jsonPath("$[0].id").exists())
-        .andExpect(jsonPath("$[0].declaration").exists())
-        .andExpect(jsonPath("$[0].evidence").exists());
+        .andExpect(jsonPath("$.content", hasSize(2)))
+        .andExpect(jsonPath("$.content[0].id").exists())
+        .andExpect(jsonPath("$.content[0].declaration").exists())
+        .andExpect(jsonPath("$.content[0].evidence").exists())
+        .andExpect(jsonPath("$.totalElements").value(2))
+        .andExpect(jsonPath("$.totalPages").value(1))
+        .andExpect(jsonPath("$.page").value(0))
+        .andExpect(jsonPath("$.size").value(2));
   }
 
   @Test
@@ -128,8 +135,8 @@ public class ApplicationControllerTest {
             .evidence("EVIDENCE")
             .build();
 
-    when(applicationService.getAllApplications(any(), any(), any()))
-        .thenReturn(List.of(application1, application2));
+    Page<ApplicationResponse> page = new PageImpl<>(List.of(application1, application2));
+    when(applicationService.getAllApplications(any(), any(), any())).thenReturn(page);
 
     // Act + Assert
     mockMvc
@@ -140,10 +147,8 @@ public class ApplicationControllerTest {
                 .param("officeId", officeId.toString()))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.*", hasSize(2)))
-        .andExpect(jsonPath("$[0].id").exists())
-        .andExpect(jsonPath("$[0].declaration").exists())
-        .andExpect(jsonPath("$[0].evidence").exists());
+        .andExpect(jsonPath("$.content", hasSize(2)))
+        .andExpect(jsonPath("$.content[0].id").exists());
     verify(applicationService, never())
         .getAllApplications(eq(Specification.<ApplicationEntity>unrestricted()), eq(0), eq(25));
   }

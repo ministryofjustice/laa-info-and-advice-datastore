@@ -1,11 +1,11 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.justice.laa.ia.datastore.api.ApplicationApi;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationResponses;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
@@ -36,10 +37,18 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<List<ApplicationResponse>> getApplications(
+  public ResponseEntity<ApplicationResponses> getApplications(
       Integer page, Integer size, UUID officeId) {
     final Specification<ApplicationEntity> filterBy = ApplicationSpecification.filterBy(officeId);
-    return ResponseEntity.ok(service.getAllApplications(filterBy, page, size));
+    final Page<ApplicationResponse> result = service.getAllApplications(filterBy, page, size);
+    final ApplicationResponses responses =
+        new ApplicationResponses()
+            .content(result.getContent())
+            .page(result.getNumber())
+            .size(result.getSize())
+            .totalElements(result.getTotalElements())
+            .totalPages(result.getTotalPages());
+    return ResponseEntity.ok(responses);
   }
 
   @Override
