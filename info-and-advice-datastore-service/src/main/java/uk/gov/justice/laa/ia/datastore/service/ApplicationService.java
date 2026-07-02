@@ -51,7 +51,6 @@ public class ApplicationService {
 
     // Set default/system values from context
     entity.setProviderFirmId(userContext.getProviderFirmId());
-    entity.setProviderOfficeId(userContext.getProviderOfficeId());
     entity.setApplicationState(ApplicationState.DRAFT);
     entity.setCreatedBy(userContext.getCurrentUser());
     entity.setModifiedBy(userContext.getCurrentUser());

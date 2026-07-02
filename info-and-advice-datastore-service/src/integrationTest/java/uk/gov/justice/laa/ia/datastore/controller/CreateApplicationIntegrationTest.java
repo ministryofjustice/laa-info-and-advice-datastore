@@ -8,10 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
-import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
@@ -21,8 +19,6 @@ import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBu
 /** Integration test for creating an application. */
 @ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
-
-  @Autowired private UserContext userContext;
 
   @Test
   void shouldCreateApplicationSuccessfully() throws Exception {
@@ -55,6 +51,6 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(savedEntity.getReferenceNumber()).isNotNull();
     assertThat(savedEntity.getReferenceNumber()).matches("L-\\w{3}-\\w{3}");
     assertThat(savedEntity.getCreatedBy()).isEqualTo("SYSTEM");
-    assertThat(savedEntity.getProviderOfficeId()).isEqualTo(userContext.getProviderOfficeId());
+    assertThat(savedEntity.getProviderOfficeId()).isEqualTo(command.getProviderOfficeId());
   }
 }

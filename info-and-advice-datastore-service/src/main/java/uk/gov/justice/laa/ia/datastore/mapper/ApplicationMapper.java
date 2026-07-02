@@ -33,7 +33,6 @@ public interface ApplicationMapper {
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(target = "modifiedBy", ignore = true)
   @Mapping(target = "providerFirmId", ignore = true)
-  @Mapping(target = "providerOfficeId", ignore = true)
   @Mapping(target = "applicationState", ignore = true)
   @Mapping(target = "referenceNumber", ignore = true)
   @Mapping(target = "evidence", ignore = true)

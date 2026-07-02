@@ -294,6 +294,7 @@ components:
       required:
         - client
         - applicationType
+        - providerOfficeId
       properties:
         client: 
           $ref: "./open-api-applications/client-details-components.yml#/components/schemas/CreateClientCommand"
@@ -302,6 +303,9 @@ components:
           enum:
             - RCW
             - CLA
+        providerOfficeId:
+          type: string
+          format: uuid
             
 
     DeclarationCommand:
