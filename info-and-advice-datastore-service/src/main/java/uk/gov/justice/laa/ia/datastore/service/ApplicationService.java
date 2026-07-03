@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -66,9 +66,9 @@ public class ApplicationService {
    *     specification.
    * @param page the page number to retrieve, if null will use default page 0.
    * @param size the page size, if null will use default page size.
-   * @return list of {@link ApplicationResponse}
+   * @return page of {@link ApplicationResponse}
    */
-  public List<ApplicationResponse> getAllApplications(
+  public Page<ApplicationResponse> getAllApplications(
       Specification<ApplicationEntity> specification, Integer page, Integer size) {
 
     int resolvedPage = page != null ? page : 0;
@@ -78,9 +78,7 @@ public class ApplicationService {
 
     return repository
         .findAll(resolvedSpecification, PageRequest.of(resolvedPage, resolvedSize))
-        .stream()
-        .map(applicationMapper::toApplication)
-        .toList();
+        .map(applicationMapper::toApplication);
   }
 
   /**

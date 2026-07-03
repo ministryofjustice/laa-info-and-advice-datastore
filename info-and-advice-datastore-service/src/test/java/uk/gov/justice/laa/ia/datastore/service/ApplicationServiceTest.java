@@ -22,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
@@ -106,10 +107,11 @@ public class ApplicationServiceTest {
     when(mapper.toApplication(entity2)).thenReturn(application2);
 
     // Act
-    final List<ApplicationResponse> result = sut.getAllApplications(null, null, null);
+    final Page<ApplicationResponse> result = sut.getAllApplications(null, null, null);
 
     // Assert
-    assertThat(result).hasSize(2).contains(application1, application2);
+    assertThat(result.getContent()).hasSize(2).contains(application1, application2);
+    assertThat(result.getTotalElements()).isEqualTo(2);
     verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
     verify(mapper, times(2)).toApplication(any());
   }
@@ -125,7 +127,7 @@ public class ApplicationServiceTest {
     when(mapper.toApplication(entity1)).thenReturn(application1);
 
     // Act
-    final List<ApplicationResponse> result =
+    final Page<ApplicationResponse> result =
         sut.getAllApplications(
             (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("id"), entity1.getId()),
@@ -133,7 +135,7 @@ public class ApplicationServiceTest {
             10);
 
     // Assert
-    assertThat(result).hasSize(1).contains(application1);
+    assertThat(result.getContent()).hasSize(1).contains(application1);
     verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
     verify(mapper, times(1)).toApplication(any());
   }
