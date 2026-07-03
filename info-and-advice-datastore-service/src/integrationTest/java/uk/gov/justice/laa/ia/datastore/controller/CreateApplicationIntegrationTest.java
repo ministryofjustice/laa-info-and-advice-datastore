@@ -51,5 +51,6 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(savedEntity.getReferenceNumber()).isNotNull();
     assertThat(savedEntity.getReferenceNumber()).matches("L-\\w{3}-\\w{3}");
     assertThat(savedEntity.getCreatedBy()).isEqualTo("SYSTEM");
+    assertThat(savedEntity.getProviderOfficeId()).isEqualTo(command.getProviderOfficeId());
   }
 }

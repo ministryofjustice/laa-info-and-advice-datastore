@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.generator;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 
@@ -10,7 +11,8 @@ public class StartCaseCommandGenerator {
     StartCaseCommand.Builder builder =
         StartCaseCommand.builder()
             .client(CreateClientCommandGenerator.create(null))
-            .applicationType(StartCaseCommand.ApplicationTypeEnum.RCW);
+            .applicationType(StartCaseCommand.ApplicationTypeEnum.RCW)
+            .providerOfficeId(UUID.randomUUID());
 
     if (customizer != null) {
       customizer.accept(builder);

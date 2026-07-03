@@ -58,16 +58,16 @@ public class ApplicationServiceTest {
   @Test
   void shouldCreateApplication() {
     // Arrange
-    final StartCaseCommand cmd = new StartCaseCommand();
+    final UUID officeId = UUID.randomUUID();
+    final StartCaseCommand cmd = StartCaseCommand.builder().providerOfficeId(officeId).build();
     final ApplicationEntity entity = new ApplicationEntity();
+    entity.setProviderOfficeId(officeId);
     final UUID generatedId = UUID.randomUUID();
     final UUID firmId = UUID.randomUUID();
-    final UUID officeId = UUID.randomUUID();
     final String user = "TEST_USER";
 
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
     when(userContext.getProviderFirmId()).thenReturn(firmId);
-    when(userContext.getProviderOfficeId()).thenReturn(officeId);
     when(userContext.getCurrentUser()).thenReturn(user);
     when(repo.save(any(ApplicationEntity.class)))
         .thenAnswer(

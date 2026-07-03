@@ -51,7 +51,8 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         .perform(get("/api/v0/applications").withBearerReadToken())
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.*", hasSize(DEFAULT_NUMBER_OF_APPLICATIONS)));
+        .andExpect(jsonPath("$.*", hasSize(DEFAULT_NUMBER_OF_APPLICATIONS)))
+        .andExpect(jsonPath("$[0].providerOfficeId").isNotEmpty());
   }
 
   @Test
@@ -74,6 +75,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
                 .withBearerReadToken())
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.*", hasSize(2)));
+        .andExpect(jsonPath("$.*", hasSize(2)))
+        .andExpect(jsonPath("$[0].providerOfficeId").value(officeId.toString()));
   }
 }
