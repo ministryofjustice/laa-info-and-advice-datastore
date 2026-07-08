@@ -67,13 +67,45 @@ Go back to Github to authorize MOJ for SSO
 ### Run integration tests
 `./gradlew integrationTest`
 
+### Prerequisites
+
+On first setup, add `host.docker.internal` to your `/etc/hosts` (Docker Desktop on Mac does not add this automatically):
+
+```bash
+echo '127.0.0.1 host.docker.internal' | sudo tee -a /etc/hosts
+```
+
 ### Run application locally ignoring auth requirements
 `./gradlew bootRunLocal`
 
-### Run application with Entra authentication
-Copy `.env.example` to `.env` and fill in the required values:
+### Run full stack via Docker (mock OAuth2 server)
 
+Builds and runs the app, postgres, and a mock OAuth2 server. Requires `.env` to be present:
+
+```bash
+cp .env.example .env
+./gradlew :info-and-advice-datastore-service:bootJar
+docker-compose up -d --build
 ```
+
+Get an access token and call the API:
+
+```bash
+TOKEN=$(curl -s -X POST http://host.docker.internal:9090/default/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id=test&client_secret=test" \
+  | jq -r .access_token)
+
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v0/applications
+```
+
+The mock server automatically issues tokens with the `DataStore.Access` role for `client_credentials` grants.
+
+### Run application with Entra authentication
+
+Copy `.env.example` to `.env` and uncomment the Entra values, filling in the tenant ID and application (client) ID:
+
+```bash
 cp .env.example .env
 ```
 
@@ -89,14 +121,8 @@ set -a && source .env && set +a
 ./gradlew :info-and-advice-datastore-service:bootRun
 ```
 
-> **Note:** The app must be run directly (not via Docker) when Entra authentication is enabled, as
+> **Note:** The app must be run directly (not via Docker) when using Entra, as
 > Docker containers on a VPN may not be able to resolve `login.microsoftonline.com`.
-
-### Run application via Docker (no auth)
-Runs the full stack using the `local` Spring profile, which bypasses authentication.
-Requires `.env` to be present with `DB_USERNAME` and `DB_PASSWORD` set.
-
-`docker compose up`
 
 ## Development guidelines
 
