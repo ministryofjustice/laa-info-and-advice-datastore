@@ -44,20 +44,11 @@ laa:
             - issuer-uri: ${LAA_OAUTH2_ISSUER_URI:https://placeholder.issuer.uri/v2.0}
               audiences:
                 - ${LAA_OAUTH2_AUDIENCE:api://placeholder-audience}
-      # Scope names are placeholders — update to match Entra app registration delegated permissions
-      authorized-scopes: '[
+      authorized-roles: '[
         {
-          "name": "applications:read",
+          "name": "DataStore.Access",
           "uris": [
-            {"method":["GET"],"uri":"/api/v0/applications"},
-            {"method":["GET"],"uri":"/api/v0/applications/**"}
-          ]
-        },
-        {
-          "name": "applications:write",
-          "uris": [
-            {"method":["POST"],"uri":"/api/v0/applications:start-case"},
-            {"method":["PUT"],"uri":"/api/v0/applications/**"}
+            {"method":["GET","POST","PUT","PATCH","DELETE"],"uri":"/api/v0/**"}
           ]
         }
       ]'

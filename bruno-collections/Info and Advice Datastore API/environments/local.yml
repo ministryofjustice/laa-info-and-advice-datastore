@@ -1,0 +1,21 @@
+variables:
+  - name: baseUrl
+    value: http://localhost:8080
+    type: text
+    enabled: true
+  - name: tokenUrl
+    value: ""
+    type: secret
+    enabled: true
+  - name: clientId
+    value: ""
+    type: secret
+    enabled: true
+  - name: clientSecret
+    value: ""
+    type: secret
+    enabled: true
+  - name: scope
+    value: ""
+    type: secret
+    enabled: true

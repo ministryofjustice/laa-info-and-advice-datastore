@@ -8,10 +8,13 @@ services:
       - "8080:8080"
     depends_on: 
       - postgres
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     environment:
       - DB_URL=jdbc:postgresql://postgres:5432/laa_info_advice_datastore
-      - DB_USERNAME=laa_user
-      - DB_PASSWORD=laa_password
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
       - SPRING_PROFILES_ACTIVE=local
       
   postgres:
@@ -22,7 +25,7 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_DB: laa_info_advice_datastore
-      POSTGRES_USER: laa_user
-      POSTGRES_PASSWORD: laa_password
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - /var/lib/postgresql/18/docker

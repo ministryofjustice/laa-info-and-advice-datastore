@@ -70,10 +70,32 @@ Go back to Github to authorize MOJ for SSO
 ### Run application locally ignoring auth requirements
 `./gradlew bootRunLocal`
 
-### Run application
-`./gradlew bootRun`
+### Run application with Entra authentication
+Copy `.env.example` to `.env` and fill in the required values:
 
-### Run application via Docker
+```
+cp .env.example .env
+```
+
+| Variable | Description |
+|---|---|
+| `LAA_OAUTH2_ISSUER_URI` | Entra token issuer URI, e.g. `https://login.microsoftonline.com/<tenant-id>/v2.0` |
+| `LAA_OAUTH2_AUDIENCE` | Application (client) ID of this app registration in Entra |
+
+Then export the variables and run:
+
+```bash
+set -a && source .env && set +a
+./gradlew :info-and-advice-datastore-service:bootRun
+```
+
+> **Note:** The app must be run directly (not via Docker) when Entra authentication is enabled, as
+> Docker containers on a VPN may not be able to resolve `login.microsoftonline.com`.
+
+### Run application via Docker (no auth)
+Runs the full stack using the `local` Spring profile, which bypasses authentication.
+Requires `.env` to be present with `DB_USERNAME` and `DB_PASSWORD` set.
+
 `docker compose up`
 
 ## Development guidelines
