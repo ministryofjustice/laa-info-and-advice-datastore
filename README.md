@@ -75,9 +75,6 @@ On first setup, add `host.docker.internal` to your `/etc/hosts` (Docker Desktop 
 echo '127.0.0.1 host.docker.internal' | sudo tee -a /etc/hosts
 ```
 
-### Run application locally ignoring auth requirements
-`./gradlew bootRunLocal`
-
 ### Run full stack via Docker (mock OAuth2 server)
 
 Builds and runs the app, postgres, and a mock OAuth2 server. Requires `.env` to be present:
