@@ -11,7 +11,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
     implementation 'org.openapitools:jackson-databind-nullable:0.2.10'
-    implementation platform("com.fasterxml.jackson:jackson-bom:2.22.0")
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.22.1")
 }
 
 sourceSets.main.java.srcDirs += ['generated/src/main/java']
