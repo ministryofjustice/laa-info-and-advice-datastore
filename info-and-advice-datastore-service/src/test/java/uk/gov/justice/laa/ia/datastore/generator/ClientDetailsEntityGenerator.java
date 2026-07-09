@@ -37,7 +37,9 @@ public class ClientDetailsEntityGenerator {
             .firstName("Joe")
             .lastName("Bloggs")
             .niNumber("AB123456Q")
-            .dateOfBirth(LocalDate.of(1990, 01, 01));
+            .dateOfBirth(LocalDate.of(1990, 01, 01))
+            .createdBy("SYSTEM")
+            .modifiedBy("SYSTEM");
     if (customizer != null) {
       customizer.accept(builder);
     }

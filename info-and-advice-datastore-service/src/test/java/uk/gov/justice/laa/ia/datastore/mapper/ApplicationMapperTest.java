@@ -3,12 +3,17 @@ package uk.gov.justice.laa.ia.datastore.mapper;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.when;
 
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
@@ -24,12 +29,10 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-public class ApplicationMapperTest extends BaseMapperTest {
-  private final ApplicationMapper sut;
-
-  ApplicationMapperTest() {
-    sut = applicationMapper;
-  }
+@SpringBootTest
+public class ApplicationMapperTest {
+  @Autowired private ApplicationMapper sut;
+  @MockitoBean private UserContext userContext;
 
   @Test
   void toApplication_shouldMapAllProperties() {
@@ -94,6 +97,33 @@ public class ApplicationMapperTest extends BaseMapperTest {
 
     assertNotNull(mappedModel);
     assertNotNull(mappedModel.getClientDetails());
+  }
+
+  @Test
+  void startCaseCommand_toApplication_shouldSetCreatedAndModifiedBy() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final StartCaseCommand cmd = StartCaseCommandGenerator.create(null);
+
+    // Act
+    final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
+
+    // Assert
+    assertEquals("USERCONTEXT:SYSTEM", mappedModel.getCreatedBy());
+    assertEquals("USERCONTEXT:SYSTEM", mappedModel.getModifiedBy());
+  }
+
+  @Test
+  void startCaseCommand_toApplication_shouldSetProviderFirmId() {
+    // Arrange
+    final UUID providerFirmId = UUID.randomUUID();
+    when(userContext.getProviderFirmId()).thenReturn(providerFirmId);
+    final StartCaseCommand cmd = StartCaseCommandGenerator.create(null);
+    // Act
+    final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
+
+    // Assert
+    assertEquals(providerFirmId, mappedModel.getProviderFirmId());
   }
 
   private static void assertEligibiltyEquals(

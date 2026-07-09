@@ -1,11 +1,15 @@
 package uk.gov.justice.laa.ia.datastore.mapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
@@ -13,12 +17,10 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-public class DeclarationMapperTest extends BaseMapperTest {
-  @InjectMocks private final DeclarationMapper sut;
-
-  DeclarationMapperTest() {
-    sut = new DeclarationMapperImpl(dtMapper);
-  }
+@SpringBootTest
+public class DeclarationMapperTest {
+  @Autowired private DeclarationMapper sut;
+  @MockitoBean private UserContext userContext;
 
   @Test
   void toDeclarationResponse_shouldMapAllProperties() {
@@ -44,5 +46,17 @@ public class DeclarationMapperTest extends BaseMapperTest {
     final DeclarationEntity mappedEntity = sut.toDeclarationEntity(cmd);
 
     assertEquals(cmd.getDeclarationConfirmation(), mappedEntity.isDeclarationConfirmation());
+  }
+
+  @Test
+  void toDeclarationEntity_shouldSetCreatedByAndModifiedBy() {
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final DeclarationCommand cmd =
+        DeclarationCommand.builder().declarationConfirmation(true).build();
+
+    final DeclarationEntity mappedEntity = sut.toDeclarationEntity(cmd);
+
+    assertEquals("USERCONTEXT:SYSTEM", mappedEntity.getCreatedBy());
+    assertEquals("USERCONTEXT:SYSTEM", mappedEntity.getModifiedBy());
   }
 }

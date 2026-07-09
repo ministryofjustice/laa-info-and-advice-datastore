@@ -76,7 +76,20 @@ public class EligibilityResultRepositoryIntegrationTest extends BaseIntegrationT
 
     // Assert
     assertThat(getApplication.getEligibilityResults()).hasSize(2);
-    assertThat(getApplication.getEligibilityResults()).contains(entity1);
-    assertThat(getApplication.getEligibilityResults()).contains(entity2);
+    assertSetContainsEligiblityResult(getApplication.getEligibilityResults(), entity1);
+    assertSetContainsEligiblityResult(getApplication.getEligibilityResults(), entity2);
+  }
+
+  private static void assertSetContainsEligiblityResult(
+      Iterable<EligibilityResultEntity> eligibilityResults, EligibilityResultEntity expected) {
+    assertThat(eligibilityResults)
+        .anySatisfy(
+            result -> {
+              assertThat(result.getEligibilityResultId())
+                  .isEqualTo(expected.getEligibilityResultId());
+              assertThat(result.getApplicationId()).isEqualTo(expected.getApplicationId());
+              assertThat(result.getResultJson()).isEqualTo(expected.getResultJson());
+              assertThat(result.getCreatedAt()).isNotNull();
+            });
   }
 }

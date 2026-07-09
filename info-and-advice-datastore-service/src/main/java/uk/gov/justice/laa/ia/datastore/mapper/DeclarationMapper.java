@@ -3,6 +3,8 @@ package uk.gov.justice.laa.ia.datastore.mapper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
@@ -12,14 +14,17 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
     componentModel = "spring",
     uses = {DateTimeMapper.class},
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
-public interface DeclarationMapper {
-  DeclarationResponse toDeclarationResponse(DeclarationEntity entity);
+public abstract class DeclarationMapper {
+
+  @Autowired protected UserContext userContext;
+
+  public abstract DeclarationResponse toDeclarationResponse(DeclarationEntity entity);
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "clientDeclarationStatus", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
-  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")
   @Mapping(target = "modifiedAt", ignore = true)
-  @Mapping(target = "modifiedBy", ignore = true)
-  DeclarationEntity toDeclarationEntity(DeclarationCommand command);
+  @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
+  public abstract DeclarationEntity toDeclarationEntity(DeclarationCommand command);
 }
