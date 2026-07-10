@@ -19,6 +19,7 @@ import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 
 /** For shared integration test behaviours. */
 @ActiveProfiles("test")
@@ -34,6 +35,7 @@ public abstract class BaseIntegrationTest {
   @Autowired protected ClientDetailsRepository clientDetailsRepository;
   @Autowired protected ApplicationRepository applicationRepository;
   @Autowired protected EligibilityResultRepository eligibilityResultRepository;
+  @Autowired protected EventRepository eventRepository;
   @Autowired protected MockMvc mockMvc;
   private final ObjectMapper objectMapper =
       new ObjectMapper()
