@@ -86,8 +86,3 @@ tasks.register('checkstyleAll') {
     description = 'Runs checkstyleMain, checkstyleTest, and checkstyleIntegrationTest.'
     dependsOn tasks.matching { it.name in ['checkstyleMain', 'checkstyleTest', 'checkstyleIntegrationTest'] }
 }
-
-tasks.register('bootRunLocal') {
-   dependsOn 'bootRun'
-   bootRun.systemProperty('spring.profiles.active', 'local')
-}

@@ -17,12 +17,12 @@ public class MockHttpServletRequestBuilderExtensions {
   /** Extension method to add a Bearer token to the headers. */
   public static MockHttpServletRequestBuilder withBearerReadToken(
       MockHttpServletRequestBuilder builder) {
-    return builder.header("Authorization", "Bearer " + TestJwtConfig.READ_TOKEN);
+    return builder.header("Authorization", "Bearer " + TestJwtConfig.ACCESS_TOKEN);
   }
 
   /** Extension method to add a Bearer token to the headers. */
   public static MockHttpServletRequestBuilder withBearerWriteToken(
       MockHttpServletRequestBuilder builder) {
-    return builder.header("Authorization", "Bearer " + TestJwtConfig.WRITE_TOKEN);
+    return builder.header("Authorization", "Bearer " + TestJwtConfig.ACCESS_TOKEN);
   }
 }

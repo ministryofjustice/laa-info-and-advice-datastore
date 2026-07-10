@@ -11,16 +11,13 @@ import uk.gov.laa.springboot.oauth2.testsupport.StubJwtToken;
 @TestConfiguration
 public class TestJwtConfig {
 
-  public static final String READ_TOKEN = "applications-read-token";
-  public static final String WRITE_TOKEN = "applications-write-token";
+  public static final String ACCESS_TOKEN = "datastore-access-token";
 
-  /** Stub {@link JwtDecoder} seeded with tokens for each scope used in tests. */
+  /** Stub {@link JwtDecoder} seeded with a token containing the DataStore.Access role. */
   @Bean
   public JwtDecoder jwtDecoder() {
     return StubJwtDecoder.of(
         new StubJwtToken(
-            READ_TOKEN, "test-user", null, new String[] {"applications:read"}, Map.of()),
-        new StubJwtToken(
-            WRITE_TOKEN, "test-user", null, new String[] {"applications:write"}, Map.of()));
+            ACCESS_TOKEN, "test-user", new String[] {"DataStore.Access"}, null, Map.of()));
   }
 }

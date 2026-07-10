@@ -67,14 +67,59 @@ Go back to Github to authorize MOJ for SSO
 ### Run integration tests
 `./gradlew integrationTest`
 
-### Run application locally ignoring auth requirements
-`./gradlew bootRunLocal`
+### Prerequisites
 
-### Run application
-`./gradlew bootRun`
+On first setup, add `host.docker.internal` to your `/etc/hosts` (Docker Desktop on Mac does not add this automatically):
 
-### Run application via Docker
-`docker compose up`
+```bash
+echo '127.0.0.1 host.docker.internal' | sudo tee -a /etc/hosts
+```
+
+### Run full stack via Docker (mock OAuth2 server)
+
+Builds and runs the app, postgres, and a mock OAuth2 server. Requires `.env` to be present:
+
+```bash
+cp .env.example .env
+./gradlew :info-and-advice-datastore-service:bootJar
+docker-compose up -d --build
+```
+
+Get an access token and call the API:
+
+```bash
+TOKEN=$(curl -s -X POST http://host.docker.internal:9090/default/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id=test&client_secret=test" \
+  | jq -r .access_token)
+
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v0/applications
+```
+
+The mock server automatically issues tokens with the `DataStore.Access` role for `client_credentials` grants.
+
+### Run application with Entra authentication
+
+Copy `.env.example` to `.env` and uncomment the Entra values, filling in the tenant ID and application (client) ID:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Description |
+|---|---|
+| `LAA_OAUTH2_ISSUER_URI` | Entra token issuer URI, e.g. `https://login.microsoftonline.com/<tenant-id>/v2.0` |
+| `LAA_OAUTH2_AUDIENCE` | Application (client) ID of this app registration in Entra |
+
+Then export the variables and run:
+
+```bash
+set -a && source .env && set +a
+./gradlew :info-and-advice-datastore-service:bootRun
+```
+
+> **Note:** The app must be run directly (not via Docker) when using Entra, as
+> Docker containers on a VPN may not be able to resolve `login.microsoftonline.com`.
 
 ## Development guidelines
 

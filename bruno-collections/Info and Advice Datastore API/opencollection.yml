@@ -8,3 +8,14 @@ extensions:
     ignore:
       - node_modules
       - .git
+auth:
+  mode: oauth2
+  oauth2:
+    grantType: client_credentials
+    accessTokenUrl: "{{tokenUrl}}"
+    clientId: "{{clientId}}"
+    clientSecret: "{{clientSecret}}"
+    scope: "{{scope}}"
+    tokenPlacement: header
+    tokenHeaderPrefix: Bearer
+    tokenHeaderName: Authorization
