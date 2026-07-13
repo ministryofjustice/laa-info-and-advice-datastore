@@ -139,6 +139,10 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     assertThat(event.getHttpMethod()).isEqualTo(expectedMethod);
     assertThat(event.getUrlPath()).contains(expectedUrlContains);
     assertThat(event.getChangedBy()).isEqualTo("SYSTEM");
+    assertThat(event.getProviderFirmId())
+        .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    assertThat(event.getProviderOfficeId())
+        .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000001"));
     assertThat(event.getSequenceNumber()).isNotNull();
     assertThat(event.getCreatedAt()).isNotNull();
     assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(expectedPayload));
