@@ -53,6 +53,7 @@ public class ApplicationServiceTest {
   @Mock private DeclarationMapper declarationMapper;
   @Mock private UserContext userContext;
   @Mock private ObjectMapper objectMapper;
+  @Mock private EventService eventService;
 
   @InjectMocks private ApplicationService sut;
 
@@ -392,5 +393,107 @@ public class ApplicationServiceTest {
     assertThat(application.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
     assertThat(application.getModifiedAt()).isNotNull();
     verify(repo, times(1)).save(application);
+  }
+
+  @Test
+  void shouldRecordEvent_whenApplicationCreated() {
+    // Arrange
+    final StartCaseCommand cmd = StartCaseCommand.builder().build();
+    final ApplicationEntity entity = new ApplicationEntity();
+    when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
+    when(repo.save(any(ApplicationEntity.class))).thenAnswer(i -> i.getArgument(0));
+
+    // Act
+    sut.createApplication(cmd);
+
+    // Assert
+    verify(eventService, times(1)).record(cmd);
+  }
+
+  @Test
+  void shouldRecordEvent_whenMeansDataUpdated() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final Object body = new Object();
+    final JsonNode jsonNode = new ObjectMapper().createObjectNode();
+    final ApplicationEntity application = ApplicationEntity.builder().id(applicationId).build();
+    when(repo.findById(applicationId)).thenReturn(Optional.of(application));
+    when(userContext.canAccessApplication(application)).thenReturn(true);
+    when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
+
+    // Act
+    sut.updateMeansData(applicationId, body);
+
+    // Assert
+    verify(eventService, times(1)).record(body);
+  }
+
+  @Test
+  void shouldNotRecordEvent_whenMeansDataUpdatedForUnknownApplication() {
+    // Arrange
+    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+
+    // Act
+    sut.updateMeansData(UUID.randomUUID(), new Object());
+
+    // Assert
+    verify(eventService, never()).record(any());
+  }
+
+  @Test
+  void shouldRecordEvent_whenDeclarationUpdated() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final DeclarationCommand command =
+        DeclarationCommand.builder().declarationConfirmation(true).build();
+    final DeclarationEntity declarationEntity =
+        DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
+    when(repo.findById(applicationId)).thenReturn(Optional.of(new ApplicationEntity()));
+    when(declarationMapper.toDeclarationEntity(command)).thenReturn(declarationEntity);
+
+    // Act
+    sut.updateClientDeclaration(applicationId, command);
+
+    // Assert
+    verify(eventService, times(1)).record(command);
+  }
+
+  @Test
+  void shouldNotRecordEvent_whenDeclarationUpdatedForUnknownApplication() {
+    // Arrange
+    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+
+    // Act
+    sut.updateClientDeclaration(UUID.randomUUID(), null);
+
+    // Assert
+    verify(eventService, never()).record(any());
+  }
+
+  @Test
+  void shouldRecordEvent_whenEvidenceUpdated() {
+    // Arrange
+    final var evidence = EvidenceGenerator.createEvidenceMap();
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
+    when(repo.findById(application.getId())).thenReturn(Optional.of(application));
+
+    // Act
+    sut.updateEvidence(application.getId(), evidence);
+
+    // Assert
+    verify(eventService, times(1)).record(evidence);
+  }
+
+  @Test
+  void shouldNotRecordEvent_whenEvidenceUpdatedForUnknownApplication() {
+    // Arrange
+    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+
+    // Act
+    sut.updateEvidence(UUID.randomUUID(), null);
+
+    // Assert
+    verify(eventService, never()).record(any());
   }
 }

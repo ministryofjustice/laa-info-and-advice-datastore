@@ -39,6 +39,7 @@ public class ApplicationService {
   private final DeclarationMapper declarationMapper;
   private final UserContext userContext;
   private final ObjectMapper objectMapper;
+  private final EventService eventService;
 
   /**
    * Create an application.
@@ -56,6 +57,7 @@ public class ApplicationService {
     entity.setModifiedBy(userContext.getCurrentUser());
 
     ApplicationEntity saved = repository.save(entity);
+    eventService.record(startCase);
     return saved.getId();
   }
 
@@ -129,6 +131,7 @@ public class ApplicationService {
     application.setModifiedAt(Instant.now());
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
+    eventService.record(body);
     return true;
   }
 
@@ -137,6 +140,7 @@ public class ApplicationService {
    *
    * @return true if application updated, false if not found.
    */
+  @Transactional
   public boolean updateClientDeclaration(
       UUID applicationId, DeclarationCommand declarationConfirmation) {
     final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
@@ -165,6 +169,7 @@ public class ApplicationService {
     application.setModifiedAt(modifiedAt);
 
     repository.save(application);
+    eventService.record(declarationConfirmation);
     return true;
   }
 
@@ -173,6 +178,7 @@ public class ApplicationService {
    *
    * @return true if application updated, false if not found.
    */
+  @Transactional
   public boolean updateEvidence(UUID applicationId, Map<String, Object> evidence) {
 
     final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
@@ -184,6 +190,7 @@ public class ApplicationService {
     application.setModifiedAt(Instant.now());
     application.setEvidence(evidence);
     repository.save(application);
+    eventService.record(evidence);
     return true;
   }
 }

@@ -1,0 +1,159 @@
+package uk.gov.justice.laa.ia.datastore.controller;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.UUID;
+import lombok.experimental.ExtensionMethod;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
+import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
+import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
+import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
+
+/** Integration tests verifying that an event is recorded for each mutating operation. */
+@ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
+public class EventsIntegrationTest extends BaseIntegrationTest {
+
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
+  @Test
+  void shouldRecordEvent_whenApplicationCreated() throws Exception {
+    StartCaseCommand command = StartCaseCommandGenerator.create(null);
+    String payload = toJson(command);
+
+    mockMvc
+        .perform(
+            post("/api/v0/applications:start-case")
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isCreated());
+
+    assertSingleEventRecorded("POST", "/api/v0/applications:start-case", payload);
+  }
+
+  @Test
+  void shouldRecordEvent_whenMeansDataUpdated() throws Exception {
+    final UUID applicationId = savedApplicationId();
+    final String payload =
+        """
+        {"determinationId": "%s", "meansAssessmentRequired": true}
+        """
+            .formatted(UUID.randomUUID());
+
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}:update-means-data", applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isOk());
+
+    assertSingleEventRecorded("PUT", applicationId.toString(), payload);
+  }
+
+  @Test
+  void shouldRecordEvent_whenDeclarationUpdated() throws Exception {
+    final UUID applicationId = savedApplicationId();
+    final String payload =
+        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateDeclaration, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNoContent());
+
+    assertSingleEventRecorded("PUT", applicationId.toString(), payload);
+  }
+
+  @Test
+  void shouldRecordEvent_whenEvidenceUpdated() throws Exception {
+    final UUID applicationId = savedApplicationId();
+    final String payload = toJson(EvidenceGenerator.createEvidenceMap());
+
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateEvidence, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNoContent());
+
+    assertSingleEventRecorded("PUT", applicationId.toString(), payload);
+  }
+
+  @Test
+  void shouldRecordEventsInOrder_whenMultipleMutationsOccur() throws Exception {
+    UUID applicationId = savedApplicationId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateDeclaration, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    toJson(DeclarationCommand.builder().declarationConfirmation(true).build())))
+        .andExpect(status().isNoContent());
+
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateEvidence, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(EvidenceGenerator.createEvidenceMap())))
+        .andExpect(status().isNoContent());
+
+    clearCache();
+    List<EventEntity> events =
+        eventRepository.findAll().stream()
+            .sorted((a, b) -> a.getSequenceNumber().compareTo(b.getSequenceNumber()))
+            .toList();
+    assertThat(events).hasSize(2);
+    assertThat(events.get(0).getSequenceNumber()).isLessThan(events.get(1).getSequenceNumber());
+    assertThat(events.get(0).getUrlPath()).contains("/declaration");
+    assertThat(events.get(1).getUrlPath()).contains(":update-evidence");
+  }
+
+  private void assertSingleEventRecorded(
+      String expectedMethod, String expectedUrlContains, String expectedPayload) throws Exception {
+    clearCache();
+    List<EventEntity> events = eventRepository.findAll();
+    assertThat(events).hasSize(1);
+    EventEntity event = events.getFirst();
+    assertThat(event.getHttpMethod()).isEqualTo(expectedMethod);
+    assertThat(event.getUrlPath()).contains(expectedUrlContains);
+    assertThat(event.getChangedBy()).isEqualTo("SYSTEM");
+    assertThat(event.getProviderFirmId())
+        .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    assertThat(event.getProviderOfficeId())
+        .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+    assertThat(event.getSequenceNumber()).isNotNull();
+    assertThat(event.getCreatedAt()).isNotNull();
+    assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(expectedPayload));
+  }
+
+  private UUID savedApplicationId() {
+    return applicationRepository
+        .saveAndFlush(
+            ApplicationEntityGenerator.createWithoutId(
+                builder ->
+                    builder.clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))))
+        .getId();
+  }
+}
