@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
 
 /** Test class for {@link EligibilityMapper}. */
-@SpringBootTest
+@SpringBootTest(classes = {EligibilityMapperImpl.class, DateTimeMapperImpl.class})
 public class EligibilityMapperTest {
   @Autowired private EligibilityMapper eligibilityMapper;
 

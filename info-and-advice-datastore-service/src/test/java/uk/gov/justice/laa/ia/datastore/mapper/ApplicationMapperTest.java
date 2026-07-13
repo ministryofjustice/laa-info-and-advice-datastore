@@ -29,7 +29,16 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest
+@SpringBootTest(
+    classes = {
+      ApplicationMapperImpl.class,
+      UserContext.class,
+      DeclarationMapperImpl.class,
+      EligibilityMapperImpl.class,
+      ClientDetailsMapperImpl.class,
+      AddressMapperImpl.class,
+      DateTimeMapperImpl.class,
+    })
 public class ApplicationMapperTest {
   @Autowired private ApplicationMapper sut;
   @MockitoBean private UserContext userContext;

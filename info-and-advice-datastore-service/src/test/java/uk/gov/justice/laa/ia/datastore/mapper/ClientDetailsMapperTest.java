@@ -23,7 +23,13 @@ import uk.gov.justice.laa.ia.datastore.model.CreateClientCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest
+@SpringBootTest(
+    classes = {
+      ClientDetailsMapperImpl.class,
+      UserContext.class,
+      AddressMapperImpl.class,
+      DateTimeMapperImpl.class
+    })
 public class ClientDetailsMapperTest {
   @Autowired private ClientDetailsMapper sut;
   @MockitoBean private UserContext userContext;

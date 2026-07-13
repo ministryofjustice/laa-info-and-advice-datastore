@@ -17,7 +17,8 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest
+@SpringBootTest(
+    classes = {DeclarationMapperImpl.class, UserContext.class, DateTimeMapperImpl.class})
 public class DeclarationMapperTest {
   @Autowired private DeclarationMapper sut;
   @MockitoBean private UserContext userContext;

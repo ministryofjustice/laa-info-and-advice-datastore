@@ -20,7 +20,7 @@ import uk.gov.justice.laa.ia.datastore.model.CreateAddressCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest
+@SpringBootTest(classes = {AddressMapperImpl.class, UserContext.class, DateTimeMapperImpl.class})
 public class AddressMapperTest {
   @Autowired private AddressMapper sut;
   @MockitoBean private UserContext userContext;
