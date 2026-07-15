@@ -27,6 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -51,6 +52,7 @@ import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
           + "org.springframework.boot.security.oauth2.server.resource"
           + ".autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration"
     })
+@ActiveProfiles(profiles = "test")
 public class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
