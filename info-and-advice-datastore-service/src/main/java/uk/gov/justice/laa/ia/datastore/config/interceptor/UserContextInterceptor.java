@@ -32,6 +32,9 @@ public class UserContextInterceptor implements HandlerInterceptor {
     JsonNode payloadNode = objectMapper.readTree(payload);
     UUID providerFirmId = UUID.fromString(payloadNode.get("providerFirmId").asText());
     userContext.setProviderFirmId(providerFirmId);
+
+    // TODO: reject when providerFirmId is null or not a valid UUID
+
     return true; // Continue with the next interceptor or the handler itself
   }
 
