@@ -102,6 +102,7 @@ public class ApplicationServiceTest {
         ApplicationResponse.builder().id(entity1.getId()).build();
     final ApplicationResponse application2 =
         ApplicationResponse.builder().id(entity2.getId()).build();
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
     when(mapper.toApplication(entity1)).thenReturn(application1);
@@ -118,37 +119,14 @@ public class ApplicationServiceTest {
   }
 
   @Test
-  void shouldPassSpecificationToRepository_whenGettingAllApplications() {
-    // Arrange
-    final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
-    final ApplicationResponse application1 =
-        ApplicationResponse.builder().id(entity1.getId()).build();
-    when(repo.findAll(any(Specification.class), any(Pageable.class)))
-        .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1)));
-    when(mapper.toApplication(entity1)).thenReturn(application1);
-
-    // Act
-    final Page<ApplicationResponse> result =
-        sut.getAllApplications(
-            (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("id"), entity1.getId()),
-            0,
-            10);
-
-    // Assert
-    assertThat(result.getContent()).hasSize(1).contains(application1);
-    verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
-    verify(mapper, times(1)).toApplication(any());
-  }
-
-  @Test
   void shouldGetApplication() {
     // Arrange
     final ApplicationEntity entity = ApplicationEntity.builder().id(UUID.randomUUID()).build();
     final ApplicationResponse application =
         ApplicationResponse.builder().id(entity.getId()).build();
-    when(repo.findById(entity.getId())).thenReturn(Optional.of(entity));
-    when(userContext.canAccessApplication(entity)).thenReturn(true);
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
+
     when(mapper.toApplication(entity)).thenReturn(application);
 
     // Act
@@ -156,30 +134,15 @@ public class ApplicationServiceTest {
 
     // Assert
     assertThat(result).isEqualTo(application);
-    verify(repo, times(1)).findById(entity.getId());
+    verify(repo, times(1)).findOne(any(Specification.class));
     verify(mapper, times(1)).toApplication(entity);
-  }
-
-  @Test
-  void shouldReturnEmptyOptional_whenAccessDenied() {
-    // Arrange
-    final ApplicationEntity entity = ApplicationEntity.builder().id(UUID.randomUUID()).build();
-    when(repo.findById(entity.getId())).thenReturn(Optional.of(entity));
-    when(userContext.canAccessApplication(entity)).thenReturn(false);
-
-    // Act
-    Optional<ApplicationResponse> result = sut.getApplication(entity.getId());
-
-    // Assert
-    assertThat(result).isEmpty();
-    verify(repo, times(1)).findById(entity.getId());
-    verify(mapper, times(0)).toApplication(any());
   }
 
   @Test
   void shouldReturnEmptyOptional_whenApplicationDoesNotExist() {
     // Arrange
-    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
     Optional<ApplicationResponse> result = sut.getApplication(UUID.randomUUID());
@@ -199,8 +162,8 @@ public class ApplicationServiceTest {
     final JsonNode jsonNode = new ObjectMapper().createObjectNode();
     final String user = "TEST_USER";
 
-    when(repo.findById(applicationId)).thenReturn(Optional.of(application));
-    when(userContext.canAccessApplication(application)).thenReturn(true);
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn(user);
     when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
 
@@ -226,7 +189,8 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final Object body = new Object();
-    when(repo.findById(applicationId)).thenReturn(Optional.empty());
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
     boolean result = sut.updateMeansData(applicationId, body);
@@ -246,7 +210,8 @@ public class ApplicationServiceTest {
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
     final ApplicationEntity applicationEntity = new ApplicationEntity();
-    when(repo.findById(applicationId)).thenReturn(Optional.of(applicationEntity));
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
 
     // Act
@@ -296,7 +261,8 @@ public class ApplicationServiceTest {
               builder.modifiedAt(originalCreatedTime);
               builder.modifiedBy(originalUser);
             });
-    when(repo.findById(applicationId)).thenReturn(Optional.of(applicationEntity));
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
 
     assertThat(applicationEntity.getDeclaration().getCreatedAt()).isEqualTo(originalCreatedTime);
     assertThat(applicationEntity.getDeclaration().getModifiedAt()).isEqualTo(originalCreatedTime);
@@ -328,7 +294,8 @@ public class ApplicationServiceTest {
   @Test
   void updateDeclaration_shouldReturnFalse_whenApplicationDoesNotExist() {
     // Arrange
-    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
     final boolean result = sut.updateClientDeclaration(UUID.randomUUID(), null);
@@ -341,7 +308,8 @@ public class ApplicationServiceTest {
   @Test
   void updateEvidence_shouldReturnFalse_whenApplicationDoesNotExist() {
     // Arrange
-    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
     final boolean result = sut.updateEvidence(UUID.randomUUID(), null);
@@ -359,7 +327,8 @@ public class ApplicationServiceTest {
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
 
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
-    when(repo.findById(application.getId())).thenReturn(Optional.of(application));
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
     final boolean result = sut.updateEvidence(application.getId(), evidence);
@@ -381,7 +350,8 @@ public class ApplicationServiceTest {
     final var originalEvidence = application.getEvidence();
     final var evidence = EvidenceGenerator.createEvidenceMap();
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
-    when(repo.findById(application.getId())).thenReturn(Optional.of(application));
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
     final boolean result = sut.updateEvidence(application.getId(), evidence);
@@ -417,8 +387,8 @@ public class ApplicationServiceTest {
     final Object body = new Object();
     final JsonNode jsonNode = new ObjectMapper().createObjectNode();
     final ApplicationEntity application = ApplicationEntity.builder().id(applicationId).build();
-    when(repo.findById(applicationId)).thenReturn(Optional.of(application));
-    when(userContext.canAccessApplication(application)).thenReturn(true);
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
 
     // Act
@@ -431,7 +401,8 @@ public class ApplicationServiceTest {
   @Test
   void shouldNotRecordEvent_whenMeansDataUpdatedForUnknownApplication() {
     // Arrange
-    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
     sut.updateMeansData(UUID.randomUUID(), new Object());
@@ -448,7 +419,8 @@ public class ApplicationServiceTest {
         DeclarationCommand.builder().declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
-    when(repo.findById(applicationId)).thenReturn(Optional.of(new ApplicationEntity()));
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(new ApplicationEntity()));
     when(declarationMapper.toDeclarationEntity(command)).thenReturn(declarationEntity);
 
     // Act
@@ -461,7 +433,8 @@ public class ApplicationServiceTest {
   @Test
   void shouldNotRecordEvent_whenDeclarationUpdatedForUnknownApplication() {
     // Arrange
-    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
     sut.updateClientDeclaration(UUID.randomUUID(), null);
@@ -476,7 +449,8 @@ public class ApplicationServiceTest {
     final var evidence = EvidenceGenerator.createEvidenceMap();
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
-    when(repo.findById(application.getId())).thenReturn(Optional.of(application));
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
     sut.updateEvidence(application.getId(), evidence);
@@ -488,7 +462,8 @@ public class ApplicationServiceTest {
   @Test
   void shouldNotRecordEvent_whenEvidenceUpdatedForUnknownApplication() {
     // Arrange
-    when(repo.findById(any(UUID.class))).thenReturn(Optional.empty());
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
     sut.updateEvidence(UUID.randomUUID(), null);

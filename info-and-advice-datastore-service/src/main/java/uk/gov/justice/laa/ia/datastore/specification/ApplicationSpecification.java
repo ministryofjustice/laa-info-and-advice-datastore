@@ -12,6 +12,13 @@ public class ApplicationSpecification {
 
   private static final UUID EMPTY_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
+  /** Setups a specification for filtering ApplicationEntity by applicationId and providerFirmId. */
+  public static Specification<ApplicationEntity> findById(UUID applicationId, UUID providerFirmId) {
+    return filterByProviderFirmId(providerFirmId)
+        .and(
+            (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("id"), applicationId));
+  }
+
   /** Setups a specification for filtering ApplicationEntity by providerFirmId. */
   public static Specification<ApplicationEntity> filterByProviderFirmId(UUID providerFirmId) {
     if (providerFirmId == null || providerFirmId.equals(EMPTY_UUID)) {

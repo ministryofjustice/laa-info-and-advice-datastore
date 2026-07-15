@@ -10,7 +10,8 @@
           "match": "client_credentials",
           "claims": {
             "aud": "default",
-            "roles": ["DataStore.Access"]
+            "roles": ["DataStore.Access"],
+            "providerFirmId": "942c2013-9a52-4b5d-8531-7749f286af8e"
           }
         }
       ]

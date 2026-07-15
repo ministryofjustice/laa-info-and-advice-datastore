@@ -30,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
@@ -41,7 +42,7 @@ import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 
 /** Unit testing for the {@link ApplicationController}. */
-@WebMvcTest(ApplicationController.class)
+@WebMvcTest({ApplicationController.class, UserContext.class, ObjectMapper.class})
 @TestPropertySource(
     properties = {
       "spring.autoconfigure.exclude="

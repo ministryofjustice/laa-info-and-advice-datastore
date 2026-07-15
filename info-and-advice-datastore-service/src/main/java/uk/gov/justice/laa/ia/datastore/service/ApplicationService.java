@@ -25,6 +25,7 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
 /** Service class for handling Applications. */
 @RequiredArgsConstructor
@@ -75,8 +76,12 @@ public class ApplicationService {
 
     int resolvedPage = page != null ? page : 0;
     int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
+
     Specification<ApplicationEntity> resolvedSpecification =
-        specification != null ? specification : Specification.unrestricted();
+        ApplicationSpecification.filterByProviderFirmId(userContext.getProviderFirmId());
+    if (specification != null) {
+      resolvedSpecification = resolvedSpecification.and(specification);
+    }
 
     return repository
         .findAll(resolvedSpecification, PageRequest.of(resolvedPage, resolvedSize))
@@ -89,9 +94,10 @@ public class ApplicationService {
    * @return {@link ApplicationResponse}
    */
   public Optional<ApplicationResponse> getApplication(UUID applicationId) {
+    var findApplicationByIdSpecification =
+        ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId());
     return repository
-        .findById(applicationId)
-        .filter(userContext::canAccessApplication)
+        .findOne(findApplicationByIdSpecification)
         .map(applicationMapper::toApplication);
   }
 
@@ -105,7 +111,8 @@ public class ApplicationService {
   @Transactional
   public boolean updateMeansData(UUID applicationId, Object body) {
     Optional<ApplicationEntity> applicationOpt =
-        repository.findById(applicationId).filter(userContext::canAccessApplication);
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -143,7 +150,9 @@ public class ApplicationService {
   @Transactional
   public boolean updateClientDeclaration(
       UUID applicationId, DeclarationCommand declarationConfirmation) {
-    final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
+    final Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -181,7 +190,9 @@ public class ApplicationService {
   @Transactional
   public boolean updateEvidence(UUID applicationId, Map<String, Object> evidence) {
 
-    final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
+    final Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
