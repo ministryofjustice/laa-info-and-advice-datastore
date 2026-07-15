@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.context;
 
 import java.util.UUID;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.annotation.RequestScope;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 
 /**
@@ -9,6 +10,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
  * place" to update when we implement real authentication.
  */
 @Component
+@RequestScope
 public class UserContext {
 
   /**
