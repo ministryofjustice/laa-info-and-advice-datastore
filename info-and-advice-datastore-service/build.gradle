@@ -10,6 +10,14 @@ configurations.configureEach {
             details.useVersion '1.5.36'
             details.because 'CVE fix: Expression Injection in logback-core < 1.5.36'
         }
+        if (details.requested.group == 'com.fasterxml.jackson.core' && details.requested.name == 'jackson-databind') {
+            details.useVersion '2.21.5'
+            details.because 'CVE fix: Incorrect Authorization in jackson-databind < 2.21.5'
+        }
+        if (details.requested.group == 'tools.jackson.core' && details.requested.name == 'jackson-databind') {
+            details.useVersion '3.1.5'
+            details.because 'CVE fix: Incorrect Authorization in jackson-databind < 3.1.5'
+        }
     }
 }
 
