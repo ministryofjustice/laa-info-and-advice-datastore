@@ -24,6 +24,7 @@ import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerato
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityResultResponse;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 
@@ -42,6 +43,29 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 public class ApplicationMapperTest {
   @Autowired private ApplicationMapper sut;
   @MockitoBean private UserContext userContext;
+
+  @Test
+  void toApplicationSummary_shouldMapSummaryFields() {
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> {
+              builder.clientDetails(ClientDetailsEntityGenerator.createWithId(null));
+              builder.referenceNumber("LAA-TEST-001");
+            });
+
+    final ApplicationSummary summary = sut.toApplicationSummary(application);
+
+    assertEquals(application.getId(), summary.getId());
+    assertEquals(application.getReferenceNumber(), summary.getReferenceNumber());
+    assertEquals(application.getClientDetails().getFirstName(), summary.getClientFirstName());
+    assertEquals(application.getClientDetails().getLastName(), summary.getClientLastName());
+    assertEquals(application.getModifiedAt(), summary.getModifiedAt().toInstant());
+  }
+
+  @Test
+  void toApplicationSummary_whenNull_shouldReturnNull() {
+    assertNull(sut.toApplicationSummary(null));
+  }
 
   @Test
   void toApplication_shouldMapAllProperties() {

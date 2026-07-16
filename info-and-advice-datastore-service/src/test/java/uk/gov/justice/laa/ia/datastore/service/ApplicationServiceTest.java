@@ -38,6 +38,7 @@ import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
@@ -94,37 +95,34 @@ public class ApplicationServiceTest {
     // Arrange
     final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
     final ApplicationEntity entity2 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
-    final ApplicationResponse application1 =
-        ApplicationResponse.builder().id(entity1.getId()).build();
-    final ApplicationResponse application2 =
-        ApplicationResponse.builder().id(entity2.getId()).build();
+    final ApplicationSummary summary1 = new ApplicationSummary(entity1.getId(), "REF-001", null);
+    final ApplicationSummary summary2 = new ApplicationSummary(entity2.getId(), "REF-002", null);
     when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
-    when(mapper.toApplication(entity1)).thenReturn(application1);
-    when(mapper.toApplication(entity2)).thenReturn(application2);
+    when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
+    when(mapper.toApplicationSummary(entity2)).thenReturn(summary2);
 
     // Act
-    final Page<ApplicationResponse> result = sut.getAllApplications(null, null, null);
+    final Page<ApplicationSummary> result = sut.getAllApplications(null, null, null);
 
     // Assert
-    assertThat(result.getContent()).hasSize(2).contains(application1, application2);
+    assertThat(result.getContent()).hasSize(2).contains(summary1, summary2);
     assertThat(result.getTotalElements()).isEqualTo(2);
     verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
-    verify(mapper, times(2)).toApplication(any());
+    verify(mapper, times(2)).toApplicationSummary(any());
   }
 
   @Test
   void shouldPassSpecificationToRepository_whenGettingAllApplications() {
     // Arrange
     final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
-    final ApplicationResponse application1 =
-        ApplicationResponse.builder().id(entity1.getId()).build();
+    final ApplicationSummary summary1 = new ApplicationSummary(entity1.getId(), "REF-001", null);
     when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1)));
-    when(mapper.toApplication(entity1)).thenReturn(application1);
+    when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
 
     // Act
-    final Page<ApplicationResponse> result =
+    final Page<ApplicationSummary> result =
         sut.getAllApplications(
             (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("id"), entity1.getId()),
@@ -132,9 +130,9 @@ public class ApplicationServiceTest {
             10);
 
     // Assert
-    assertThat(result.getContent()).hasSize(1).contains(application1);
+    assertThat(result.getContent()).hasSize(1).contains(summary1);
     verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
-    verify(mapper, times(1)).toApplication(any());
+    verify(mapper, times(1)).toApplicationSummary(any());
   }
 
   @Test

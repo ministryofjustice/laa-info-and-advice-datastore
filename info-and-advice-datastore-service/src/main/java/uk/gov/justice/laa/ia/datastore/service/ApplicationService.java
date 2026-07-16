@@ -19,6 +19,7 @@ import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
@@ -64,7 +65,7 @@ public class ApplicationService {
    * @param size the page size, if null will use default page size.
    * @return page of {@link ApplicationResponse}
    */
-  public Page<ApplicationResponse> getAllApplications(
+  public Page<ApplicationSummary> getAllApplications(
       Specification<ApplicationEntity> specification, Integer page, Integer size) {
 
     int resolvedPage = page != null ? page : 0;
@@ -74,7 +75,7 @@ public class ApplicationService {
 
     return repository
         .findAll(resolvedSpecification, PageRequest.of(resolvedPage, resolvedSize))
-        .map(applicationMapper::toApplication);
+        .map(applicationMapper::toApplicationSummary);
   }
 
   /**

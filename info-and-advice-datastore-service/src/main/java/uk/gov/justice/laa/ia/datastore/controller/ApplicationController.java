@@ -14,6 +14,7 @@ import uk.gov.justice.laa.ia.datastore.api.ApplicationApi;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponses;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
@@ -40,7 +41,7 @@ public class ApplicationController implements ApplicationApi {
   public ResponseEntity<ApplicationResponses> getApplications(
       Integer page, Integer size, UUID officeId) {
     final Specification<ApplicationEntity> filterBy = ApplicationSpecification.filterBy(officeId);
-    final Page<ApplicationResponse> result = service.getAllApplications(filterBy, page, size);
+    final Page<ApplicationSummary> result = service.getAllApplications(filterBy, page, size);
     final ApplicationResponses responses =
         new ApplicationResponses()
             .content(result.getContent())
