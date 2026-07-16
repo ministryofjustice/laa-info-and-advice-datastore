@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 
 /** The mapper between Application and ApplicationEntity. */
@@ -21,6 +22,11 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public abstract class ApplicationMapper {
   @Autowired protected UserContext userContext;
+
+  /** Maps an {@link ApplicationEntity} to an {@link ApplicationSummary} for list views. */
+  @Mapping(source = "clientDetails.firstName", target = "clientFirstName")
+  @Mapping(source = "clientDetails.lastName", target = "clientLastName")
+  public abstract ApplicationSummary toApplicationSummary(ApplicationEntity entity);
 
   /** Maps an {@link ApplicationEntity} to an {@link ApplicationResponse}. */
   @Mapping(source = "clientDetails.id", target = "individualLegalAidNumber")

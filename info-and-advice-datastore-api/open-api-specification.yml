@@ -235,6 +235,8 @@ components:
           type: boolean
         contribution:
           type: string
+        referenceNumber:
+          type: string
         applicationType:
           type: string
         determinationId:
@@ -253,13 +255,34 @@ components:
         modifiedBy:
           type: string
 
+    ApplicationSummary:
+      type: object
+      description: Slim representation of an application for use in list views
+      required:
+        - id
+        - referenceNumber
+        - modifiedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientFirstName:
+          type: string
+        clientLastName:
+          type: string
+        referenceNumber:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+
     ApplicationResponses:
       type: object
       properties:
         content:
           type: array
           items:
-            $ref: "#/components/schemas/ApplicationResponse"
+            $ref: "#/components/schemas/ApplicationSummary"
         page:
           type: integer
         size:
