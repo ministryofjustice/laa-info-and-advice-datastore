@@ -33,7 +33,8 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
 
     assertThat(getEntity)
         .usingRecursiveComparison()
-        .ignoringFields("referenceNumber", "createdAt", "modifiedAt", "eligibilityResults")
+        .ignoringFields("referenceNumber", "eligibilityResults")
+        .ignoringFieldsMatchingRegexes(".*createdAt", ".*modifiedAt")
         .isEqualTo(entity);
     assertThat(getEntity.getCreatedAt()).isNotNull();
     assertThat(getEntity.getModifiedAt()).isNotNull();

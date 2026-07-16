@@ -3,6 +3,8 @@ package uk.gov.justice.laa.ia.datastore.mapper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
@@ -17,22 +19,24 @@ import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
       EligibilityMapper.class
     },
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
-public interface ApplicationMapper {
-  /** Maps an {@link ApplicationEntity} to an {@link ApplicationEntity}. */
+public abstract class ApplicationMapper {
+  @Autowired protected UserContext userContext;
+
+  /** Maps an {@link ApplicationEntity} to an {@link ApplicationResponse}. */
   @Mapping(source = "clientDetails.id", target = "individualLegalAidNumber")
   @Mapping(source = "clientDetails", target = "client")
   @Mapping(source = "declaration", target = "declaration")
   @Mapping(source = "evidence", target = "evidence")
   @Mapping(source = "mostRecentEligibilityResult", target = "eligibilityResult")
-  ApplicationResponse toApplication(ApplicationEntity entity);
+  public abstract ApplicationResponse toApplication(ApplicationEntity entity);
 
   /** Maps an {@link StartCaseCommand} to an {@link ApplicationEntity}. */
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
-  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")
   @Mapping(target = "modifiedAt", ignore = true)
-  @Mapping(target = "modifiedBy", ignore = true)
-  @Mapping(target = "providerFirmId", ignore = true)
+  @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
+  @Mapping(target = "providerFirmId", expression = "java(userContext.getProviderFirmId())")
   @Mapping(target = "applicationState", ignore = true)
   @Mapping(target = "referenceNumber", ignore = true)
   @Mapping(target = "evidence", ignore = true)
@@ -45,5 +49,5 @@ public interface ApplicationMapper {
   @Mapping(target = "determinationId", ignore = true)
   @Mapping(source = "client", target = "clientDetails")
   @Mapping(target = "eligibilityResults", ignore = true)
-  ApplicationEntity toApplicationEntity(StartCaseCommand cmd);
+  public abstract ApplicationEntity toApplicationEntity(StartCaseCommand cmd);
 }

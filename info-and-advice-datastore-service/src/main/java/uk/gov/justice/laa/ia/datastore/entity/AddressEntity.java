@@ -59,4 +59,10 @@ public class AddressEntity {
   @Column(name = "last_modified_at")
   @UpdateTimestamp
   private Instant modifiedAt;
+
+  @Column(name = "created_by", nullable = false)
+  private String createdBy;
+
+  @Column(name = "last_modified_by", nullable = false)
+  private String modifiedBy;
 }

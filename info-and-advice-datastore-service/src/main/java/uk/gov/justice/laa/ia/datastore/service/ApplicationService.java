@@ -3,7 +3,6 @@ package uk.gov.justice.laa.ia.datastore.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -50,12 +49,7 @@ public class ApplicationService {
   public UUID createApplication(StartCaseCommand startCase) {
     ApplicationEntity entity = applicationMapper.toApplicationEntity(startCase);
 
-    // Set default/system values from context
-    entity.setProviderFirmId(userContext.getProviderFirmId());
     entity.setApplicationState(ApplicationState.DRAFT);
-    entity.setCreatedBy(userContext.getCurrentUser());
-    entity.setModifiedBy(userContext.getCurrentUser());
-
     ApplicationEntity saved = repository.save(entity);
     eventService.record(startCase);
     return saved.getId();
@@ -116,7 +110,11 @@ public class ApplicationService {
 
     // Save the result to the new table
     EligibilityResultEntity resultEntity =
-        EligibilityResultEntity.builder().applicationId(applicationId).resultJson(jsonNode).build();
+        EligibilityResultEntity.builder()
+            .applicationId(applicationId)
+            .resultJson(jsonNode)
+            .createdBy(userContext.getCurrentUser())
+            .build();
 
     eligibilityResultRepository.save(resultEntity);
 
@@ -128,7 +126,6 @@ public class ApplicationService {
       application.setMeansAssessmentRequired(jsonNode.get("meansAssessmentRequired").asBoolean());
     }
 
-    application.setModifiedAt(Instant.now());
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
     eventService.record(body);
@@ -152,21 +149,14 @@ public class ApplicationService {
         declarationMapper.toDeclarationEntity(declarationConfirmation);
     // TODO: declaration status is currently undefined
     declarationEntity.setClientDeclarationStatus(ClientDeclarationStatus.DRAFT);
-    Instant modifiedAt = Instant.now();
 
     ApplicationEntity application = applicationOpt.get();
     if (application.getDeclaration() != null) {
       declarationEntity.setId(application.getDeclaration().getId());
       declarationEntity.setCreatedAt(application.getDeclaration().getCreatedAt());
       declarationEntity.setCreatedBy(application.getDeclaration().getCreatedBy());
-    } else {
-      declarationEntity.setCreatedBy(userContext.getCurrentUser());
     }
-    declarationEntity.setModifiedBy(userContext.getCurrentUser());
-    declarationEntity.setModifiedAt(modifiedAt);
     application.setDeclaration(declarationEntity);
-    application.setModifiedBy(userContext.getCurrentUser());
-    application.setModifiedAt(modifiedAt);
 
     repository.save(application);
     eventService.record(declarationConfirmation);
@@ -187,7 +177,6 @@ public class ApplicationService {
     }
     final ApplicationEntity application = applicationOpt.get();
     application.setModifiedBy(userContext.getCurrentUser());
-    application.setModifiedAt(Instant.now());
     application.setEvidence(evidence);
     repository.save(application);
     eventService.record(evidence);

@@ -41,4 +41,7 @@ public class EligibilityResultEntity {
   @Column(name = "created_at", nullable = false, updatable = false)
   @CreationTimestamp
   private Instant createdAt;
+
+  @Column(name = "created_by", nullable = false)
+  private String createdBy;
 }

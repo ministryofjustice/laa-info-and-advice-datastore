@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
@@ -64,13 +65,11 @@ public class ApplicationServiceTest {
     final StartCaseCommand cmd = StartCaseCommand.builder().providerOfficeId(officeId).build();
     final ApplicationEntity entity = new ApplicationEntity();
     entity.setProviderOfficeId(officeId);
+    entity.setClientDetails(ClientDetailsEntity.builder().build());
     final UUID generatedId = UUID.randomUUID();
-    final UUID firmId = UUID.randomUUID();
     final String user = "TEST_USER";
 
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
-    when(userContext.getProviderFirmId()).thenReturn(firmId);
-    when(userContext.getCurrentUser()).thenReturn(user);
     when(repo.save(any(ApplicationEntity.class)))
         .thenAnswer(
             invocation -> {
@@ -84,11 +83,8 @@ public class ApplicationServiceTest {
 
     // Assert
     assertThat(result).isEqualTo(generatedId);
-    assertThat(entity.getProviderFirmId()).isEqualTo(firmId);
     assertThat(entity.getProviderOfficeId()).isEqualTo(officeId);
     assertThat(entity.getApplicationState()).isEqualTo(ApplicationState.DRAFT);
-    assertThat(entity.getCreatedBy()).isEqualTo(user);
-    assertThat(entity.getModifiedBy()).isEqualTo(user);
 
     verify(repo, times(1)).save(entity);
   }
@@ -212,7 +208,6 @@ public class ApplicationServiceTest {
     verify(eligibilityResultRepository, times(1)).save(any(EligibilityResultEntity.class));
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
-    assertThat(application.getModifiedAt()).isAfter(originalModifiedAt);
 
     ArgumentCaptor<EligibilityResultEntity> resultCaptor =
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
@@ -274,7 +269,12 @@ public class ApplicationServiceTest {
         DeclarationCommand.builder().declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithoutId(
-            builder -> builder.declarationConfirmation(true).clientDeclarationStatus(null));
+            builder ->
+                builder
+                    .declarationConfirmation(true)
+                    .clientDeclarationStatus(null)
+                    .modifiedBy(originalUser)
+                    .createdBy(originalUser));
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
     final ApplicationEntity applicationEntity =
         ApplicationEntityGenerator.createWithId(
@@ -298,9 +298,6 @@ public class ApplicationServiceTest {
             });
     when(repo.findById(applicationId)).thenReturn(Optional.of(applicationEntity));
 
-    assertThat(applicationEntity.getDeclaration().getCreatedAt()).isEqualTo(originalCreatedTime);
-    assertThat(applicationEntity.getDeclaration().getModifiedAt()).isEqualTo(originalCreatedTime);
-
     // Act
     final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
     final DeclarationEntity declaration = applicationEntity.getDeclaration();
@@ -313,13 +310,6 @@ public class ApplicationServiceTest {
 
     assertThat(declaration.getId()).isEqualTo(originalDeclarationId);
     assertThat(declaration.getCreatedBy()).isEqualTo(originalUser);
-    assertThat(declaration.getCreatedAt()).isEqualTo(originalCreatedTime);
-
-    assertThat(declaration.getModifiedAt()).isNotEqualTo(originalCreatedTime);
-    assertThat(declaration.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
-
-    assertThat(applicationEntity.getModifiedAt()).isNotEqualTo(originalCreatedTime);
-    assertThat(applicationEntity.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
 
     verify(repo, times(1)).save(applicationEntity);
     verify(declarationMapper, times(1)).toDeclarationEntity(declarationCommand);

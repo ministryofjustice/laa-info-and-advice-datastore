@@ -42,7 +42,11 @@ public class EligibilityResultEntityGenerator {
         new ObjectMapper().createObjectNode().put("status", status).put("score", score);
     return EligibilityResultEntityGenerator.createWithoutId(
         builder -> {
-          builder.applicationId(applicationId).resultJson(resultJson).createdAt(Instant.now());
+          builder
+              .applicationId(applicationId)
+              .resultJson(resultJson)
+              .createdAt(Instant.now())
+              .createdBy("SYSTEM");
         });
   }
 }
