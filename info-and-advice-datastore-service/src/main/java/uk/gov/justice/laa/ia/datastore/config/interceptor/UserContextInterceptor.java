@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 
 /** Interceptor that will provide data for the UserContext request scope. */
@@ -24,34 +23,22 @@ public class UserContextInterceptor implements HandlerInterceptor {
   private static final String AUTHORIZATION_HEADER = "Authorization";
 
   @Override
-  public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
-      throws Exception {
-    String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
-    String[] chunks = authorizationHeader.split("\\.");
-    String payload = new String(Base64.getDecoder().decode(chunks[1]));
-    JsonNode payloadNode = objectMapper.readTree(payload);
-    UUID providerFirmId = UUID.fromString(payloadNode.get("providerFirmId").asText());
-    userContext.setProviderFirmId(providerFirmId);
+  public boolean preHandle(
+      HttpServletRequest request, HttpServletResponse response, Object handler) {
+    try {
+      String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
+      String[] chunks = authorizationHeader.split("\\.");
+      String payload = new String(Base64.getDecoder().decode(chunks[1]));
+      JsonNode payloadNode = objectMapper.readTree(payload);
+      UUID providerFirmId = UUID.fromString(payloadNode.get("providerFirmId").asText());
+      userContext.setProviderFirmId(providerFirmId);
+    } catch (Exception e) {
+      log.error("Error parsing JWT token: {}", e.getMessage());
+      return false; // Reject the request if there's an error parsing the token
+    }
 
     // TODO: reject when providerFirmId is null or not a valid UUID
 
     return true; // Continue with the next interceptor or the handler itself
-  }
-
-  @Override
-  public void postHandle(
-      HttpServletRequest request,
-      HttpServletResponse response,
-      Object handler,
-      ModelAndView modelAndView)
-      throws Exception {
-    // Implement logic to clean up user context after handling the request
-  }
-
-  @Override
-  public void afterCompletion(
-      HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
-      throws Exception {
-    // Implement logic to perform any final cleanup after the request has been completed
   }
 }
