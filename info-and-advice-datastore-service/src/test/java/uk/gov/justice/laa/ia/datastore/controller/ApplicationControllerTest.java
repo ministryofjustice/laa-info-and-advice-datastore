@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -31,6 +32,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
@@ -56,6 +58,7 @@ import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 public class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
+  @MockitoBean private UserContextInterceptor userContextInterceptor;
 
   private final ObjectMapper objectMapper =
       new ObjectMapper()
@@ -63,6 +66,11 @@ public class ApplicationControllerTest {
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   @MockitoBean private ApplicationService applicationService;
+
+  @BeforeEach
+  void setUp() throws Exception {
+    when(userContextInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+  }
 
   @Test
   void startCase_returnsCreatedStatus_andApplicationIdHeader() throws Exception {

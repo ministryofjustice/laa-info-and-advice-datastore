@@ -31,15 +31,20 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
 
   void setupApplications() {
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(builder -> builder.withDefaultClientDetails()));
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(builder -> builder.withDefaultClientDetails()));
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(builder -> builder.withDefaultClientDetails()));
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(builder -> builder.withDefaultClientDetails()));
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(builder -> builder.withDefaultClientDetails()));
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
     clearCache();
   }
 
@@ -65,10 +70,18 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     final UUID officeId = UUID.randomUUID();
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerOfficeId(officeId)));
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmId(PROVIDER_FIRM_ID)
+                    .providerOfficeId(officeId)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerOfficeId(officeId)));
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmId(PROVIDER_FIRM_ID)
+                    .providerOfficeId(officeId)));
     clearCache();
     // Act & Assert
     mockMvc

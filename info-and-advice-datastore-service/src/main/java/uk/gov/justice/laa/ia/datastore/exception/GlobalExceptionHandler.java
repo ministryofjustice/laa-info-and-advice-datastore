@@ -10,9 +10,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 /** The global exception handler for all exceptions. */
 @RestControllerAdvice
 @Slf4j
-@Profile(
-    "!test && !local") // disable in test and local profiles to allow exceptions to propagate for
-// testing
+@Profile("!local") // disable local profiles to allow exceptions to propagate for development
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   /**
    * The handler for Exception.
