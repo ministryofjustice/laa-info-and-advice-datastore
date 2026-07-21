@@ -60,26 +60,28 @@ public class ApplicationService {
   /**
    * Gets all the Applications.
    *
-   * @param specification the specification to filter applications, if null will use unrestricted
-   *     specification.
+   * @param additionalFilteringSpecification the specification to filter applications, if null will
+   *     just filter to the provider firm ID.
    * @param page the page number to retrieve, if null will use default page 0.
    * @param size the page size, if null will use default page size.
-   * @return page of {@link ApplicationResponse}
+   * @return page of {@link ApplicationSummary}
    */
   public Page<ApplicationSummary> getAllApplications(
-      Specification<ApplicationEntity> specification, Integer page, Integer size) {
+      Specification<ApplicationEntity> additionalFilteringSpecification,
+      Integer page,
+      Integer size) {
 
     int resolvedPage = page != null ? page : 0;
     int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
 
-    Specification<ApplicationEntity> resolvedSpecification =
+    Specification<ApplicationEntity> specificationToApply =
         ApplicationSpecification.filterByProviderFirmId(userContext.getProviderFirmId());
-    if (specification != null) {
-      resolvedSpecification = resolvedSpecification.and(specification);
+    if (additionalFilteringSpecification != null) {
+      specificationToApply = specificationToApply.and(additionalFilteringSpecification);
     }
 
     return repository
-        .findAll(resolvedSpecification, PageRequest.of(resolvedPage, resolvedSize))
+        .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize))
         .map(applicationMapper::toApplicationSummary);
   }
 

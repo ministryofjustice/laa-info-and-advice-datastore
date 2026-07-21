@@ -37,8 +37,6 @@ public class UserContextInterceptor implements HandlerInterceptor {
       return false; // Reject the request if there's an error parsing the token
     }
 
-    // TODO: reject when providerFirmId is null or not a valid UUID
-
     return true; // Continue with the next interceptor or the handler itself
   }
 }
