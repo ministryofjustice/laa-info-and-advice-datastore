@@ -81,6 +81,16 @@ spec:
               value: "{{ .Values.env.RATE_WINDOW_MS }}"
             - name: NODE_ENV
               value: "{{ .Values.env.NODE_ENV }}"
+            - name: LAA_OAUTH2_ISSUER_URI
+              valueFrom:
+                secretKeyRef:
+                  name: laa-info-and-advice-datastore-entra
+                  key: LAA_OAUTH2_ISSUER_URI
+            - name: LAA_OAUTH2_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: laa-info-and-advice-datastore-entra
+                  key: LAA_OAUTH2_AUDIENCE
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:

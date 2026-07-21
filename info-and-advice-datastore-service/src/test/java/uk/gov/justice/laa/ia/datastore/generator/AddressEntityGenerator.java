@@ -36,7 +36,9 @@ public class AddressEntityGenerator {
             .addressLine1("10 Downing Street")
             .addressLine2("Prime ministers address")
             .postCode("SW1A 2AA")
-            .townOrCity("London");
+            .townOrCity("London")
+            .createdBy("SYSTEM")
+            .modifiedBy("SYSTEM");
 
     if (customizer != null) {
       customizer.accept(builder);

@@ -3,6 +3,8 @@ package uk.gov.justice.laa.ia.datastore.mapper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.model.ClientDetails;
 import uk.gov.justice.laa.ia.datastore.model.CreateClientCommand;
@@ -12,11 +14,13 @@ import uk.gov.justice.laa.ia.datastore.model.CreateClientCommand;
     componentModel = "spring",
     uses = {DateTimeMapper.class, AddressMapper.class},
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
-public interface ClientDetailsMapper {
+public abstract class ClientDetailsMapper {
+
+  @Autowired protected UserContext userContext;
 
   /** Maps an {@link ClientDetailsEntity} to an {@link ClientDetails}. */
   @Mapping(source = "id", target = "individualLegalAidNumber")
-  ClientDetails toClientDetails(ClientDetailsEntity entity);
+  public abstract ClientDetails toClientDetails(ClientDetailsEntity entity);
 
   /** Maps an {@link CreateClientCommand} to an {@link ClientDetailsEntity}. */
   @Mapping(source = "nationalInsuranceNumber", target = "niNumber")
@@ -24,5 +28,8 @@ public interface ClientDetailsMapper {
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(source = "createAddressCommand", target = "address")
-  ClientDetailsEntity toClientDetailsEntity(CreateClientCommand createClientCommand);
+  @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")
+  @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
+  public abstract ClientDetailsEntity toClientDetailsEntity(
+      CreateClientCommand createClientCommand);
 }

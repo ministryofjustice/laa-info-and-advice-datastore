@@ -37,9 +37,8 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
-import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
-import uk.gov.justice.laa.ia.datastore.model.DeclarationResponse;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
@@ -94,21 +93,17 @@ public class ApplicationControllerTest {
   void getApplications_returnsOkStatus_andApplications() throws Exception {
 
     // Arrange
-    ApplicationResponse application1 =
-        ApplicationResponse.builder()
-            .id(UUID.randomUUID())
-            .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
-            .evidence("EVIDENCE")
-            .build();
+    ApplicationSummary application1 =
+        new ApplicationSummary(UUID.randomUUID(), "REF-001", null)
+            .clientFirstName("Alice")
+            .clientLastName("Smith");
 
-    ApplicationResponse application2 =
-        ApplicationResponse.builder()
-            .id(UUID.randomUUID())
-            .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
-            .evidence("EVIDENCE")
-            .build();
+    ApplicationSummary application2 =
+        new ApplicationSummary(UUID.randomUUID(), "REF-002", null)
+            .clientFirstName("Bob")
+            .clientLastName("Jones");
 
-    Page<ApplicationResponse> page = new PageImpl<>(List.of(application1, application2));
+    Page<ApplicationSummary> page = new PageImpl<>(List.of(application1, application2));
     when(applicationService.getAllApplications(
             eq(Specification.<ApplicationEntity>unrestricted()), eq(0), eq(25)))
         .thenReturn(page);
@@ -120,8 +115,9 @@ public class ApplicationControllerTest {
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.content", hasSize(2)))
         .andExpect(jsonPath("$.content[0].id").exists())
-        .andExpect(jsonPath("$.content[0].declaration").exists())
-        .andExpect(jsonPath("$.content[0].evidence").exists())
+        .andExpect(jsonPath("$.content[0].referenceNumber").value("REF-001"))
+        .andExpect(jsonPath("$.content[0].clientFirstName").value("Alice"))
+        .andExpect(jsonPath("$.content[0].clientLastName").value("Smith"))
         .andExpect(jsonPath("$.totalElements").value(2))
         .andExpect(jsonPath("$.totalPages").value(1))
         .andExpect(jsonPath("$.page").value(0))
@@ -132,21 +128,17 @@ public class ApplicationControllerTest {
   void filterApplications_returnsOkStatus_andFilteredApplications() throws Exception {
     // Arrange
     final UUID officeId = UUID.fromString("019f1461-02ae-71f8-b731-c6d63bb59e6d");
-    ApplicationResponse application1 =
-        ApplicationResponse.builder()
-            .id(UUID.randomUUID())
-            .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
-            .evidence("EVIDENCE")
-            .build();
+    ApplicationSummary application1 =
+        new ApplicationSummary(UUID.randomUUID(), "REF-001", null)
+            .clientFirstName("Alice")
+            .clientLastName("Smith");
 
-    ApplicationResponse application2 =
-        ApplicationResponse.builder()
-            .id(UUID.randomUUID())
-            .declaration(DeclarationResponse.builder().id(UUID.randomUUID()).build())
-            .evidence("EVIDENCE")
-            .build();
+    ApplicationSummary application2 =
+        new ApplicationSummary(UUID.randomUUID(), "REF-002", null)
+            .clientFirstName("Bob")
+            .clientLastName("Jones");
 
-    Page<ApplicationResponse> page = new PageImpl<>(List.of(application1, application2));
+    Page<ApplicationSummary> page = new PageImpl<>(List.of(application1, application2));
     when(applicationService.getAllApplications(any(), any(), any())).thenReturn(page);
 
     // Act + Assert

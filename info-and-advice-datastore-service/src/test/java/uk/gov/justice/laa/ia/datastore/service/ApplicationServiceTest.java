@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
@@ -37,6 +38,7 @@ import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
@@ -64,13 +66,11 @@ public class ApplicationServiceTest {
     final StartCaseCommand cmd = StartCaseCommand.builder().providerOfficeId(officeId).build();
     final ApplicationEntity entity = new ApplicationEntity();
     entity.setProviderOfficeId(officeId);
+    entity.setClientDetails(ClientDetailsEntity.builder().build());
     final UUID generatedId = UUID.randomUUID();
-    final UUID firmId = UUID.randomUUID();
     final String user = "TEST_USER";
 
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
-    when(userContext.getProviderFirmId()).thenReturn(firmId);
-    when(userContext.getCurrentUser()).thenReturn(user);
     when(repo.save(any(ApplicationEntity.class)))
         .thenAnswer(
             invocation -> {
@@ -84,11 +84,8 @@ public class ApplicationServiceTest {
 
     // Assert
     assertThat(result).isEqualTo(generatedId);
-    assertThat(entity.getProviderFirmId()).isEqualTo(firmId);
     assertThat(entity.getProviderOfficeId()).isEqualTo(officeId);
     assertThat(entity.getApplicationState()).isEqualTo(ApplicationState.DRAFT);
-    assertThat(entity.getCreatedBy()).isEqualTo(user);
-    assertThat(entity.getModifiedBy()).isEqualTo(user);
 
     verify(repo, times(1)).save(entity);
   }
@@ -98,24 +95,47 @@ public class ApplicationServiceTest {
     // Arrange
     final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
     final ApplicationEntity entity2 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
-    final ApplicationResponse application1 =
-        ApplicationResponse.builder().id(entity1.getId()).build();
-    final ApplicationResponse application2 =
-        ApplicationResponse.builder().id(entity2.getId()).build();
+    final ApplicationSummary summary1 = new ApplicationSummary(entity1.getId(), "REF-001", null);
+    final ApplicationSummary summary2 = new ApplicationSummary(entity2.getId(), "REF-002", null);
+
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
-    when(mapper.toApplication(entity1)).thenReturn(application1);
-    when(mapper.toApplication(entity2)).thenReturn(application2);
+    when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
+    when(mapper.toApplicationSummary(entity2)).thenReturn(summary2);
 
     // Act
-    final Page<ApplicationResponse> result = sut.getAllApplications(null, null, null);
+    final Page<ApplicationSummary> result = sut.getAllApplications(null, null, null);
 
     // Assert
-    assertThat(result.getContent()).hasSize(2).contains(application1, application2);
+    assertThat(result.getContent()).hasSize(2).contains(summary1, summary2);
     assertThat(result.getTotalElements()).isEqualTo(2);
     verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
-    verify(mapper, times(2)).toApplication(any());
+    verify(mapper, times(2)).toApplicationSummary(any());
+  }
+
+  @Test
+  void shouldPassSpecificationToRepository_whenGettingAllApplications() {
+    // Arrange
+    final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
+    final ApplicationSummary summary1 = new ApplicationSummary(entity1.getId(), "REF-001", null);
+    when(repo.findAll(any(Specification.class), any(Pageable.class)))
+        .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1)));
+    when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+
+    // Act
+    final Page<ApplicationSummary> result =
+        sut.getAllApplications(
+            (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("id"), entity1.getId()),
+            0,
+            10);
+
+    // Assert
+    assertThat(result.getContent()).hasSize(1).contains(summary1);
+    verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
+    verify(mapper, times(1)).toApplicationSummary(any());
   }
 
   @Test
@@ -175,7 +195,6 @@ public class ApplicationServiceTest {
     verify(eligibilityResultRepository, times(1)).save(any(EligibilityResultEntity.class));
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
-    assertThat(application.getModifiedAt()).isAfter(originalModifiedAt);
 
     ArgumentCaptor<EligibilityResultEntity> resultCaptor =
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
@@ -239,7 +258,12 @@ public class ApplicationServiceTest {
         DeclarationCommand.builder().declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithoutId(
-            builder -> builder.declarationConfirmation(true).clientDeclarationStatus(null));
+            builder ->
+                builder
+                    .declarationConfirmation(true)
+                    .clientDeclarationStatus(null)
+                    .modifiedBy(originalUser)
+                    .createdBy(originalUser));
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
     final ApplicationEntity applicationEntity =
         ApplicationEntityGenerator.createWithId(
@@ -279,13 +303,6 @@ public class ApplicationServiceTest {
 
     assertThat(declaration.getId()).isEqualTo(originalDeclarationId);
     assertThat(declaration.getCreatedBy()).isEqualTo(originalUser);
-    assertThat(declaration.getCreatedAt()).isEqualTo(originalCreatedTime);
-
-    assertThat(declaration.getModifiedAt()).isNotEqualTo(originalCreatedTime);
-    assertThat(declaration.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
-
-    assertThat(applicationEntity.getModifiedAt()).isNotEqualTo(originalCreatedTime);
-    assertThat(applicationEntity.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
 
     verify(repo, times(1)).save(applicationEntity);
     verify(declarationMapper, times(1)).toDeclarationEntity(declarationCommand);

@@ -18,9 +18,7 @@ fullnameOverride: ""
 
 serviceAccount:
   create: false
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: "your-github-action-service-account"
+  name: "cd-serviceaccount"
 
 podAnnotations: {}
 podLabels: {}
@@ -49,13 +47,14 @@ service:
 
 ingress:
   enabled: true
+  className: modsec-non-prod
   hosts:
     - host: laa-info-and-advice-datastore-staging.cloud-platform.service.justice.gov.uk
       paths:
         - path: /
           pathType: Prefix
   annotations:
-    external-dns.alpha.kubernetes.io/set-identifier: "laa-info-and-advice-datastore-staging-green"
+    external-dns.alpha.kubernetes.io/set-identifier: "laa-info-and-advice-datastore-laa-info-and-advice-datastore-staging-green"
     external-dns.alpha.kubernetes.io/aws-weight: "100"
     nginx.ingress.kubernetes.io/enable-modsecurity: "true"
     nginx.ingress.kubernetes.io/enable-owasp-core-rules: "true"
@@ -74,16 +73,23 @@ resources:
     cpu: 250m
     memory: 256Mi
 
+startupProbe:
+  httpGet:
+    path: /actuator/health
+    port: http
+  failureThreshold: 30
+  periodSeconds: 10
+
 livenessProbe:
   httpGet:
-    path: /health
+    path: /actuator/health
     port: http
   initialDelaySeconds: 30
   periodSeconds: 60
 
 readinessProbe:
   httpGet:
-    path: /health
+    path: /actuator/health
     port: http
   initialDelaySeconds: 30
   periodSeconds: 60

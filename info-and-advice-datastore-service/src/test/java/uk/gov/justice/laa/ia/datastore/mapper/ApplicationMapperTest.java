@@ -3,12 +3,17 @@ package uk.gov.justice.laa.ia.datastore.mapper;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.when;
 
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
@@ -19,16 +24,47 @@ import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerato
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityResultResponse;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-public class ApplicationMapperTest extends BaseMapperTest {
-  private final ApplicationMapper sut;
+@SpringBootTest(
+    classes = {
+      ApplicationMapperImpl.class,
+      UserContext.class,
+      DeclarationMapperImpl.class,
+      EligibilityMapperImpl.class,
+      ClientDetailsMapperImpl.class,
+      AddressMapperImpl.class,
+      DateTimeMapperImpl.class,
+    })
+public class ApplicationMapperTest {
+  @Autowired private ApplicationMapper sut;
+  @MockitoBean private UserContext userContext;
 
-  ApplicationMapperTest() {
-    sut = applicationMapper;
+  @Test
+  void toApplicationSummary_shouldMapSummaryFields() {
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> {
+              builder.clientDetails(ClientDetailsEntityGenerator.createWithId(null));
+              builder.referenceNumber("LAA-TEST-001");
+            });
+
+    final ApplicationSummary summary = sut.toApplicationSummary(application);
+
+    assertEquals(application.getId(), summary.getId());
+    assertEquals(application.getReferenceNumber(), summary.getReferenceNumber());
+    assertEquals(application.getClientDetails().getFirstName(), summary.getClientFirstName());
+    assertEquals(application.getClientDetails().getLastName(), summary.getClientLastName());
+    assertEquals(application.getModifiedAt(), summary.getModifiedAt().toInstant());
+  }
+
+  @Test
+  void toApplicationSummary_whenNull_shouldReturnNull() {
+    assertNull(sut.toApplicationSummary(null));
   }
 
   @Test
@@ -94,6 +130,33 @@ public class ApplicationMapperTest extends BaseMapperTest {
 
     assertNotNull(mappedModel);
     assertNotNull(mappedModel.getClientDetails());
+  }
+
+  @Test
+  void startCaseCommand_toApplication_shouldSetCreatedAndModifiedBy() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final StartCaseCommand cmd = StartCaseCommandGenerator.create(null);
+
+    // Act
+    final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
+
+    // Assert
+    assertEquals("USERCONTEXT:SYSTEM", mappedModel.getCreatedBy());
+    assertEquals("USERCONTEXT:SYSTEM", mappedModel.getModifiedBy());
+  }
+
+  @Test
+  void startCaseCommand_toApplication_shouldSetProviderFirmId() {
+    // Arrange
+    final UUID providerFirmId = UUID.randomUUID();
+    when(userContext.getProviderFirmId()).thenReturn(providerFirmId);
+    final StartCaseCommand cmd = StartCaseCommandGenerator.create(null);
+    // Act
+    final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
+
+    // Assert
+    assertEquals(providerFirmId, mappedModel.getProviderFirmId());
   }
 
   private static void assertEligibiltyEquals(

@@ -57,7 +57,11 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.content", hasSize(DEFAULT_NUMBER_OF_APPLICATIONS)))
-        .andExpect(jsonPath("$.content[0].providerOfficeId").isNotEmpty())
+        .andExpect(jsonPath("$.content[0].id").isNotEmpty())
+        .andExpect(jsonPath("$.content[0].referenceNumber").isNotEmpty())
+        .andExpect(jsonPath("$.content[0].clientFirstName").isNotEmpty())
+        .andExpect(jsonPath("$.content[0].clientLastName").isNotEmpty())
+        .andExpect(jsonPath("$.content[0].modifiedAt").isNotEmpty())
         .andExpect(jsonPath("$.totalElements").value(DEFAULT_NUMBER_OF_APPLICATIONS))
         .andExpect(jsonPath("$.totalPages").value(1))
         .andExpect(jsonPath("$.page").value(0));
@@ -92,7 +96,8 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.content", hasSize(2)))
-        .andExpect(jsonPath("$.content[0].providerOfficeId").value(officeId.toString()))
+        .andExpect(jsonPath("$.content[0].id").isNotEmpty())
+        .andExpect(jsonPath("$.content[0].referenceNumber").isNotEmpty())
         .andExpect(jsonPath("$.totalElements").value(2));
   }
 

@@ -2,12 +2,17 @@ package uk.gov.justice.laa.ia.datastore.mapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.generator.CreateAddressCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.Address;
@@ -15,12 +20,10 @@ import uk.gov.justice.laa.ia.datastore.model.CreateAddressCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-public class AddressMapperTest extends BaseMapperTest {
-  private final AddressMapper sut;
-
-  AddressMapperTest() {
-    sut = addressMapper;
-  }
+@SpringBootTest(classes = {AddressMapperImpl.class, UserContext.class, DateTimeMapperImpl.class})
+public class AddressMapperTest {
+  @Autowired private AddressMapper sut;
+  @MockitoBean private UserContext userContext;
 
   @Test
   void toAddress_shouldMapAllProperties() {
@@ -81,6 +84,20 @@ public class AddressMapperTest extends BaseMapperTest {
     assertEquals(cmd.getPostCode(), address.getPostCode());
     assertEquals(cmd.getCounty(), address.getCounty());
     assertEquals(cmd.getCountry(), address.getCountry());
+  }
+
+  @Test
+  void createAddressCommand_toAddressEntity_shouldSetCreatedAndModifiedBy() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final CreateAddressCommand cmd = CreateAddressCommandGenerator.create(null);
+
+    // Act
+    final AddressEntity address = sut.toAddressEntity(cmd);
+
+    // Assert
+    assertEquals("USERCONTEXT:SYSTEM", address.getCreatedBy());
+    assertEquals("USERCONTEXT:SYSTEM", address.getModifiedBy());
   }
 
   private AddressEntity.AddressEntityBuilder createAddress() {
