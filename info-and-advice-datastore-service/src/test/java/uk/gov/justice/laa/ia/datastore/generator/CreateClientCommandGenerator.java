@@ -13,7 +13,6 @@ public class CreateClientCommandGenerator {
             .firstName("Joe")
             .lastName("Bloggs")
             .dateOfBirth(LocalDate.of(1990, 1, 1))
-            .placeOfBirth("London")
             .nationalInsuranceNumber("AC123456D");
     if (customizer != null) {
       customizer.accept(builder);

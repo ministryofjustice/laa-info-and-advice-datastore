@@ -56,7 +56,6 @@ components:
         - firstName
         - lastName
         - dateOfBirth
-        - placeOfBirth
       properties:
         firstName:
           type: string
@@ -65,8 +64,6 @@ components:
         dateOfBirth:
            type: string
            format: date
-        placeOfBirth:
-          type: string
         nationalInsuranceNumber:
           type: string
           pattern: '[A-CEGHJ-NOPR-TW-Z]{2}[0-9]{6}[ABCDs]{1}'
