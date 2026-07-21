@@ -90,7 +90,7 @@ Get an access token and call the API:
 ```bash
 TOKEN=$(curl -s -X POST http://host.docker.internal:9090/default/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials_2&client_id=test&client_secret=test" \
+  -d "grant_type=client_credentials&client_id=test&client_secret=test" \
   | jq -r .access_token)
 
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v0/applications
