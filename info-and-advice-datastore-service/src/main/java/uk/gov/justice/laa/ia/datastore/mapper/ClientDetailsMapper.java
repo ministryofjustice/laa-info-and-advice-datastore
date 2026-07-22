@@ -25,7 +25,7 @@ public abstract class ClientDetailsMapper {
   /** Maps an {@link CreateClientCommand} to an {@link ClientDetailsEntity}. */
   @Mapping(source = "nationalInsuranceNumber", target = "niNumber")
   @Mapping(target = "id", ignore = true)
-  @Mapping(target = "version", ignore = true)
+  @Mapping(target = "etag", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(source = "createAddressCommand", target = "address")

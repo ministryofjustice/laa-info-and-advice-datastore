@@ -1,6 +1,5 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +15,8 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationResponses;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
@@ -60,8 +61,9 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateMeansData(UUID id, Long ifMatch, Object body) {
-    if (service.updateMeansData(id, ifMatch, body)) {
+  public ResponseEntity<Void> updateMeansData(
+      UUID id, UpdateMeansDataCommand updateMeansDataCommand) {
+    if (service.updateMeansData(id, updateMeansDataCommand)) {
       return ResponseEntity.ok().build();
     } else {
       return ResponseEntity.notFound().build();
@@ -69,9 +71,8 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateDeclaration(
-      UUID id, Long ifMatch, DeclarationCommand declarationCommand) {
-    if (service.updateClientDeclaration(id, ifMatch, declarationCommand)) {
+  public ResponseEntity<Void> updateDeclaration(UUID id, DeclarationCommand declarationCommand) {
+    if (service.updateClientDeclaration(id, declarationCommand)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();
@@ -79,8 +80,8 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateEvidence(UUID id, Long ifMatch, Map<String, Object> evidence) {
-    if (service.updateEvidence(id, ifMatch, evidence)) {
+  public ResponseEntity<Void> updateEvidence(UUID id, UpdateEvidenceCommand updateEvidenceCommand) {
+    if (service.updateEvidence(id, updateEvidenceCommand)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();

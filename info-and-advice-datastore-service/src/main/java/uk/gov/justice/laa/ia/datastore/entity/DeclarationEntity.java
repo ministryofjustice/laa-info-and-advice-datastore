@@ -30,8 +30,8 @@ public class DeclarationEntity {
   private UUID id;
 
   @Version
-  @Column(name = "version", nullable = false)
-  private long version;
+  @Column(name = "etag", nullable = false)
+  private long etag;
 
   @Column(name = "client_declaration_status", nullable = false)
   private ClientDeclarationStatus clientDeclarationStatus;

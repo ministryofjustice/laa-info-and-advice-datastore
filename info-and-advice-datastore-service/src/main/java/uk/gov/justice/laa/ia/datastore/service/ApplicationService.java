@@ -1,9 +1,8 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.transaction.Transactional;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +23,8 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
@@ -103,13 +104,12 @@ public class ApplicationService {
    * Update means data for an application.
    *
    * @param applicationId the application ID
-   * @param version the expected ETag version
-   * @param body the means data
+   * @param command the means data command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found
-   * @throws EtagMismatchException if the provided version does not match the current entity version
+   * @throws EtagMismatchException if the eTag does not match the current entity value
    */
   @Transactional
-  public boolean updateMeansData(UUID applicationId, long version, Object body) {
+  public boolean updateMeansData(UUID applicationId, UpdateMeansDataCommand command) {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
@@ -118,11 +118,10 @@ public class ApplicationService {
     }
 
     ApplicationEntity application = applicationOpt.get();
-    if (application.getVersion() != version) {
-      throw new EtagMismatchException();
-    }
+    validateEtag(application, command.geteTag());
 
-    JsonNode jsonNode = objectMapper.valueToTree(body);
+    ObjectNode jsonNode = (ObjectNode) objectMapper.valueToTree(command);
+    jsonNode.remove("eTag");
 
     // Save the result to the new table
     EligibilityResultEntity resultEntity =
@@ -144,20 +143,19 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
-    eventService.record(body);
+    eventService.record(command);
     return true;
   }
 
   /**
-   * Update application client declaration..
+   * Update application client declaration.
    *
-   * @param version the expected ETag version
+   * @param command the declaration command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found.
-   * @throws EtagMismatchException if the provided version does not match the current entity version
+   * @throws EtagMismatchException if the eTag does not match the current entity value
    */
   @Transactional
-  public boolean updateClientDeclaration(
-      UUID applicationId, long version, DeclarationCommand declarationConfirmation) {
+  public boolean updateClientDeclaration(UUID applicationId, DeclarationCommand command) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
@@ -166,12 +164,9 @@ public class ApplicationService {
     }
 
     final ApplicationEntity application = applicationOpt.get();
-    if (application.getVersion() != version) {
-      throw new EtagMismatchException();
-    }
+    validateEtag(application, command.geteTag());
 
-    DeclarationEntity declarationEntity =
-        declarationMapper.toDeclarationEntity(declarationConfirmation);
+    DeclarationEntity declarationEntity = declarationMapper.toDeclarationEntity(command);
     // TODO: declaration status is currently undefined
     declarationEntity.setClientDeclarationStatus(ClientDeclarationStatus.DRAFT);
 
@@ -183,19 +178,19 @@ public class ApplicationService {
     application.setDeclaration(declarationEntity);
 
     repository.save(application);
-    eventService.record(declarationConfirmation);
+    eventService.record(command);
     return true;
   }
 
   /**
    * Update application evidence.
    *
-   * @param version the expected ETag version
+   * @param command the evidence command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found.
-   * @throws EtagMismatchException if the provided version does not match the current entity version
+   * @throws EtagMismatchException if the eTag does not match the current entity value
    */
   @Transactional
-  public boolean updateEvidence(UUID applicationId, long version, Map<String, Object> evidence) {
+  public boolean updateEvidence(UUID applicationId, UpdateEvidenceCommand command) {
 
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
@@ -204,13 +199,17 @@ public class ApplicationService {
       return false;
     }
     final ApplicationEntity application = applicationOpt.get();
-    if (application.getVersion() != version) {
+    validateEtag(application, command.geteTag());
+    application.setModifiedBy(userContext.getCurrentUser());
+    application.setEvidence(command.getAdditionalProperties());
+    repository.save(application);
+    eventService.record(command);
+    return true;
+  }
+
+  private void validateEtag(ApplicationEntity application, Long providedEtag) {
+    if (application.getEtag() != providedEtag) {
       throw new EtagMismatchException();
     }
-    application.setModifiedBy(userContext.getCurrentUser());
-    application.setEvidence(evidence);
-    repository.save(application);
-    eventService.record(evidence);
-    return true;
   }
 }

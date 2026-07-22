@@ -35,7 +35,7 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
             .getId();
     clearCache();
     final String payload =
-        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
 
     // Act
     final MvcResult result =
@@ -43,7 +43,6 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
             .perform(
                 put(TestConstants.UpdateDeclaration, applicationId)
                     .withBearerWriteToken()
-                    .header("If-Match", "0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(payload))
             .andExpect(status().isNoContent())
@@ -71,14 +70,13 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
             .getId();
     clearCache();
     final String payload =
-        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+        toJson(DeclarationCommand.builder().eTag(99L).declarationConfirmation(true).build());
 
-    // Act + Assert - send with stale version 99 (actual version is 0)
+    // Act + Assert - send with stale eTag 99 (actual is 0)
     mockMvc
         .perform(
             put(TestConstants.UpdateDeclaration, applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "99")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isConflict());

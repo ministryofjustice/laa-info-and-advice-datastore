@@ -39,8 +39,8 @@ public class ApplicationEntity {
   private UUID id;
 
   @Version
-  @Column(name = "version", nullable = false)
-  private long version;
+  @Column(name = "etag", nullable = false)
+  private long etag;
 
   @Column(name = "provider_firm_id", nullable = false)
   private UUID providerFirmId;

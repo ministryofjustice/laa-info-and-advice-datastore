@@ -83,19 +83,12 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: If-Match
-          in: header
-          required: true
-          description: ETag version of the application to update
-          schema:
-            type: integer
-            format: int64
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/UpdateMeansDataCommand'
       responses:
         '200':
           description: Success
@@ -106,7 +99,7 @@ paths:
         '404':
           description: Not found
         '409':
-          description: Conflict - ETag version mismatch
+          description: Conflict - ETag mismatch
         '500':
           description: Internal server error
   /api/v0/applications:start-case:
@@ -139,13 +132,6 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: If-Match
-          in: header
-          required: true
-          description: ETag version of the application to update
-          schema:
-            type: integer
-            format: int64
       requestBody:
         required: true
         description: Confirmation of the evidence statement for the application.
@@ -161,7 +147,7 @@ paths:
         '404':
           description: Application not found
         '409':
-          description: Conflict - ETag version mismatch
+          description: Conflict - ETag mismatch
         '500':
           description: Internal server error
 
@@ -178,13 +164,6 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: If-Match
-          in: header
-          required: true
-          description: ETag version of the application to update
-          schema:
-            type: integer
-            format: int64
       requestBody:
         required: true
         description: Confirmation of the declaration statement for the application.
@@ -200,7 +179,7 @@ paths:
         '404':
           description: Application not found
         '409':
-          description: Conflict - ETag version mismatch
+          description: Conflict - ETag mismatch
         '500':
           description: Internal server error
 
@@ -281,10 +260,10 @@ components:
           format: date-time
         modifiedBy:
           type: string
-        version:
+        eTag:
           type: integer
           format: int64
-          description: ETag version for optimistic concurrency control
+          description: ETag value for optimistic concurrency control
 
     ApplicationSummary:
       type: object
@@ -377,14 +356,37 @@ components:
     DeclarationCommand:
       type: object
       required:
+        - eTag
         - declarationConfirmation
       properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
         declarationConfirmation:
           type: boolean
+
     UpdateEvidenceCommand:
       type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
       additionalProperties: true
-      minProperties: 1
+
+    UpdateMeansDataCommand:
+      type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+      additionalProperties: true
 
     EligibilityResultResponse:
       type: object

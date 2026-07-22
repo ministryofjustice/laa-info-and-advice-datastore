@@ -38,7 +38,7 @@ public abstract class ApplicationMapper {
 
   /** Maps an {@link StartCaseCommand} to an {@link ApplicationEntity}. */
   @Mapping(target = "id", ignore = true)
-  @Mapping(target = "version", ignore = true)
+  @Mapping(target = "etag", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")
   @Mapping(target = "modifiedAt", ignore = true)

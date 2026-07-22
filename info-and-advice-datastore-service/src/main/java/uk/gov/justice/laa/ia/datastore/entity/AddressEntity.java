@@ -30,8 +30,8 @@ public class AddressEntity {
   private UUID id;
 
   @Version
-  @Column(name = "version", nullable = false)
-  private long version;
+  @Column(name = "etag", nullable = false)
+  private long etag;
 
   @Column(name = "address_line_1", nullable = false)
   private String addressLine1;

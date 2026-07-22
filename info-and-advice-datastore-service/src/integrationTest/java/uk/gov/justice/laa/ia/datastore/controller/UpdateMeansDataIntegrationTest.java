@@ -42,6 +42,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     final String payload =
         """
         {
+          "eTag": 0,
           "determinationId": "%s",
           "meansAssessmentRequired": true,
           "status": "ELIGIBLE"
@@ -54,7 +55,6 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
         .perform(
             put("/api/v0/applications/{id}:update-means-data", applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isOk());
@@ -63,7 +63,8 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     clearCache();
     final ApplicationEntity updatedApplication =
         applicationRepository.findById(applicationId).orElseThrow();
-    final JsonNode expectedJson = objectMapper.readTree(payload);
+    final JsonNode expectedJson = objectMapper.readTree(payload).deepCopy();
+    ((com.fasterxml.jackson.databind.node.ObjectNode) expectedJson).remove("eTag");
     final List<EligibilityResultEntity> eligibilityResults =
         eligibilityResultRepository.findAll().stream()
             .filter(result -> result.getApplicationId().equals(applicationId))
@@ -93,16 +94,15 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
     final String payload =
         """
-        {"determinationId": "%s", "meansAssessmentRequired": true}
+        {"eTag": 99, "determinationId": "%s", "meansAssessmentRequired": true}
         """
             .formatted(UUID.randomUUID());
 
-    // Act + Assert - send with stale version 99 (actual version is 0)
+    // Act + Assert - send with stale eTag 99 (actual is 0)
     mockMvc
         .perform(
             put("/api/v0/applications/{id}:update-means-data", applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "99")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isConflict());

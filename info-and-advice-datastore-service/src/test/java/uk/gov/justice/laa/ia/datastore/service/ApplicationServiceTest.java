@@ -10,8 +10,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +44,8 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 
@@ -180,17 +182,17 @@ public class ApplicationServiceTest {
     final Instant originalModifiedAt = Instant.now().minusSeconds(60);
     final ApplicationEntity application =
         ApplicationEntity.builder().id(applicationId).modifiedAt(originalModifiedAt).build();
-    final Object body = new Object();
-    final JsonNode jsonNode = new ObjectMapper().createObjectNode();
+    final UpdateMeansDataCommand command = UpdateMeansDataCommand.builder().eTag(0L).build();
+    final ObjectNode objectNode = new ObjectMapper().createObjectNode();
     final String user = "TEST_USER";
 
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn(user);
-    when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
+    when(objectMapper.valueToTree(command)).thenReturn(objectNode);
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, 0L, body);
+    boolean result = sut.updateMeansData(applicationId, command);
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
 
@@ -198,19 +200,19 @@ public class ApplicationServiceTest {
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
-    assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(jsonNode);
+    assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(objectNode);
   }
 
   @Test
   void shouldReturnFalse_whenUpdatingMeansDataForUnknownApplication() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
-    final Object body = new Object();
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, 0L, body);
+    boolean result =
+        sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build());
     verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
@@ -220,7 +222,7 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().declarationConfirmation(true).build();
+        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
     final ApplicationEntity applicationEntity = new ApplicationEntity();
@@ -229,7 +231,7 @@ public class ApplicationServiceTest {
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
 
     // Act
-    final boolean result = sut.updateClientDeclaration(applicationId, 0L, declarationCommand);
+    final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
 
     // Assert
     assertTrue(result);
@@ -250,7 +252,7 @@ public class ApplicationServiceTest {
     Instant originalCreatedTime = Instant.now().minusSeconds(3600);
     final UUID applicationId = UUID.randomUUID();
     final DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().declarationConfirmation(true).build();
+        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithoutId(
             builder ->
@@ -287,7 +289,7 @@ public class ApplicationServiceTest {
     assertThat(applicationEntity.getDeclaration().getModifiedAt()).isEqualTo(originalCreatedTime);
 
     // Act
-    final boolean result = sut.updateClientDeclaration(applicationId, 0L, declarationCommand);
+    final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
     final DeclarationEntity declaration = applicationEntity.getDeclaration();
 
     // Assert
@@ -310,7 +312,8 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    final boolean result = sut.updateClientDeclaration(UUID.randomUUID(), 0L, null);
+    final boolean result =
+        sut.updateClientDeclaration(UUID.randomUUID(), (DeclarationCommand) null);
 
     // Assert
     assertFalse(result);
@@ -324,7 +327,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    final boolean result = sut.updateEvidence(UUID.randomUUID(), 0L, null);
+    final boolean result = sut.updateEvidence(UUID.randomUUID(), (UpdateEvidenceCommand) null);
 
     // Assert
     assertFalse(result);
@@ -334,7 +337,9 @@ public class ApplicationServiceTest {
   @Test
   void updateEvidence_shouldUpdateEvidence_whenApplicationExistsAndEvidenceDoesNotExist() {
     // Arrange
-    final var evidence = EvidenceGenerator.createEvidenceMap();
+    final var evidenceMap = EvidenceGenerator.createEvidenceMap();
+    final var command =
+        UpdateEvidenceCommand.builder().eTag(0L).additionalProperties(evidenceMap).build();
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
 
@@ -343,11 +348,11 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
-    final boolean result = sut.updateEvidence(application.getId(), 0L, evidence);
+    final boolean result = sut.updateEvidence(application.getId(), command);
 
     // Assert
     assertTrue(result);
-    assertThat(application.getEvidence()).isSameAs(evidence);
+    assertThat(application.getEvidence()).isSameAs(evidenceMap);
     assertThat(application.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
     assertThat(application.getModifiedAt()).isNotNull();
     verify(repo, times(1)).save(application);
@@ -360,17 +365,19 @@ public class ApplicationServiceTest {
         ApplicationEntityGenerator.createWithId(
             builder -> builder.evidence(EvidenceGenerator.createEvidenceMap()));
     final var originalEvidence = application.getEvidence();
-    final var evidence = EvidenceGenerator.createEvidenceMap();
+    final var evidenceMap = EvidenceGenerator.createEvidenceMap();
+    final var command =
+        UpdateEvidenceCommand.builder().eTag(0L).additionalProperties(evidenceMap).build();
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
-    final boolean result = sut.updateEvidence(application.getId(), 0L, evidence);
+    final boolean result = sut.updateEvidence(application.getId(), command);
 
     // Assert
     assertTrue(result);
-    assertThat(application.getEvidence()).isSameAs(evidence);
+    assertThat(application.getEvidence()).isSameAs(evidenceMap);
     assertThat(application.getEvidence()).isNotSameAs(originalEvidence);
     assertThat(application.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
     assertThat(application.getModifiedAt()).isNotNull();
@@ -396,15 +403,15 @@ public class ApplicationServiceTest {
   void shouldRecordEvent_whenMeansDataUpdated() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
-    final Object body = new Object();
-    final JsonNode jsonNode = new ObjectMapper().createObjectNode();
+    final UpdateMeansDataCommand command = UpdateMeansDataCommand.builder().eTag(0L).build();
+    final ObjectNode objectNode = new ObjectMapper().createObjectNode();
     final ApplicationEntity application = ApplicationEntity.builder().id(applicationId).build();
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
+    when(objectMapper.valueToTree(command)).thenReturn(objectNode);
 
     // Act
-    sut.updateMeansData(applicationId, 0L, body);
+    sut.updateMeansData(applicationId, command);
   }
 
   @Test
@@ -414,7 +421,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    sut.updateMeansData(UUID.randomUUID(), 0L, new Object());
+    sut.updateMeansData(UUID.randomUUID(), UpdateMeansDataCommand.builder().eTag(0L).build());
 
     // Assert
     verify(eventService, never()).record(any());
@@ -425,7 +432,7 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final DeclarationCommand command =
-        DeclarationCommand.builder().declarationConfirmation(true).build();
+        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
@@ -433,7 +440,7 @@ public class ApplicationServiceTest {
     when(declarationMapper.toDeclarationEntity(command)).thenReturn(declarationEntity);
 
     // Act
-    sut.updateClientDeclaration(applicationId, 0L, command);
+    sut.updateClientDeclaration(applicationId, command);
 
     // Assert
     verify(eventService, times(1)).record(command);
@@ -446,7 +453,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    sut.updateClientDeclaration(UUID.randomUUID(), 0L, null);
+    sut.updateClientDeclaration(UUID.randomUUID(), (DeclarationCommand) null);
 
     // Assert
     verify(eventService, never()).record(any());
@@ -455,17 +462,19 @@ public class ApplicationServiceTest {
   @Test
   void shouldRecordEvent_whenEvidenceUpdated() {
     // Arrange
-    final var evidence = EvidenceGenerator.createEvidenceMap();
+    final var evidenceMap = EvidenceGenerator.createEvidenceMap();
+    final var command =
+        UpdateEvidenceCommand.builder().eTag(0L).additionalProperties(evidenceMap).build();
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
-    sut.updateEvidence(application.getId(), 0L, evidence);
+    sut.updateEvidence(application.getId(), command);
 
     // Assert
-    verify(eventService, times(1)).record(evidence);
+    verify(eventService, times(1)).record(command);
   }
 
   @Test
@@ -475,7 +484,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    sut.updateEvidence(UUID.randomUUID(), 0L, null);
+    sut.updateEvidence(UUID.randomUUID(), (UpdateEvidenceCommand) null);
 
     // Assert
     verify(eventService, never()).record(any());
@@ -486,13 +495,15 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final ApplicationEntity application =
-        ApplicationEntity.builder().id(applicationId).build(); // version = 0
+        ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
     assertThrows(
-        EtagMismatchException.class, () -> sut.updateMeansData(applicationId, 99L, new Object()));
+        EtagMismatchException.class,
+        () ->
+            sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(99L).build()));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -500,13 +511,16 @@ public class ApplicationServiceTest {
   void updateClientDeclaration_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
-    final ApplicationEntity application = new ApplicationEntity(); // version = 0
+    final ApplicationEntity application = new ApplicationEntity(); // eTag = 0
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
     assertThrows(
-        EtagMismatchException.class, () -> sut.updateClientDeclaration(applicationId, 99L, null));
+        EtagMismatchException.class,
+        () ->
+            sut.updateClientDeclaration(
+                applicationId, DeclarationCommand.builder().eTag(99L).build()));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -514,13 +528,16 @@ public class ApplicationServiceTest {
   void updateEvidence_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null)); // version = 0
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null)); // eTag = 0
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
     assertThrows(
-        EtagMismatchException.class, () -> sut.updateEvidence(application.getId(), 99L, null));
+        EtagMismatchException.class,
+        () ->
+            sut.updateEvidence(
+                application.getId(), UpdateEvidenceCommand.builder().eTag(99L).build()));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 }

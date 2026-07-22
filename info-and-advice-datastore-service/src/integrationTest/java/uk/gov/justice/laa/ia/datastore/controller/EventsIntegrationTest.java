@@ -49,7 +49,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId = savedApplicationId();
     final String payload =
         """
-        {"determinationId": "%s", "meansAssessmentRequired": true}
+        {"eTag": 0, "determinationId": "%s", "meansAssessmentRequired": true}
         """
             .formatted(UUID.randomUUID());
 
@@ -57,7 +57,6 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         .perform(
             put("/api/v0/applications/{id}:update-means-data", applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isOk());
@@ -69,13 +68,12 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
   void shouldRecordEvent_whenDeclarationUpdated() throws Exception {
     final UUID applicationId = savedApplicationId();
     final String payload =
-        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
 
     mockMvc
         .perform(
             put(TestConstants.UpdateDeclaration, applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNoContent());
@@ -86,13 +84,12 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldRecordEvent_whenEvidenceUpdated() throws Exception {
     final UUID applicationId = savedApplicationId();
-    final String payload = toJson(EvidenceGenerator.createEvidenceMap());
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
 
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNoContent());
@@ -109,19 +106,21 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         .perform(
             put(TestConstants.UpdateDeclaration, applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    toJson(DeclarationCommand.builder().declarationConfirmation(true).build())))
+                    toJson(
+                        DeclarationCommand.builder()
+                            .eTag(0L)
+                            .declarationConfirmation(true)
+                            .build())))
         .andExpect(status().isNoContent());
 
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(EvidenceGenerator.createEvidenceMap())))
+                .content(toJson(EvidenceGenerator.createUpdateEvidenceCommand(1L))))
         .andExpect(status().isNoContent());
 
     clearCache();

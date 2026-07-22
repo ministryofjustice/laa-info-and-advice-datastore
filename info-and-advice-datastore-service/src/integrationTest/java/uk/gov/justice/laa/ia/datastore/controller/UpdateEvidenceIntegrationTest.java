@@ -32,14 +32,13 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                     }))
             .getId();
     clearCache();
-    final String payload = toJson(EvidenceGenerator.createEvidenceMap());
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
 
     // Act
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNoContent())
@@ -49,12 +48,11 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldReturnNotFoundWhenApplicationDoesNotExist() throws Exception {
     final UUID applicationId = UUID.randomUUID();
-    final String payload = toJson(EvidenceGenerator.createEvidenceMap());
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNotFound());
@@ -74,14 +72,13 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                     }))
             .getId();
     clearCache();
-    final String payload = toJson(EvidenceGenerator.createEvidenceMap());
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(99L));
 
-    // Act + Assert - send with stale version 99 (actual version is 0)
+    // Act + Assert - send with stale eTag 99 (actual is 0)
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .withBearerWriteToken()
-                .header("If-Match", "99")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isConflict());

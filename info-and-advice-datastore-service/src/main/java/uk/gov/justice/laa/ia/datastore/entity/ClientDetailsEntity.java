@@ -34,8 +34,8 @@ public class ClientDetailsEntity {
   private UUID id;
 
   @Version
-  @Column(name = "version", nullable = false)
-  private long version;
+  @Column(name = "etag", nullable = false)
+  private long etag;
 
   @Column(name = "first_name", nullable = false)
   private String firstName;
