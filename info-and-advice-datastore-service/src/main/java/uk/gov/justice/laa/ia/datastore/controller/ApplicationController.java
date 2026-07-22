@@ -63,7 +63,7 @@ public class ApplicationController implements ApplicationApi {
   @Override
   public ResponseEntity<Void> updateMeansData(UUID id, Object body) {
     if (service.updateMeansData(id, body)) {
-      return ResponseEntity.ok().build();
+      return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();
     }

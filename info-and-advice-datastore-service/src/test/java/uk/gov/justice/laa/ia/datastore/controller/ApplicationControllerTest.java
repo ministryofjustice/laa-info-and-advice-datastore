@@ -169,7 +169,7 @@ public class ApplicationControllerTest {
             put("/api/v0/applications/" + id + ":update-means-data")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
   }
 
   @Test
