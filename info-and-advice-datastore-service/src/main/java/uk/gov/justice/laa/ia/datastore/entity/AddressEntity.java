@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -27,6 +28,10 @@ public class AddressEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
+
+  @Version
+  @Column(name = "version", nullable = false)
+  private long version;
 
   @Column(name = "address_line_1", nullable = false)
   private String addressLine1;

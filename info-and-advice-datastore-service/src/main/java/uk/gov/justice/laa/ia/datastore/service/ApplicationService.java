@@ -15,6 +15,7 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -102,11 +103,13 @@ public class ApplicationService {
    * Update means data for an application.
    *
    * @param applicationId the application ID
+   * @param version the expected ETag version
    * @param body the means data
    * @return true if application updated, false if not found
+   * @throws EtagMismatchException if the provided version does not match the current entity version
    */
   @Transactional
-  public boolean updateMeansData(UUID applicationId, Object body) {
+  public boolean updateMeansData(UUID applicationId, long version, Object body) {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
@@ -115,6 +118,9 @@ public class ApplicationService {
     }
 
     ApplicationEntity application = applicationOpt.get();
+    if (application.getVersion() != version) {
+      throw new EtagMismatchException();
+    }
 
     JsonNode jsonNode = objectMapper.valueToTree(body);
 
@@ -145,11 +151,13 @@ public class ApplicationService {
   /**
    * Update application client declaration..
    *
+   * @param version the expected ETag version
    * @return true if application updated, false if not found.
+   * @throws EtagMismatchException if the provided version does not match the current entity version
    */
   @Transactional
   public boolean updateClientDeclaration(
-      UUID applicationId, DeclarationCommand declarationConfirmation) {
+      UUID applicationId, long version, DeclarationCommand declarationConfirmation) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
@@ -157,12 +165,16 @@ public class ApplicationService {
       return false;
     }
 
+    final ApplicationEntity application = applicationOpt.get();
+    if (application.getVersion() != version) {
+      throw new EtagMismatchException();
+    }
+
     DeclarationEntity declarationEntity =
         declarationMapper.toDeclarationEntity(declarationConfirmation);
     // TODO: declaration status is currently undefined
     declarationEntity.setClientDeclarationStatus(ClientDeclarationStatus.DRAFT);
 
-    ApplicationEntity application = applicationOpt.get();
     if (application.getDeclaration() != null) {
       declarationEntity.setId(application.getDeclaration().getId());
       declarationEntity.setCreatedAt(application.getDeclaration().getCreatedAt());
@@ -178,10 +190,12 @@ public class ApplicationService {
   /**
    * Update application evidence.
    *
+   * @param version the expected ETag version
    * @return true if application updated, false if not found.
+   * @throws EtagMismatchException if the provided version does not match the current entity version
    */
   @Transactional
-  public boolean updateEvidence(UUID applicationId, Map<String, Object> evidence) {
+  public boolean updateEvidence(UUID applicationId, long version, Map<String, Object> evidence) {
 
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
@@ -190,6 +204,9 @@ public class ApplicationService {
       return false;
     }
     final ApplicationEntity application = applicationOpt.get();
+    if (application.getVersion() != version) {
+      throw new EtagMismatchException();
+    }
     application.setModifiedBy(userContext.getCurrentUser());
     application.setEvidence(evidence);
     repository.save(application);

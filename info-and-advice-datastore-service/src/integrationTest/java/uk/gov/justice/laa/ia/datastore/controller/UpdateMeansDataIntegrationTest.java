@@ -54,6 +54,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
         .perform(
             put("/api/v0/applications/{id}:update-means-data", applicationId)
                 .withBearerWriteToken()
+                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isOk());
@@ -74,5 +75,36 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     assertThat(eligibilityResults).hasSize(1);
     assertThat(eligibilityResults.getFirst().getResultJson()).isEqualTo(expectedJson);
     assertThat(eligibilityResults.getFirst().getCreatedAt()).isNotNull();
+  }
+
+  @Test
+  void shouldReturn409_whenEtagVersionMismatch() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmId(PROVIDER_FIRM_ID)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"determinationId": "%s", "meansAssessmentRequired": true}
+        """
+            .formatted(UUID.randomUUID());
+
+    // Act + Assert - send with stale version 99 (actual version is 0)
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}:update-means-data", applicationId)
+                .withBearerWriteToken()
+                .header("If-Match", "99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isConflict());
   }
 }

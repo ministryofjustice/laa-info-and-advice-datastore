@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -12,6 +13,18 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Slf4j
 @Profile("!local") // disable local profiles to allow exceptions to propagate for development
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+  /**
+   * The handler for EtagMismatchException.
+   *
+   * @param exception the exception
+   * @return 409 Conflict response
+   */
+  @ExceptionHandler(EtagMismatchException.class)
+  public ResponseEntity<String> handleEtagMismatchException(EtagMismatchException exception) {
+    log.warn("ETag mismatch: {}", exception.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
+  }
+
   /**
    * The handler for Exception.
    *

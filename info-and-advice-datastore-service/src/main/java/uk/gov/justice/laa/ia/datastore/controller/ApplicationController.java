@@ -1,6 +1,5 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
-import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,7 @@ public class ApplicationController implements ApplicationApi {
   private final ApplicationService service;
 
   @Override
-  public ResponseEntity<Void> startCase(@Valid StartCaseCommand startCaseCommand) {
+  public ResponseEntity<Void> startCase(StartCaseCommand startCaseCommand) {
     UUID id = service.createApplication(startCaseCommand);
 
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -61,8 +60,8 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateMeansData(UUID id, Object body) {
-    if (service.updateMeansData(id, body)) {
+  public ResponseEntity<Void> updateMeansData(UUID id, Long ifMatch, Object body) {
+    if (service.updateMeansData(id, ifMatch, body)) {
       return ResponseEntity.ok().build();
     } else {
       return ResponseEntity.notFound().build();
@@ -71,8 +70,8 @@ public class ApplicationController implements ApplicationApi {
 
   @Override
   public ResponseEntity<Void> updateDeclaration(
-      UUID id, @Valid DeclarationCommand declarationCommand) {
-    if (service.updateClientDeclaration(id, declarationCommand)) {
+      UUID id, Long ifMatch, DeclarationCommand declarationCommand) {
+    if (service.updateClientDeclaration(id, ifMatch, declarationCommand)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();
@@ -80,8 +79,8 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateEvidence(UUID id, @Valid Map<String, Object> evidence) {
-    if (service.updateEvidence(id, evidence)) {
+  public ResponseEntity<Void> updateEvidence(UUID id, Long ifMatch, Map<String, Object> evidence) {
+    if (service.updateEvidence(id, ifMatch, evidence)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();

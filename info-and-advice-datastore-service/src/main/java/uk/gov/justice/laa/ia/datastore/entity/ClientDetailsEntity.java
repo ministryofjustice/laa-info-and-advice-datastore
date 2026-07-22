@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.persistence.Version;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -31,6 +32,10 @@ public class ClientDetailsEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private UUID id;
+
+  @Version
+  @Column(name = "version", nullable = false)
+  private long version;
 
   @Column(name = "first_name", nullable = false)
   private String firstName;

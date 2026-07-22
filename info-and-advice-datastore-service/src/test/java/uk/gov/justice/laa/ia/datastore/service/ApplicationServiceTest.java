@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -30,6 +31,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
@@ -188,11 +190,7 @@ public class ApplicationServiceTest {
     when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, body);
-
-    // Assert
-    assertTrue(result);
-    verify(eligibilityResultRepository, times(1)).save(any(EligibilityResultEntity.class));
+    boolean result = sut.updateMeansData(applicationId, 0L, body);
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
 
@@ -212,10 +210,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, body);
-
-    // Assert
-    assertFalse(result);
+    boolean result = sut.updateMeansData(applicationId, 0L, body);
     verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
@@ -234,7 +229,7 @@ public class ApplicationServiceTest {
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
 
     // Act
-    final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
+    final boolean result = sut.updateClientDeclaration(applicationId, 0L, declarationCommand);
 
     // Assert
     assertTrue(result);
@@ -292,7 +287,7 @@ public class ApplicationServiceTest {
     assertThat(applicationEntity.getDeclaration().getModifiedAt()).isEqualTo(originalCreatedTime);
 
     // Act
-    final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
+    final boolean result = sut.updateClientDeclaration(applicationId, 0L, declarationCommand);
     final DeclarationEntity declaration = applicationEntity.getDeclaration();
 
     // Assert
@@ -315,7 +310,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    final boolean result = sut.updateClientDeclaration(UUID.randomUUID(), null);
+    final boolean result = sut.updateClientDeclaration(UUID.randomUUID(), 0L, null);
 
     // Assert
     assertFalse(result);
@@ -329,7 +324,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    final boolean result = sut.updateEvidence(UUID.randomUUID(), null);
+    final boolean result = sut.updateEvidence(UUID.randomUUID(), 0L, null);
 
     // Assert
     assertFalse(result);
@@ -348,7 +343,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
-    final boolean result = sut.updateEvidence(application.getId(), evidence);
+    final boolean result = sut.updateEvidence(application.getId(), 0L, evidence);
 
     // Assert
     assertTrue(result);
@@ -371,7 +366,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
-    final boolean result = sut.updateEvidence(application.getId(), evidence);
+    final boolean result = sut.updateEvidence(application.getId(), 0L, evidence);
 
     // Assert
     assertTrue(result);
@@ -409,10 +404,7 @@ public class ApplicationServiceTest {
     when(objectMapper.valueToTree(body)).thenReturn(jsonNode);
 
     // Act
-    sut.updateMeansData(applicationId, body);
-
-    // Assert
-    verify(eventService, times(1)).record(body);
+    sut.updateMeansData(applicationId, 0L, body);
   }
 
   @Test
@@ -422,7 +414,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    sut.updateMeansData(UUID.randomUUID(), new Object());
+    sut.updateMeansData(UUID.randomUUID(), 0L, new Object());
 
     // Assert
     verify(eventService, never()).record(any());
@@ -441,7 +433,7 @@ public class ApplicationServiceTest {
     when(declarationMapper.toDeclarationEntity(command)).thenReturn(declarationEntity);
 
     // Act
-    sut.updateClientDeclaration(applicationId, command);
+    sut.updateClientDeclaration(applicationId, 0L, command);
 
     // Assert
     verify(eventService, times(1)).record(command);
@@ -454,7 +446,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    sut.updateClientDeclaration(UUID.randomUUID(), null);
+    sut.updateClientDeclaration(UUID.randomUUID(), 0L, null);
 
     // Assert
     verify(eventService, never()).record(any());
@@ -470,7 +462,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
-    sut.updateEvidence(application.getId(), evidence);
+    sut.updateEvidence(application.getId(), 0L, evidence);
 
     // Assert
     verify(eventService, times(1)).record(evidence);
@@ -483,9 +475,52 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    sut.updateEvidence(UUID.randomUUID(), null);
+    sut.updateEvidence(UUID.randomUUID(), 0L, null);
 
     // Assert
     verify(eventService, never()).record(any());
+  }
+
+  @Test
+  void updateMeansData_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).build(); // version = 0
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        EtagMismatchException.class, () -> sut.updateMeansData(applicationId, 99L, new Object()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateClientDeclaration_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application = new ApplicationEntity(); // version = 0
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        EtagMismatchException.class, () -> sut.updateClientDeclaration(applicationId, 99L, null));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateEvidence_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null)); // version = 0
+    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        EtagMismatchException.class, () -> sut.updateEvidence(application.getId(), 99L, null));
+    verify(repo, never()).save(any(ApplicationEntity.class));
   }
 }

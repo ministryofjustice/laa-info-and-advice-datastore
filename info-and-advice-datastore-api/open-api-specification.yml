@@ -83,6 +83,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: If-Match
+          in: header
+          required: true
+          description: ETag version of the application to update
+          schema:
+            type: integer
+            format: int64
       requestBody:
         required: true
         content:
@@ -98,6 +105,8 @@ paths:
           description: Forbidden
         '404':
           description: Not found
+        '409':
+          description: Conflict - ETag version mismatch
         '500':
           description: Internal server error
   /api/v0/applications:start-case:
@@ -130,6 +139,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: If-Match
+          in: header
+          required: true
+          description: ETag version of the application to update
+          schema:
+            type: integer
+            format: int64
       requestBody:
         required: true
         description: Confirmation of the evidence statement for the application.
@@ -144,6 +160,8 @@ paths:
           description: Bad request
         '404':
           description: Application not found
+        '409':
+          description: Conflict - ETag version mismatch
         '500':
           description: Internal server error
 
@@ -160,6 +178,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: If-Match
+          in: header
+          required: true
+          description: ETag version of the application to update
+          schema:
+            type: integer
+            format: int64
       requestBody:
         required: true
         description: Confirmation of the declaration statement for the application.
@@ -174,6 +199,8 @@ paths:
           description: Bad request
         '404':
           description: Application not found
+        '409':
+          description: Conflict - ETag version mismatch
         '500':
           description: Internal server error
 
@@ -254,6 +281,10 @@ components:
           format: date-time
         modifiedBy:
           type: string
+        version:
+          type: integer
+          format: int64
+          description: ETag version for optimistic concurrency control
 
     ApplicationSummary:
       type: object

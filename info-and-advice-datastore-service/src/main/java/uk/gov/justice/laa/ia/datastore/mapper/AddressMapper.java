@@ -20,6 +20,7 @@ public abstract class AddressMapper {
 
   /** Maps a {@link CreateAddressCommand} to an {@link AddressEntity}. */
   @Mapping(target = "id", ignore = true)
+  @Mapping(target = "version", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")

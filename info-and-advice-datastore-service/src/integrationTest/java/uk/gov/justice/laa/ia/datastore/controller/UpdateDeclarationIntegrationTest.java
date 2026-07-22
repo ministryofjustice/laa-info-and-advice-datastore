@@ -43,6 +43,7 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
             .perform(
                 put(TestConstants.UpdateDeclaration, applicationId)
                     .withBearerWriteToken()
+                    .header("If-Match", "0")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(payload))
             .andExpect(status().isNoContent())
@@ -53,5 +54,33 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
         applicationRepository.findById(applicationId).orElseThrow().getDeclaration();
 
     assertThat(updatedEntity.isDeclarationConfirmation()).isTrue();
+  }
+
+  @Test
+  void shouldReturn409_whenEtagVersionMismatch() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder -> {
+                      builder
+                          .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                          .providerFirmId(PROVIDER_FIRM_ID);
+                    }))
+            .getId();
+    clearCache();
+    final String payload =
+        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+
+    // Act + Assert - send with stale version 99 (actual version is 0)
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateDeclaration, applicationId)
+                .withBearerWriteToken()
+                .header("If-Match", "99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isConflict());
   }
 }

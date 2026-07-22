@@ -21,6 +21,7 @@ public abstract class DeclarationMapper {
   public abstract DeclarationResponse toDeclarationResponse(DeclarationEntity entity);
 
   @Mapping(target = "id", ignore = true)
+  @Mapping(target = "version", ignore = true)
   @Mapping(target = "clientDeclarationStatus", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")

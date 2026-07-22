@@ -57,6 +57,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         .perform(
             put("/api/v0/applications/{id}:update-means-data", applicationId)
                 .withBearerWriteToken()
+                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isOk());
@@ -74,6 +75,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         .perform(
             put(TestConstants.UpdateDeclaration, applicationId)
                 .withBearerWriteToken()
+                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNoContent());
@@ -90,6 +92,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .withBearerWriteToken()
+                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNoContent());
@@ -106,6 +109,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         .perform(
             put(TestConstants.UpdateDeclaration, applicationId)
                 .withBearerWriteToken()
+                .header("If-Match", "0")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     toJson(DeclarationCommand.builder().declarationConfirmation(true).build())))
@@ -115,6 +119,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .withBearerWriteToken()
+                .header("If-Match", "1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(EvidenceGenerator.createEvidenceMap())))
         .andExpect(status().isNoContent());
