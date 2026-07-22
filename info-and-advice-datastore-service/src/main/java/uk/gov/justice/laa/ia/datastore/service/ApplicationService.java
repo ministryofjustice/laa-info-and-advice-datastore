@@ -9,6 +9,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
@@ -79,9 +80,9 @@ public class ApplicationService {
     if (additionalFilteringSpecification != null) {
       specificationToApply = specificationToApply.and(additionalFilteringSpecification);
     }
-
+    final Sort defaultSort = Sort.by(Sort.Direction.DESC, "modifiedAt");
     return repository
-        .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize))
+        .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize, defaultSort))
         .map(applicationMapper::toApplicationSummary);
   }
 
