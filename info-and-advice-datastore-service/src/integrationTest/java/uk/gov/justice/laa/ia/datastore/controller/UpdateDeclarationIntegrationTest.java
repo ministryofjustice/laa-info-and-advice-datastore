@@ -54,4 +54,18 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
 
     assertThat(updatedEntity.isDeclarationConfirmation()).isTrue();
   }
+
+  @Test
+  void shouldReturnNotFoundWhenApplicationDoesNotExist() throws Exception {
+    final UUID applicationId = UUID.randomUUID();
+    final String payload =
+        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateDeclaration, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNotFound());
+  }
 }

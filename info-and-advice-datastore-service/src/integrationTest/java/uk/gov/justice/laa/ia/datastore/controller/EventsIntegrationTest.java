@@ -59,7 +59,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
 
     assertSingleEventRecorded("PUT", applicationId.toString(), payload);
   }
