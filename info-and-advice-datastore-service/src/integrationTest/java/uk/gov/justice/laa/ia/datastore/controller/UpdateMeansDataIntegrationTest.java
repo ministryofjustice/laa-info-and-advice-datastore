@@ -56,7 +56,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
 
     // Assert
     clearCache();
@@ -74,5 +74,26 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     assertThat(eligibilityResults).hasSize(1);
     assertThat(eligibilityResults.getFirst().getResultJson()).isEqualTo(expectedJson);
     assertThat(eligibilityResults.getFirst().getCreatedAt()).isNotNull();
+  }
+
+  @Test
+  void shouldReturnNotFoundWhenApplicationDoesNotExist() throws Exception {
+    final UUID applicationId = UUID.randomUUID();
+    final String payload =
+        """
+        {
+          "determinationId": "%s",
+          "meansAssessmentRequired": true,
+          "status": "ELIGIBLE"
+        }
+        """
+            .formatted(UUID.randomUUID());
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}:update-means-data", applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNotFound());
   }
 }

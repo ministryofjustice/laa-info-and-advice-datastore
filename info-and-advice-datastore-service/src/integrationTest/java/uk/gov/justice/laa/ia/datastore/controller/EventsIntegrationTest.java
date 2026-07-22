@@ -15,9 +15,9 @@ import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
@@ -30,18 +30,18 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
 
   @Test
   void shouldRecordEvent_whenApplicationCreated() throws Exception {
-    StartCaseCommand command = StartCaseCommandGenerator.create(null);
+    StartApplicationCommand command = StartApplicationCommandGenerator.create(null);
     String payload = toJson(command);
 
     mockMvc
         .perform(
-            post("/api/v0/applications:start-case")
+            post("/api/v0/applications:start-application")
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isCreated());
 
-    assertSingleEventRecorded("POST", "/api/v0/applications:start-case", payload);
+    assertSingleEventRecorded("POST", "/api/v0/applications:start-application", payload);
   }
 
   @Test
@@ -59,7 +59,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
 
     assertSingleEventRecorded("PUT", applicationId.toString(), payload);
   }

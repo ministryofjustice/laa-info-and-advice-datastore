@@ -16,7 +16,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponses;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
@@ -29,8 +29,9 @@ public class ApplicationController implements ApplicationApi {
   private final ApplicationService service;
 
   @Override
-  public ResponseEntity<Void> startCase(@Valid StartCaseCommand startCaseCommand) {
-    UUID id = service.createApplication(startCaseCommand);
+  public ResponseEntity<Void> startApplication(
+      @Valid StartApplicationCommand startApplicationCommand) {
+    UUID id = service.createApplication(startApplicationCommand);
 
     return ResponseEntity.status(HttpStatus.CREATED)
         .header("X-Application-ID", id.toString())
@@ -63,7 +64,7 @@ public class ApplicationController implements ApplicationApi {
   @Override
   public ResponseEntity<Void> updateMeansData(UUID id, Object body) {
     if (service.updateMeansData(id, body)) {
-      return ResponseEntity.ok().build();
+      return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();
     }

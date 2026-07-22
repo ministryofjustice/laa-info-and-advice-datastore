@@ -41,7 +41,7 @@ class EventServiceTest {
     when(userContext.getProviderOfficeId())
         .thenReturn(UUID.fromString("00000000-0000-0000-0000-000000000001"));
     when(request.getMethod()).thenReturn("POST");
-    when(request.getRequestURI()).thenReturn("/api/v0/applications:start-case");
+    when(request.getRequestURI()).thenReturn("/api/v0/applications:start-application");
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
     when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -58,7 +58,7 @@ class EventServiceTest {
     assertThat(saved.getProviderOfficeId())
         .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000001"));
     assertThat(saved.getHttpMethod()).isEqualTo("POST");
-    assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-case");
+    assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-application");
     assertThat(saved.getPayload()).isEqualTo(payloadNode);
   }
 }
