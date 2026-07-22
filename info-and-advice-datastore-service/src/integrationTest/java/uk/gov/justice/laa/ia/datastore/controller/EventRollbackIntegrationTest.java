@@ -13,8 +13,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
@@ -38,12 +38,12 @@ public class EventRollbackIntegrationTest extends BaseIntegrationTest {
         .when(applicationRepository)
         .save(any(ApplicationEntity.class));
 
-    StartCaseCommand command = StartCaseCommandGenerator.create(null);
+    StartApplicationCommand command = StartApplicationCommandGenerator.create(null);
 
     // Act
     mockMvc
         .perform(
-            post("/api/v0/applications:start-case")
+            post("/api/v0/applications:start-application")
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(command)))

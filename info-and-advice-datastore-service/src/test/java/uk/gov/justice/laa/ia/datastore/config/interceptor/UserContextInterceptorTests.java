@@ -22,7 +22,7 @@ public class UserContextInterceptorTests {
     // Arrange
     // Create a mock HttpServletRequest with a valid JWT token in the Authorization header
     MockHttpServletRequestBuilder builder =
-        post("/api/v0/applications:start-case").header("Authorization", "");
+        post("/api/v0/applications:start-application").header("Authorization", "");
     var request = builder.buildRequest(null);
 
     // Act
