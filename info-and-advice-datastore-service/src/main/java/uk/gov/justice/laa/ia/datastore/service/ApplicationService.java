@@ -22,7 +22,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
@@ -48,12 +48,12 @@ public class ApplicationService {
    * @return ID of newly created application.
    */
   @Transactional
-  public UUID createApplication(StartCaseCommand startCase) {
-    ApplicationEntity entity = applicationMapper.toApplicationEntity(startCase);
+  public UUID createApplication(StartApplicationCommand startApplication) {
+    ApplicationEntity entity = applicationMapper.toApplicationEntity(startApplication);
 
     entity.setApplicationState(ApplicationState.DRAFT);
     ApplicationEntity saved = repository.save(entity);
-    eventService.record(startCase);
+    eventService.record(startApplication);
     return saved.getId();
   }
 

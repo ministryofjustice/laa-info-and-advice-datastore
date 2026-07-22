@@ -90,19 +90,19 @@ paths:
         '403': { description: Forbidden }
         '404': { description: Not found }
         '500': { description: Internal server error }
-  /api/v0/applications:start-case:
+  /api/v0/applications:start-application:
     post:
       tags:
         - application
-      operationId: startCase
-      summary: Start an application/case for a client
+      operationId: startApplication
+      summary: Start an application for a client
       requestBody:
         required: true
-        description: Information required to start an application/case
+        description: Information required to start an application
         content:
           application/json:
             schema: 
-              $ref: '#/components/schemas/StartCaseCommand'
+              $ref: '#/components/schemas/StartApplicationCommand'
       responses:
         '201' : { description: Application created successfully }
         '400' : { description: Bad request }
@@ -312,7 +312,7 @@ components:
       enum:
         - DRAFT
 
-    StartCaseCommand:
+    StartApplicationCommand:
       type: object
       required:
         - client

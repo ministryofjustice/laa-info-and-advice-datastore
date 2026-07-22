@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
@@ -23,13 +23,13 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldCreateApplicationSuccessfully() throws Exception {
     // Arrange
-    StartCaseCommand command = StartCaseCommandGenerator.create(null);
+    StartApplicationCommand command = StartApplicationCommandGenerator.create(null);
 
     // Act
     MvcResult result =
         mockMvc
             .perform(
-                post("/api/v0/applications:start-case")
+                post("/api/v0/applications:start-application")
                     .withBearerWriteToken()
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(toJson(command)))
