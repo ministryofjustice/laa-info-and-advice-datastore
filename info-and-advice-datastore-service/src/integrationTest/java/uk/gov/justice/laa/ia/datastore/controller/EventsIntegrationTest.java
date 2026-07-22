@@ -139,10 +139,8 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     assertThat(event.getHttpMethod()).isEqualTo(expectedMethod);
     assertThat(event.getUrlPath()).contains(expectedUrlContains);
     assertThat(event.getChangedBy()).isEqualTo("SYSTEM");
-    assertThat(event.getProviderFirmId())
-        .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000000"));
-    assertThat(event.getProviderOfficeId())
-        .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+    assertThat(event.getProviderFirmId()).isEqualTo(PROVIDER_FIRM_ID);
+    assertThat(event.getProviderOfficeId()).isEqualTo(PROVIDER_OFFICE_ID);
     assertThat(event.getSequenceNumber()).isNotNull();
     assertThat(event.getCreatedAt()).isNotNull();
     assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(expectedPayload));
@@ -153,7 +151,10 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         .saveAndFlush(
             ApplicationEntityGenerator.createWithoutId(
                 builder ->
-                    builder.clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))))
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmId(PROVIDER_FIRM_ID)
+                        .providerOfficeId(PROVIDER_FIRM_ID)))
         .getId();
   }
 }

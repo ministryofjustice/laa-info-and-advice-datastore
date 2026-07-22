@@ -1,11 +1,16 @@
 package uk.gov.justice.laa.ia.datastore.utils;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,9 +18,12 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.SpringBootMicroserviceApplication;
+import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
@@ -41,6 +49,18 @@ public abstract class BaseIntegrationTest {
       new ObjectMapper()
           .registerModule(new JavaTimeModule())
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+  @MockitoBean private UserContextInterceptor userContextInterceptor;
+  @MockitoBean private UserContext userContext;
+  protected static final UUID PROVIDER_FIRM_ID = UUID.randomUUID();
+  protected static final UUID PROVIDER_OFFICE_ID = UUID.randomUUID();
+
+  @BeforeEach
+  void setUp() throws Exception {
+    when(userContextInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+    when(userContext.getProviderFirmId()).thenReturn(PROVIDER_FIRM_ID);
+    when(userContext.getProviderOfficeId()).thenReturn(PROVIDER_OFFICE_ID);
+    when(userContext.getCurrentUser()).thenReturn("SYSTEM");
+  }
 
   public void clearCache() {
     entityManager.flush();

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -27,9 +28,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
@@ -40,7 +44,7 @@ import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 
 /** Unit testing for the {@link ApplicationController}. */
-@WebMvcTest(ApplicationController.class)
+@WebMvcTest({ApplicationController.class, UserContext.class, ObjectMapper.class})
 @TestPropertySource(
     properties = {
       "spring.autoconfigure.exclude="
@@ -49,9 +53,11 @@ import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
           + "org.springframework.boot.security.oauth2.server.resource"
           + ".autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration"
     })
+@ActiveProfiles(profiles = "test")
 public class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
+  @MockitoBean private UserContextInterceptor userContextInterceptor;
 
   private final ObjectMapper objectMapper =
       new ObjectMapper()
@@ -59,6 +65,11 @@ public class ApplicationControllerTest {
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   @MockitoBean private ApplicationService applicationService;
+
+  @BeforeEach
+  void setUp() throws Exception {
+    when(userContextInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+  }
 
   @Test
   void startCase_returnsCreatedStatus_andApplicationIdHeader() throws Exception {

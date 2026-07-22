@@ -25,6 +25,7 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
 /** Service class for handling Applications. */
 @RequiredArgsConstructor
@@ -59,22 +60,28 @@ public class ApplicationService {
   /**
    * Gets all the Applications.
    *
-   * @param specification the specification to filter applications, if null will use unrestricted
-   *     specification.
+   * @param additionalFilteringSpecification the specification to filter applications, if null will
+   *     just filter to the provider firm ID.
    * @param page the page number to retrieve, if null will use default page 0.
    * @param size the page size, if null will use default page size.
-   * @return page of {@link ApplicationResponse}
+   * @return page of {@link ApplicationSummary}
    */
   public Page<ApplicationSummary> getAllApplications(
-      Specification<ApplicationEntity> specification, Integer page, Integer size) {
+      Specification<ApplicationEntity> additionalFilteringSpecification,
+      Integer page,
+      Integer size) {
 
     int resolvedPage = page != null ? page : 0;
     int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
-    Specification<ApplicationEntity> resolvedSpecification =
-        specification != null ? specification : Specification.unrestricted();
+
+    Specification<ApplicationEntity> specificationToApply =
+        ApplicationSpecification.filterByProviderFirmId(userContext.getProviderFirmId());
+    if (additionalFilteringSpecification != null) {
+      specificationToApply = specificationToApply.and(additionalFilteringSpecification);
+    }
 
     return repository
-        .findAll(resolvedSpecification, PageRequest.of(resolvedPage, resolvedSize))
+        .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize))
         .map(applicationMapper::toApplicationSummary);
   }
 
@@ -84,9 +91,10 @@ public class ApplicationService {
    * @return {@link ApplicationResponse}
    */
   public Optional<ApplicationResponse> getApplication(UUID applicationId) {
+    var findApplicationByIdSpecification =
+        ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId());
     return repository
-        .findById(applicationId)
-        .filter(userContext::canAccessApplication)
+        .findOne(findApplicationByIdSpecification)
         .map(applicationMapper::toApplication);
   }
 
@@ -100,7 +108,8 @@ public class ApplicationService {
   @Transactional
   public boolean updateMeansData(UUID applicationId, Object body) {
     Optional<ApplicationEntity> applicationOpt =
-        repository.findById(applicationId).filter(userContext::canAccessApplication);
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -141,7 +150,9 @@ public class ApplicationService {
   @Transactional
   public boolean updateClientDeclaration(
       UUID applicationId, DeclarationCommand declarationConfirmation) {
-    final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
+    final Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -172,7 +183,9 @@ public class ApplicationService {
   @Transactional
   public boolean updateEvidence(UUID applicationId, Map<String, Object> evidence) {
 
-    final Optional<ApplicationEntity> applicationOpt = repository.findById(applicationId);
+    final Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
     if (applicationOpt.isEmpty()) {
       return false;
     }

@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.ia.datastore.repository;
+package uk.gov.justice.laa.ia.datastore.repository.specification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,10 +14,10 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
-/** Integration tests for the OfficeIdSpecification. */
+/** Integration tests for the ProviderOfficeIdSpecification. */
 @WithMockUser()
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
-public class OfficeIdSpecificationIntegrationTest extends BaseIntegrationTest {
+public class ProviderOfficeIdSpecificationIntegrationTest extends BaseIntegrationTest {
   @Test
   void whenOfficeIdSpecificationIsUsed_thenReturnApplicationsWithMatchingOfficeId() {
     // Arrange

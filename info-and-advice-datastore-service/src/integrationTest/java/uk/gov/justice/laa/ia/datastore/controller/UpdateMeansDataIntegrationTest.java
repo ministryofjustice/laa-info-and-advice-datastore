@@ -33,7 +33,9 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
             .saveAndFlush(
                 ApplicationEntityGenerator.createWithoutId(
                     builder ->
-                        builder.clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))))
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmId(PROVIDER_FIRM_ID)))
             .getId();
     clearCache();
 
