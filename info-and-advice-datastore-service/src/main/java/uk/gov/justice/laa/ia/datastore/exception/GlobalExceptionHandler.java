@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,6 +24,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<String> handleEtagMismatchException(EtagMismatchException exception) {
     log.warn("ETag mismatch: {}", exception.getMessage());
     return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
+  }
+
+  /**
+   * The handler for OptimisticLockingFailureException — thrown by JPA when a concurrent
+   * modification is detected via the {@code @Version} field.
+   *
+   * @param exception the exception
+   * @return 409 Conflict response
+   */
+  @ExceptionHandler(OptimisticLockingFailureException.class)
+  public ResponseEntity<String> handleOptimisticLockingFailure(
+      OptimisticLockingFailureException exception) {
+    log.warn("Concurrent modification conflict: {}", exception.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body("Conflict: resource was modified concurrently");
   }
 
   /**

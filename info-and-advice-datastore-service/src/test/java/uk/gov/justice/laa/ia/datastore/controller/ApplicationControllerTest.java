@@ -271,7 +271,7 @@ public class ApplicationControllerTest {
     // Arrange
     UUID id = UUID.randomUUID();
     String body = "{\"eTag\":2,\"some\":\"data\"}";
-    doThrow(new EtagMismatchException())
+    doThrow(new EtagMismatchException(2L, 5L))
         .when(applicationService)
         .updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
 
@@ -290,7 +290,7 @@ public class ApplicationControllerTest {
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
         DeclarationCommand.builder().eTag(2L).declarationConfirmation(true).build();
-    doThrow(new EtagMismatchException())
+    doThrow(new EtagMismatchException(2L, 5L))
         .when(applicationService)
         .updateClientDeclaration(eq(applicationId), any(DeclarationCommand.class));
 
@@ -308,7 +308,7 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     String body = "{\"eTag\":2,\"payeIncomeEvidence\":true}";
-    doThrow(new EtagMismatchException())
+    doThrow(new EtagMismatchException(2L, 5L))
         .when(applicationService)
         .updateEvidence(eq(applicationId), any(UpdateEvidenceCommand.class));
 

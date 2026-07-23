@@ -210,7 +210,7 @@ public class ApplicationService {
 
   private void validateEtag(ApplicationEntity application, Long providedEtag) {
     if (application.getEtag() != providedEtag) {
-      throw new EtagMismatchException();
+      throw new EtagMismatchException(providedEtag, application.getEtag());
     }
   }
 }
