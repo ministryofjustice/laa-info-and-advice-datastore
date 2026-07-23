@@ -1,7 +1,5 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
-import jakarta.validation.Valid;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +15,8 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationResponses;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
@@ -29,8 +29,7 @@ public class ApplicationController implements ApplicationApi {
   private final ApplicationService service;
 
   @Override
-  public ResponseEntity<Void> startApplication(
-      @Valid StartApplicationCommand startApplicationCommand) {
+  public ResponseEntity<Void> startApplication(StartApplicationCommand startApplicationCommand) {
     UUID id = service.createApplication(startApplicationCommand);
 
     return ResponseEntity.status(HttpStatus.CREATED)
@@ -62,8 +61,9 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateMeansData(UUID id, Object body) {
-    if (service.updateMeansData(id, body)) {
+  public ResponseEntity<Void> updateMeansData(
+      UUID id, UpdateMeansDataCommand updateMeansDataCommand) {
+    if (service.updateMeansData(id, updateMeansDataCommand)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();
@@ -71,8 +71,7 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateDeclaration(
-      UUID id, @Valid DeclarationCommand declarationCommand) {
+  public ResponseEntity<Void> updateDeclaration(UUID id, DeclarationCommand declarationCommand) {
     if (service.updateClientDeclaration(id, declarationCommand)) {
       return ResponseEntity.noContent().build();
     } else {
@@ -81,8 +80,8 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateEvidence(UUID id, @Valid Map<String, Object> evidence) {
-    if (service.updateEvidence(id, evidence)) {
+  public ResponseEntity<Void> updateEvidence(UUID id, UpdateEvidenceCommand updateEvidenceCommand) {
+    if (service.updateEvidence(id, updateEvidenceCommand)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();

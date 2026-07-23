@@ -49,7 +49,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId = savedApplicationId();
     final String payload =
         """
-        {"determinationId": "%s", "meansAssessmentRequired": true}
+        {"eTag": 0, "determinationId": "%s", "meansAssessmentRequired": true}
         """
             .formatted(UUID.randomUUID());
 
@@ -68,7 +68,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
   void shouldRecordEvent_whenDeclarationUpdated() throws Exception {
     final UUID applicationId = savedApplicationId();
     final String payload =
-        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
 
     mockMvc
         .perform(
@@ -84,7 +84,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldRecordEvent_whenEvidenceUpdated() throws Exception {
     final UUID applicationId = savedApplicationId();
-    final String payload = toJson(EvidenceGenerator.createEvidenceMap());
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
 
     mockMvc
         .perform(
@@ -108,7 +108,11 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    toJson(DeclarationCommand.builder().declarationConfirmation(true).build())))
+                    toJson(
+                        DeclarationCommand.builder()
+                            .eTag(0L)
+                            .declarationConfirmation(true)
+                            .build())))
         .andExpect(status().isNoContent());
 
     mockMvc
@@ -116,7 +120,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
             put(TestConstants.UpdateEvidence, applicationId)
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJson(EvidenceGenerator.createEvidenceMap())))
+                .content(toJson(EvidenceGenerator.createUpdateEvidenceCommand(1L))))
         .andExpect(status().isNoContent());
 
     clearCache();

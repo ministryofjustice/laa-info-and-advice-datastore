@@ -1,9 +1,8 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.transaction.Transactional;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +15,7 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -24,6 +24,8 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
@@ -103,11 +105,12 @@ public class ApplicationService {
    * Update means data for an application.
    *
    * @param applicationId the application ID
-   * @param body the means data
+   * @param command the means data command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found
+   * @throws EtagMismatchException if the eTag does not match the current entity value
    */
   @Transactional
-  public boolean updateMeansData(UUID applicationId, Object body) {
+  public boolean updateMeansData(UUID applicationId, UpdateMeansDataCommand command) {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
@@ -116,8 +119,10 @@ public class ApplicationService {
     }
 
     ApplicationEntity application = applicationOpt.get();
+    validateEtag(application, command.geteTag());
 
-    JsonNode jsonNode = objectMapper.valueToTree(body);
+    ObjectNode jsonNode = (ObjectNode) objectMapper.valueToTree(command);
+    jsonNode.remove("eTag");
 
     // Save the result to the new table
     EligibilityResultEntity resultEntity =
@@ -139,18 +144,19 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
-    eventService.record(body);
+    eventService.record(command);
     return true;
   }
 
   /**
-   * Update application client declaration..
+   * Update application client declaration.
    *
+   * @param command the declaration command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found.
+   * @throws EtagMismatchException if the eTag does not match the current entity value
    */
   @Transactional
-  public boolean updateClientDeclaration(
-      UUID applicationId, DeclarationCommand declarationConfirmation) {
+  public boolean updateClientDeclaration(UUID applicationId, DeclarationCommand command) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
@@ -158,12 +164,13 @@ public class ApplicationService {
       return false;
     }
 
-    DeclarationEntity declarationEntity =
-        declarationMapper.toDeclarationEntity(declarationConfirmation);
+    final ApplicationEntity application = applicationOpt.get();
+    validateEtag(application, command.geteTag());
+
+    DeclarationEntity declarationEntity = declarationMapper.toDeclarationEntity(command);
     // TODO: declaration status is currently undefined
     declarationEntity.setClientDeclarationStatus(ClientDeclarationStatus.DRAFT);
 
-    ApplicationEntity application = applicationOpt.get();
     if (application.getDeclaration() != null) {
       declarationEntity.setId(application.getDeclaration().getId());
       declarationEntity.setCreatedAt(application.getDeclaration().getCreatedAt());
@@ -172,17 +179,19 @@ public class ApplicationService {
     application.setDeclaration(declarationEntity);
 
     repository.save(application);
-    eventService.record(declarationConfirmation);
+    eventService.record(command);
     return true;
   }
 
   /**
    * Update application evidence.
    *
+   * @param command the evidence command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found.
+   * @throws EtagMismatchException if the eTag does not match the current entity value
    */
   @Transactional
-  public boolean updateEvidence(UUID applicationId, Map<String, Object> evidence) {
+  public boolean updateEvidence(UUID applicationId, UpdateEvidenceCommand command) {
 
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
@@ -191,10 +200,17 @@ public class ApplicationService {
       return false;
     }
     final ApplicationEntity application = applicationOpt.get();
+    validateEtag(application, command.geteTag());
     application.setModifiedBy(userContext.getCurrentUser());
-    application.setEvidence(evidence);
+    application.setEvidence(command.getAdditionalProperties());
     repository.save(application);
-    eventService.record(evidence);
+    eventService.record(command);
     return true;
+  }
+
+  private void validateEtag(ApplicationEntity application, Long providedEtag) {
+    if (application.getEtag() != providedEtag) {
+      throw new EtagMismatchException(providedEtag, application.getEtag());
+    }
   }
 }

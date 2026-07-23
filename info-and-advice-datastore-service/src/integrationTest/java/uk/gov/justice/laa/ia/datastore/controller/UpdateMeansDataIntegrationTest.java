@@ -42,6 +42,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     final String payload =
         """
         {
+          "eTag": 0,
           "determinationId": "%s",
           "meansAssessmentRequired": true,
           "status": "ELIGIBLE"
@@ -62,7 +63,8 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     clearCache();
     final ApplicationEntity updatedApplication =
         applicationRepository.findById(applicationId).orElseThrow();
-    final JsonNode expectedJson = objectMapper.readTree(payload);
+    final JsonNode expectedJson = objectMapper.readTree(payload).deepCopy();
+    ((com.fasterxml.jackson.databind.node.ObjectNode) expectedJson).remove("eTag");
     final List<EligibilityResultEntity> eligibilityResults =
         eligibilityResultRepository.findAll().stream()
             .filter(result -> result.getApplicationId().equals(applicationId))
@@ -82,6 +84,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     final String payload =
         """
         {
+          "eTag": 0,
           "determinationId": "%s",
           "meansAssessmentRequired": true,
           "status": "ELIGIBLE"
@@ -95,5 +98,35 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldReturn409_whenEtagVersionMismatch() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmId(PROVIDER_FIRM_ID)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 99, "determinationId": "%s", "meansAssessmentRequired": true}
+        """
+            .formatted(UUID.randomUUID());
+
+    // Act + Assert - send with stale eTag 99 (actual is 0)
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}:update-means-data", applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isConflict());
   }
 }

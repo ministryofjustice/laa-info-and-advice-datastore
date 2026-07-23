@@ -3,6 +3,7 @@ package uk.gov.justice.laa.ia.datastore.controller;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,11 +36,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
+import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 
@@ -161,8 +164,9 @@ public class ApplicationControllerTest {
   void updateMeansData_returnsOkStatus() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
-    String body = "{\"some\":\"data\"}";
-    when(applicationService.updateMeansData(eq(id), any())).thenReturn(true);
+    String body = "{\"eTag\":0,\"some\":\"data\"}";
+    when(applicationService.updateMeansData(eq(id), any(UpdateMeansDataCommand.class)))
+        .thenReturn(true);
 
     // Act + Assert
     mockMvc
@@ -177,8 +181,9 @@ public class ApplicationControllerTest {
   void updateMeansData_returns404_whenApplicationDoesNotExist() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
-    String body = "{\"some\":\"data\"}";
-    when(applicationService.updateMeansData(eq(id), any())).thenReturn(false);
+    String body = "{\"eTag\":0,\"some\":\"data\"}";
+    when(applicationService.updateMeansData(eq(id), any(UpdateMeansDataCommand.class)))
+        .thenReturn(false);
 
     // Act + Assert
     mockMvc
@@ -194,8 +199,9 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().declarationConfirmation(true).build();
-    when(applicationService.updateClientDeclaration(applicationId, declarationCommand))
+        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
+    when(applicationService.updateClientDeclaration(
+            eq(applicationId), any(DeclarationCommand.class)))
         .thenReturn(true);
 
     // Act + Assert
@@ -212,8 +218,9 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().declarationConfirmation(true).build();
-    when(applicationService.updateClientDeclaration(any(UUID.class), any())).thenReturn(false);
+        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
+    when(applicationService.updateClientDeclaration(any(UUID.class), any(DeclarationCommand.class)))
+        .thenReturn(false);
 
     // Act + Assert
     mockMvc
@@ -229,15 +236,16 @@ public class ApplicationControllerTest {
   void updateEvidence_returns204_whenApplicationExists() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();
-    final var updateEvidenceCommand = EvidenceGenerator.createEvidenceMap();
-    when(applicationService.updateEvidence(any(UUID.class), any())).thenReturn(true);
+    String body = "{\"eTag\":0,\"payeIncomeEvidence\":true}";
+    when(applicationService.updateEvidence(any(UUID.class), any(UpdateEvidenceCommand.class)))
+        .thenReturn(true);
 
     // Act + Assert
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateEvidenceCommand)))
+                .content(body))
         .andExpect(status().isNoContent());
   }
 
@@ -245,15 +253,71 @@ public class ApplicationControllerTest {
   void updateEvidence_returns404_whenApplicationDoesNotExist() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();
-    var updateEvidenceCommand = EvidenceGenerator.createEvidenceMap();
-    when(applicationService.updateEvidence(any(UUID.class), any())).thenReturn(false);
+    String body = "{\"eTag\":0,\"payeIncomeEvidence\":true}";
+    when(applicationService.updateEvidence(any(UUID.class), any(UpdateEvidenceCommand.class)))
+        .thenReturn(false);
 
     // Act + Assert
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateEvidenceCommand)))
+                .content(body))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void updateMeansData_returns409_whenEtagMismatch() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"eTag\":2,\"some\":\"data\"}";
+    doThrow(new EtagMismatchException(2L, 5L))
+        .when(applicationService)
+        .updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  void updateDeclaration_returns409_whenEtagMismatch() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    DeclarationCommand declarationCommand =
+        DeclarationCommand.builder().eTag(2L).declarationConfirmation(true).build();
+    doThrow(new EtagMismatchException(2L, 5L))
+        .when(applicationService)
+        .updateClientDeclaration(eq(applicationId), any(DeclarationCommand.class));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}/declaration", applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(declarationCommand)))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  void updateEvidence_returns409_whenEtagMismatch() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    String body = "{\"eTag\":2,\"payeIncomeEvidence\":true}";
+    doThrow(new EtagMismatchException(2L, 5L))
+        .when(applicationService)
+        .updateEvidence(eq(applicationId), any(UpdateEvidenceCommand.class));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateEvidence, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isConflict());
   }
 }

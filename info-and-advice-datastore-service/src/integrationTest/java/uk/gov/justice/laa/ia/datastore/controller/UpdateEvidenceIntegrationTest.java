@@ -32,7 +32,7 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                     }))
             .getId();
     clearCache();
-    final String payload = toJson(EvidenceGenerator.createEvidenceMap());
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
 
     // Act
     mockMvc
@@ -48,7 +48,7 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldReturnNotFoundWhenApplicationDoesNotExist() throws Exception {
     final UUID applicationId = UUID.randomUUID();
-    final String payload = toJson(EvidenceGenerator.createEvidenceMap());
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
     mockMvc
         .perform(
             put(TestConstants.UpdateEvidence, applicationId)
@@ -56,6 +56,32 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldReturn409_whenEtagVersionMismatch() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder -> {
+                      builder
+                          .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                          .providerFirmId(PROVIDER_FIRM_ID);
+                    }))
+            .getId();
+    clearCache();
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(99L));
+
+    // Act + Assert - send with stale eTag 99 (actual is 0)
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateEvidence, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isConflict());
   }
   // 404
 }

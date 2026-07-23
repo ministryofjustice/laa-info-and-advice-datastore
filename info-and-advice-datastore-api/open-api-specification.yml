@@ -82,13 +82,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/UpdateMeansDataCommand'
       responses:
         '204': { description: Application means data updated successfully }
         '400': { description: Bad request }
         '401': { description: Unauthorized }
         '403': { description: Forbidden }
         '404': { description: Not found }
+        '409': { description: Conflict - ETag mismatch }
         '500': { description: Internal server error }
   /api/v0/applications:start-application:
     post:
@@ -135,6 +136,7 @@ paths:
         '401': { description: Unauthorized }
         '403': { description: Forbidden }
         '404': { description: Application not found }
+        '409': { description: Conflict - ETag mismatch }
         '500': { description: Internal server error }
 
   /api/v0/applications/{id}/declaration:
@@ -163,6 +165,7 @@ paths:
         '401': { description: Unauthorized }
         '403': { description: Forbidden }
         '404': { description: Application not found }
+        '409': { description: Conflict - ETag mismatch }
         '500': { description: Internal server error }
 
 components:
@@ -242,6 +245,10 @@ components:
           format: date-time
         modifiedBy:
           type: string
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
 
     ApplicationSummary:
       type: object
@@ -334,14 +341,37 @@ components:
     DeclarationCommand:
       type: object
       required:
+        - eTag
         - declarationConfirmation
       properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
         declarationConfirmation:
           type: boolean
+
     UpdateEvidenceCommand:
       type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
       additionalProperties: true
-      minProperties: 1
+
+    UpdateMeansDataCommand:
+      type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+      additionalProperties: true
 
     EligibilityResultResponse:
       type: object

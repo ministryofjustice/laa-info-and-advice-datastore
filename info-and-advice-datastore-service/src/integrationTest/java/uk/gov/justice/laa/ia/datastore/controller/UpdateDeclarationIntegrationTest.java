@@ -35,7 +35,7 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
             .getId();
     clearCache();
     final String payload =
-        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
 
     // Act
     final MvcResult result =
@@ -59,7 +59,7 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
   void shouldReturnNotFoundWhenApplicationDoesNotExist() throws Exception {
     final UUID applicationId = UUID.randomUUID();
     final String payload =
-        toJson(DeclarationCommand.builder().declarationConfirmation(true).build());
+        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
     mockMvc
         .perform(
             put(TestConstants.UpdateDeclaration, applicationId)
@@ -67,5 +67,32 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldReturn409_whenEtagVersionMismatch() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder -> {
+                      builder
+                          .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                          .providerFirmId(PROVIDER_FIRM_ID);
+                    }))
+            .getId();
+    clearCache();
+    final String payload =
+        toJson(DeclarationCommand.builder().eTag(99L).declarationConfirmation(true).build());
+
+    // Act + Assert - send with stale eTag 99 (actual is 0)
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateDeclaration, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isConflict());
   }
 }
