@@ -83,12 +83,15 @@ public class ApplicationServiceTest {
               saved.setId(generatedId);
               return saved;
             });
+    ApplicationResponse expectedResponse = new ApplicationResponse();
+    expectedResponse.setId(generatedId);
+    when(mapper.toApplication(entity)).thenReturn(expectedResponse);
 
     // Act
-    final UUID result = sut.createApplication(cmd);
+    final ApplicationResponse result = sut.createApplication(cmd);
 
     // Assert
-    assertThat(result).isEqualTo(generatedId);
+    assertThat(result.getId()).isEqualTo(generatedId);
     assertThat(entity.getProviderOfficeId()).isEqualTo(officeId);
     assertThat(entity.getApplicationState()).isEqualTo(ApplicationState.DRAFT);
 

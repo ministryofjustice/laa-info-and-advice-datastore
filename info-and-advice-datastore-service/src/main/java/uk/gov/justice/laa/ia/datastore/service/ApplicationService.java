@@ -48,16 +48,16 @@ public class ApplicationService {
   /**
    * Create an application.
    *
-   * @return ID of newly created application.
+   * @return the full {@link ApplicationResponse} of the newly created application.
    */
   @Transactional
-  public UUID createApplication(StartApplicationCommand startApplication) {
+  public ApplicationResponse createApplication(StartApplicationCommand startApplication) {
     ApplicationEntity entity = applicationMapper.toApplicationEntity(startApplication);
 
     entity.setApplicationState(ApplicationState.DRAFT);
     ApplicationEntity saved = repository.save(entity);
     eventService.record(startApplication);
-    return saved.getId();
+    return applicationMapper.toApplication(saved);
   }
 
   /**

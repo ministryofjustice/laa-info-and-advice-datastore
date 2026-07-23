@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,6 +37,7 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
@@ -75,12 +75,13 @@ public class ApplicationControllerTest {
   }
 
   @Test
-  void startApplication_returnsCreatedStatus_andApplicationIdHeader() throws Exception {
+  void startApplication_returnsCreatedStatus_andApplicationBody() throws Exception {
     // Arrange
     StartApplicationCommand command = StartApplicationCommandGenerator.create(null);
-    UUID generatedId = UUID.randomUUID();
+    ApplicationResponse applicationResponse = new ApplicationResponse();
+    applicationResponse.setId(UUID.randomUUID());
     when(applicationService.createApplication(any(StartApplicationCommand.class)))
-        .thenReturn(generatedId);
+        .thenReturn(applicationResponse);
 
     // Act + Assert
     mockMvc
@@ -90,7 +91,8 @@ public class ApplicationControllerTest {
                 .content(objectMapper.writeValueAsString(command)))
         .andDo(print())
         .andExpect(status().isCreated())
-        .andExpect(header().string("X-Application-ID", generatedId.toString()));
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value(applicationResponse.getId().toString()));
   }
 
   @Test

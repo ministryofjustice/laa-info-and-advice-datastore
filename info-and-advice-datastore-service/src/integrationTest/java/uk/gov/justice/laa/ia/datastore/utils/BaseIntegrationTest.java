@@ -45,7 +45,7 @@ public abstract class BaseIntegrationTest {
   @Autowired protected EligibilityResultRepository eligibilityResultRepository;
   @Autowired protected EventRepository eventRepository;
   @Autowired protected MockMvc mockMvc;
-  private final ObjectMapper objectMapper =
+  protected final ObjectMapper objectMapper =
       new ObjectMapper()
           .registerModule(new JavaTimeModule())
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
