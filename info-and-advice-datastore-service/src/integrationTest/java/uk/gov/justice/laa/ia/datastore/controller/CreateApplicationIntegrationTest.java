@@ -2,7 +2,7 @@ package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
@@ -34,11 +34,12 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(toJson(command)))
             .andExpect(status().isCreated())
-            .andExpect(header().exists("X-Application-ID"))
+            .andExpect(jsonPath("$.id").exists())
             .andReturn();
 
     // Assert
-    String idString = result.getResponse().getHeader("X-Application-ID");
+    String responseBody = result.getResponse().getContentAsString();
+    String idString = objectMapper.readTree(responseBody).get("id").asText();
     UUID applicationId = UUID.fromString(idString);
 
     clearCache();

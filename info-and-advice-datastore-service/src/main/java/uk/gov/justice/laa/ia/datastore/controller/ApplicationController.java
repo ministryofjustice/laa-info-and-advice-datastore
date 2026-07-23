@@ -29,12 +29,10 @@ public class ApplicationController implements ApplicationApi {
   private final ApplicationService service;
 
   @Override
-  public ResponseEntity<Void> startApplication(StartApplicationCommand startApplicationCommand) {
-    UUID id = service.createApplication(startApplicationCommand);
-
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .header("X-Application-ID", id.toString())
-        .build();
+  public ResponseEntity<ApplicationResponse> startApplication(
+      StartApplicationCommand startApplicationCommand) {
+    ApplicationResponse response = service.createApplication(startApplicationCommand);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   @Override
