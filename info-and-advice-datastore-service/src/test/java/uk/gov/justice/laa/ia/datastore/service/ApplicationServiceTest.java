@@ -43,7 +43,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
@@ -67,7 +67,8 @@ public class ApplicationServiceTest {
   void shouldCreateApplication() {
     // Arrange
     final UUID officeId = UUID.randomUUID();
-    final StartCaseCommand cmd = StartCaseCommand.builder().providerOfficeId(officeId).build();
+    final StartApplicationCommand cmd =
+        StartApplicationCommand.builder().providerOfficeId(officeId).build();
     final ApplicationEntity entity = new ApplicationEntity();
     entity.setProviderOfficeId(officeId);
     entity.setClientDetails(ClientDetailsEntity.builder().build());
@@ -387,7 +388,7 @@ public class ApplicationServiceTest {
   @Test
   void shouldRecordEvent_whenApplicationCreated() {
     // Arrange
-    final StartCaseCommand cmd = StartCaseCommand.builder().build();
+    final StartApplicationCommand cmd = StartApplicationCommand.builder().build();
     final ApplicationEntity entity = new ApplicationEntity();
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
     when(repo.save(any(ApplicationEntity.class))).thenAnswer(i -> i.getArgument(0));

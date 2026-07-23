@@ -22,11 +22,11 @@ import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityResultResponse;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
@@ -123,8 +123,8 @@ public class ApplicationMapperTest {
   }
 
   @Test
-  void startCaseCommand_toApplication_shouldMapProperties() {
-    final StartCaseCommand cmd = StartCaseCommandGenerator.create(null);
+  void startApplicationCommand_toApplication_shouldMapProperties() {
+    final StartApplicationCommand cmd = StartApplicationCommandGenerator.create(null);
 
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
 
@@ -133,10 +133,10 @@ public class ApplicationMapperTest {
   }
 
   @Test
-  void startCaseCommand_toApplication_shouldSetCreatedAndModifiedBy() {
+  void startApplicationCommand_toApplication_shouldSetCreatedAndModifiedBy() {
     // Arrange
     when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
-    final StartCaseCommand cmd = StartCaseCommandGenerator.create(null);
+    final StartApplicationCommand cmd = StartApplicationCommandGenerator.create(null);
 
     // Act
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
@@ -147,11 +147,11 @@ public class ApplicationMapperTest {
   }
 
   @Test
-  void startCaseCommand_toApplication_shouldSetProviderFirmId() {
+  void startApplicationCommand_toApplication_shouldSetProviderFirmId() {
     // Arrange
     final UUID providerFirmId = UUID.randomUUID();
     when(userContext.getProviderFirmId()).thenReturn(providerFirmId);
-    final StartCaseCommand cmd = StartCaseCommandGenerator.create(null);
+    final StartApplicationCommand cmd = StartApplicationCommandGenerator.create(null);
     // Act
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
 

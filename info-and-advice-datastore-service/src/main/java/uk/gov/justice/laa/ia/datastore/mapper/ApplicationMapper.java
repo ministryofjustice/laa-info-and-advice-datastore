@@ -8,7 +8,7 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 
 /** The mapper between Application and ApplicationEntity. */
 @Mapper(
@@ -36,7 +36,7 @@ public abstract class ApplicationMapper {
   @Mapping(source = "mostRecentEligibilityResult", target = "eligibilityResult")
   public abstract ApplicationResponse toApplication(ApplicationEntity entity);
 
-  /** Maps an {@link StartCaseCommand} to an {@link ApplicationEntity}. */
+  /** Maps an {@link StartApplicationCommand} to an {@link ApplicationEntity}. */
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "etag", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
@@ -56,5 +56,5 @@ public abstract class ApplicationMapper {
   @Mapping(target = "determinationId", ignore = true)
   @Mapping(source = "client", target = "clientDetails")
   @Mapping(target = "eligibilityResults", ignore = true)
-  public abstract ApplicationEntity toApplicationEntity(StartCaseCommand cmd);
+  public abstract ApplicationEntity toApplicationEntity(StartApplicationCommand cmd);
 }

@@ -8,6 +8,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
@@ -22,7 +23,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
@@ -50,12 +51,12 @@ public class ApplicationService {
    * @return ID of newly created application.
    */
   @Transactional
-  public UUID createApplication(StartCaseCommand startCase) {
-    ApplicationEntity entity = applicationMapper.toApplicationEntity(startCase);
+  public UUID createApplication(StartApplicationCommand startApplication) {
+    ApplicationEntity entity = applicationMapper.toApplicationEntity(startApplication);
 
     entity.setApplicationState(ApplicationState.DRAFT);
     ApplicationEntity saved = repository.save(entity);
-    eventService.record(startCase);
+    eventService.record(startApplication);
     return saved.getId();
   }
 
@@ -81,9 +82,9 @@ public class ApplicationService {
     if (additionalFilteringSpecification != null) {
       specificationToApply = specificationToApply.and(additionalFilteringSpecification);
     }
-
+    final Sort defaultSort = Sort.by(Sort.Direction.DESC, "modifiedAt");
     return repository
-        .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize))
+        .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize, defaultSort))
         .map(applicationMapper::toApplicationSummary);
   }
 

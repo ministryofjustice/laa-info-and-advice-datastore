@@ -37,10 +37,10 @@ import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
-import uk.gov.justice.laa.ia.datastore.generator.StartCaseCommandGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
-import uk.gov.justice.laa.ia.datastore.model.StartCaseCommand;
+import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
@@ -75,16 +75,17 @@ public class ApplicationControllerTest {
   }
 
   @Test
-  void startCase_returnsCreatedStatus_andApplicationIdHeader() throws Exception {
+  void startApplication_returnsCreatedStatus_andApplicationIdHeader() throws Exception {
     // Arrange
-    StartCaseCommand command = StartCaseCommandGenerator.create(null);
+    StartApplicationCommand command = StartApplicationCommandGenerator.create(null);
     UUID generatedId = UUID.randomUUID();
-    when(applicationService.createApplication(any(StartCaseCommand.class))).thenReturn(generatedId);
+    when(applicationService.createApplication(any(StartApplicationCommand.class)))
+        .thenReturn(generatedId);
 
     // Act + Assert
     mockMvc
         .perform(
-            post("/api/v0/applications:start-case")
+            post("/api/v0/applications:start-application")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(command)))
         .andDo(print())
@@ -173,7 +174,7 @@ public class ApplicationControllerTest {
             put("/api/v0/applications/" + id + ":update-means-data")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
   }
 
   @Test

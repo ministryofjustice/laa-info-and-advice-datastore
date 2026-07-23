@@ -56,6 +56,20 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
+  void shouldReturnNotFoundWhenApplicationDoesNotExist() throws Exception {
+    final UUID applicationId = UUID.randomUUID();
+    final String payload =
+        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateDeclaration, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
   void shouldReturn409_whenEtagVersionMismatch() throws Exception {
     // Arrange
     final UUID applicationId =

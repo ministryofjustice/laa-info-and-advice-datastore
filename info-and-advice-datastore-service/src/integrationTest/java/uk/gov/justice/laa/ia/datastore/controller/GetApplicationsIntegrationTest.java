@@ -1,13 +1,19 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -173,5 +179,53 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.content", hasSize(0)))
         .andExpect(jsonPath("$.totalElements").value(DEFAULT_NUMBER_OF_APPLICATIONS))
         .andExpect(jsonPath("$.page").value(99));
+  }
+
+  @Test
+  void shouldReturnOrderByLastModifiedDescending() throws Exception {
+    // Arrange
+    setupApplications();
+    clearCache();
+
+    // Act & Assert — page 0 of size 5 should return all items in descending order of modifiedAt
+    mockMvc
+        .perform(
+            get("/api/v0/applications").param("page", "0").param("size", "5").withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content[*].modifiedAt", isDateDescendingOrder()));
+  }
+
+  @Test
+  void isDateDescendingOrder_shouldReturnTrueForDescendingDates() {
+    List<String> dates =
+        List.of(
+            "2023-01-01T12:00:00Z",
+            "2022-12-31T12:00:00Z",
+            "2022-12-30T12:00:00Z",
+            "2022-12-29T12:00:00Z");
+    final Matcher<? super List<String>> matcher = isDateDescendingOrder();
+    assertThat(matcher.matches(dates)).isTrue();
+    assertThat(matcher.matches(dates.reversed())).isFalse();
+  }
+
+  private Matcher<? super List<String>> isDateDescendingOrder() {
+    return new TypeSafeMatcher<>() {
+      @Override
+      protected boolean matchesSafely(List<String> dates) {
+        List<OffsetDateTime> parsedDates = dates.stream().map(OffsetDateTime::parse).toList();
+        for (int i = 0; i < parsedDates.size() - 1; i++) {
+          if (parsedDates.get(i).compareTo(parsedDates.get(i + 1)) < 0) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("list of dates either not parseable or not in descending order");
+      }
+    };
   }
 }
