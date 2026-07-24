@@ -121,7 +121,71 @@ set -a && source .env && set +a
 > **Note:** The app must be run directly (not via Docker) when using Entra, as
 > Docker containers on a VPN may not be able to resolve `login.microsoftonline.com`.
 
-## Development guidelines
+## Using the API Package
+
+The `info-and-advice-datastore-api` module is published to GitHub Packages and can be consumed by other Java services to share request/response types and the API interface definition.
+
+### What's included
+
+- **Request types** : `StartApplicationCommand`, `UpdateMeansDataCommand`, `UpdateEvidenceCommand`, `DeclarationCommand`
+- **Response types** : `ApplicationResponse`, `ApplicationResponses`, `ApplicationSummary`, `DeclarationResponse`, `EligibilityResultResponse`
+- **Shared types** : `ApplicationState`, `ClientDeclarationStatus`, `ClientDetails`, `Address`
+- **`ApplicationApi` interface** : can be used with a Feign client for a type-safe HTTP client with minimal boilerplate
+
+### Adding the dependency
+
+**Gradle:**
+```gradle
+implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-api:0.1.0'
+```
+
+**Maven:**
+```xml
+<dependency>
+  <groupId>uk.gov.justice.laa.ia.datastore</groupId>
+  <artifactId>info-and-advice-datastore-api</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+### Repository configuration
+
+GitHub Packages requires authentication even for public repositories. You'll need to add the repository to your build config alongside your credentials.
+
+**Gradle** : add to your `repositories` block:
+```gradle
+maven {
+    url = 'https://maven.pkg.github.com/ministryofjustice/laa-info-and-advice-datastore'
+    credentials {
+        username = System.getenv("GITHUB_ACTOR")?.trim() ?: project.findProperty('gitPackageUser')
+        password = System.getenv("GITHUB_TOKEN")?.trim() ?: project.findProperty('gitPackageKey')
+    }
+}
+```
+
+**Maven** : add to your `pom.xml`:
+```xml
+<repository>
+    <id>github</id>
+    <url>https://maven.pkg.github.com/ministryofjustice/laa-info-and-advice-datastore</url>
+</repository>
+```
+With credentials in `~/.m2/settings.xml`:
+```xml
+<server>
+    <id>github</id>
+    <username>YOUR_GITHUB_USERNAME</username>
+    <password>YOUR_GITHUB_PAT</password>
+</server>
+```
+
+> **Note:** If your project uses `laa-spring-boot-gradle-plugin`, the credentials are likely already configured via `~/.gradle/gradle.properties` : see [Add GitHub Token](#add-github-token) above.
+
+### Versioning
+
+The API package is versioned independently of the service. The version is bumped manually in `info-and-advice-datastore-api/build.gradle` whenever the API contract changes. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
+
+
 
 ### Commit conventions
 Please follow the (Commit Conventions)[https://www.conventionalcommits.org/en/v1.0.0/] guidelines when making commits.
