@@ -36,11 +36,6 @@ jobs:
       - name: Run integration tests
         run: ./gradlew integrationTest --tests '*IntegrationTest'
 
-      - name: Publish package
-        run: ./gradlew publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload checkstyle report
         if: always()
         uses: actions/upload-artifact@v7
