@@ -28,6 +28,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Publish API package
+        run: ./gradlew :info-and-advice-datastore-api:publish
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Test coverage verification
         run: ./gradlew jacocoTestCoverageVerification
 

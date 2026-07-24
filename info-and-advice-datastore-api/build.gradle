@@ -1,7 +1,10 @@
 plugins {
     id 'org.openapi.generator' version '7.23.0'
     id 'uk.gov.laa.springboot.laa-spring-boot-gradle-plugin'
+    id 'maven-publish'
 }
+
+version = '0.1.0'
 
 repositories {
     mavenCentral()
@@ -49,4 +52,24 @@ tasks.named('bootJar') {
 
 tasks.named('bootRun') {
     enabled = false
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = 'uk.gov.justice.laa.ia.datastore'
+            artifactId = 'info-and-advice-datastore-api'
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = 'https://maven.pkg.github.com/ministryofjustice/laa-info-and-advice-datastore'
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")?.trim() ?: project.findProperty('gitPackageUser')
+                password = System.getenv("GITHUB_TOKEN")?.trim() ?: project.findProperty('gitPackageKey')
+            }
+        }
+    }
 }
