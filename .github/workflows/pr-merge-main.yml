@@ -28,7 +28,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if API version changed
+        id: api-version-check
+        run: |
+          CURRENT=$(grep "^version" info-and-advice-datastore-api/build.gradle | cut -d"'" -f2)
+          PREVIOUS=$(git show HEAD~1:info-and-advice-datastore-api/build.gradle | grep "^version" | cut -d"'" -f2)
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+          echo "previous=$PREVIOUS" >> $GITHUB_OUTPUT
+          if [ "$CURRENT" != "$PREVIOUS" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish API package
+        if: steps.api-version-check.outputs.changed == 'true'
         run: ./gradlew :info-and-advice-datastore-api:publish
         env:
           GITHUB_ACTOR: ${{ github.actor }}
