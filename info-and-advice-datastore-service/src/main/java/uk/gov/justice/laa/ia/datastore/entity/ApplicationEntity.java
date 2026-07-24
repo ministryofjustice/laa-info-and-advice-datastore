@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -70,8 +71,12 @@ public class ApplicationEntity {
   @Column(name = "laa_reference")
   private String laaReference;
 
-  @Column(name = "scoping_routing_code")
-  private String scopingRoutingCode;
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "scoping_questions", columnDefinition = "jsonb")
+  private JsonNode scopingQuestions;
+
+  @Column(name = "is_means_tested")
+  private Boolean isMeansTested;
 
   @Column(name = "ufn", length = 9)
   private String ufn;

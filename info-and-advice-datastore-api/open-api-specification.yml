@@ -237,8 +237,10 @@ components:
           type: string
         applicationType:
           type: string
-        scopingRoutingCode:
-          type: string
+        scopingQuestions:
+          type: object
+        isMeansTested:
+          type: boolean
         ufn:
           type: string
           maxLength: 9
