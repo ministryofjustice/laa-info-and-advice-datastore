@@ -38,6 +38,12 @@ public class EligibilityResultEntity {
   @Column(name = "result_json", nullable = false)
   private JsonNode resultJson;
 
+  @Column(name = "indication")
+  private Boolean indication;
+
+  @Column(name = "contribution")
+  private String contribution;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   @CreationTimestamp
   private Instant createdAt;

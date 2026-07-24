@@ -233,8 +233,18 @@ components:
           type: string
         referenceNumber:
           type: string
+        laaReference:
+          type: string
         applicationType:
           type: string
+        scopingRoutingCode:
+          type: string
+        ufn:
+          type: string
+          maxLength: 9
+        dateDeclarationWasSigned:
+          type: string
+          format: date
         determinationId:
           type: string
           format: uuid
@@ -387,6 +397,10 @@ components:
         applicationId:
           type: string
           format: uuid
+        indication:
+          type: boolean
+        contribution:
+          type: string
         eligibilityResult:
           type: object
         createdAt:

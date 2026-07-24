@@ -12,6 +12,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -63,8 +64,26 @@ public class ApplicationEntity {
   @JoinColumn(name = "client_details_id", nullable = false)
   private ClientDetailsEntity clientDetails;
 
-  @Column(name = "reference_number", nullable = false)
+  @Column(name = "case_id", nullable = false)
   private String referenceNumber;
+
+  @Column(name = "laa_reference")
+  private String laaReference;
+
+  @Column(name = "scoping_routing_code")
+  private String scopingRoutingCode;
+
+  @Column(name = "ufn", length = 9)
+  private String ufn;
+
+  @Column(name = "date_declaration_was_signed")
+  private LocalDate dateDeclarationWasSigned;
+
+  @Column(name = "data_retention_event_uuid")
+  private UUID dataRetentionEventUuid;
+
+  @Column(name = "data_retention_date")
+  private Instant dataRetentionDate;
 
   @Column(name = "reason_for_reapplication", nullable = true)
   private String reasonForReapplication;
@@ -108,10 +127,10 @@ public class ApplicationEntity {
   @Column(name = "created_by", nullable = false)
   private String createdBy;
 
-  @Column(name = "last_modified_at", nullable = false)
+  @Column(name = "modified_at", nullable = false)
   @UpdateTimestamp
   private Instant modifiedAt;
 
-  @Column(name = "last_modified_by", nullable = false)
+  @Column(name = "modified_by", nullable = false)
   private String modifiedBy;
 }
