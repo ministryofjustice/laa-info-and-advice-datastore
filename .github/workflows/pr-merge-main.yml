@@ -43,7 +43,7 @@ jobs:
 
       - name: Publish API package
         if: steps.api-version-check.outputs.changed == 'true'
-        run: ./gradlew :info-and-advice-datastore-api:publish
+        run: ./gradlew :info-and-advice-datastore-api:publishMavenJavaPublicationToMavenRepository
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
