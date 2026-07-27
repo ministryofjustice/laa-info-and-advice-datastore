@@ -64,7 +64,7 @@ public class ClientDetailsEntity {
 
   @Transient
   public boolean hasFixedAddress() {
-    return address != null;
+    return !noFixedAbode;
   }
 
   @Column(name = "created_at")

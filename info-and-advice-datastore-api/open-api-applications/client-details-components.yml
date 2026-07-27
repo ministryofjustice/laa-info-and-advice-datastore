@@ -58,6 +58,7 @@ components:
         - firstName
         - lastName
         - dateOfBirth
+        - noFixedAbode
       properties:
         firstName:
           type: string
@@ -79,6 +80,7 @@ components:
       type: object
       required:
         - addressLine1
+        - country
       properties:
         addressLine1:
           type: string
