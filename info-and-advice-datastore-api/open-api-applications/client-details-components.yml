@@ -17,6 +17,8 @@ components:
           example: QQ123456B
           minLength: 9
           maxLength: 9
+        noFixedAbode:
+          type: boolean
         address:
           $ref: "#/components/schemas/Address"
         createdAt:
@@ -56,6 +58,7 @@ components:
         - firstName
         - lastName
         - dateOfBirth
+        - noFixedAbode
       properties:
         firstName:
           type: string
@@ -68,6 +71,8 @@ components:
           type: string
           pattern: '[A-CEGHJ-NOPR-TW-Z]{2}[0-9]{6}[ABCDs]{1}'
           example: AC123456D
+        noFixedAbode:
+          type: boolean
         createAddressCommand:
           $ref: '#/components/schemas/CreateAddressCommand'
 
@@ -75,6 +80,7 @@ components:
       type: object
       required:
         - addressLine1
+        - country
       properties:
         addressLine1:
           type: string

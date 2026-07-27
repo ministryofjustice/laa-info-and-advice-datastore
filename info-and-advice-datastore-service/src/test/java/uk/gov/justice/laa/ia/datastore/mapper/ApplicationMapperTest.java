@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -16,12 +17,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
@@ -36,6 +37,7 @@ import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
       UserContext.class,
       DeclarationMapperImpl.class,
       EligibilityMapperImpl.class,
+      EvidenceMapperImpl.class,
       ClientDetailsMapperImpl.class,
       AddressMapperImpl.class,
       DateTimeMapperImpl.class,
@@ -43,6 +45,7 @@ import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 public class ApplicationMapperTest {
   @Autowired private ApplicationMapper sut;
   @MockitoBean private UserContext userContext;
+  @MockitoBean private ObjectMapper objectMapper;
 
   @Test
   void toApplicationSummary_shouldMapSummaryFields() {
@@ -77,7 +80,11 @@ public class ApplicationMapperTest {
                       clientDetailsBuilder -> {
                         clientDetailsBuilder.address(AddressEntityGenerator.createWithId(null));
                       }));
-              builder.evidence(EvidenceGenerator.createEvidenceMap());
+              builder.evidence(
+                  EvidenceEntity.builder()
+                      .evidenceExemptionCode("EXEMPT_01")
+                      .evidenceExemptionReason("Test reason")
+                      .build());
               builder.declaration(DeclarationEntityGenerator.createWithId(null));
               builder.eligibilityResults(
                   Set.of(

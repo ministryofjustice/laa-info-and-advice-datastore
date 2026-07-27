@@ -45,10 +45,10 @@ public class AddressEntity {
   @Column(name = "address_line_4")
   private String addressLine4;
 
-  @Column(name = "town_or_city")
+  @Column(name = "town_city")
   private String townOrCity;
 
-  @Column(name = "post_code")
+  @Column(name = "postcode", length = 12)
   private String postCode;
 
   @Column(name = "county")
@@ -61,13 +61,13 @@ public class AddressEntity {
   @CreationTimestamp
   private Instant createdAt;
 
-  @Column(name = "last_modified_at")
+  @Column(name = "modified_at")
   @UpdateTimestamp
   private Instant modifiedAt;
 
   @Column(name = "created_by", nullable = false)
   private String createdBy;
 
-  @Column(name = "last_modified_by", nullable = false)
+  @Column(name = "modified_by", nullable = false)
   private String modifiedBy;
 }

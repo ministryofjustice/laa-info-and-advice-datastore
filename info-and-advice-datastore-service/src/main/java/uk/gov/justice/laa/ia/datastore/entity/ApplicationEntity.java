@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +13,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
-import java.util.Map;
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -48,9 +49,9 @@ public class ApplicationEntity {
   @Column(name = "provider_office_id", nullable = false)
   private UUID providerOfficeId;
 
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "evidence", nullable = true, columnDefinition = "json")
-  private Map<String, Object> evidence;
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "evidence_id", nullable = true)
+  private EvidenceEntity evidence;
 
   @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "declaration_id", nullable = true)
@@ -63,8 +64,30 @@ public class ApplicationEntity {
   @JoinColumn(name = "client_details_id", nullable = false)
   private ClientDetailsEntity clientDetails;
 
-  @Column(name = "reference_number", nullable = false)
+  @Column(name = "case_id", nullable = false)
   private String referenceNumber;
+
+  @Column(name = "laa_reference")
+  private String laaReference;
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "scoping_questions", columnDefinition = "jsonb")
+  private JsonNode scopingQuestions;
+
+  @Column(name = "is_means_tested")
+  private Boolean isMeansTested;
+
+  @Column(name = "ufn", length = 9)
+  private String ufn;
+
+  @Column(name = "date_declaration_was_signed")
+  private LocalDate dateDeclarationWasSigned;
+
+  @Column(name = "data_retention_event_uuid")
+  private UUID dataRetentionEventUuid;
+
+  @Column(name = "data_retention_date")
+  private Instant dataRetentionDate;
 
   @Column(name = "reason_for_reapplication", nullable = true)
   private String reasonForReapplication;
@@ -108,10 +131,10 @@ public class ApplicationEntity {
   @Column(name = "created_by", nullable = false)
   private String createdBy;
 
-  @Column(name = "last_modified_at", nullable = false)
+  @Column(name = "modified_at", nullable = false)
   @UpdateTimestamp
   private Instant modifiedAt;
 
-  @Column(name = "last_modified_by", nullable = false)
+  @Column(name = "modified_by", nullable = false)
   private String modifiedBy;
 }
