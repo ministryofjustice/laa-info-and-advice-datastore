@@ -15,9 +15,11 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
+import uk.gov.justice.laa.ia.datastore.mapper.EvidenceMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
@@ -28,6 +30,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
 /** Service class for handling Applications. */
@@ -39,8 +42,10 @@ public class ApplicationService {
 
   private final ApplicationRepository repository;
   private final EligibilityResultRepository eligibilityResultRepository;
+  private final EvidenceRepository evidenceRepository;
   private final ApplicationMapper applicationMapper;
   private final DeclarationMapper declarationMapper;
+  private final EvidenceMapper evidenceMapper;
   private final UserContext userContext;
   private final ObjectMapper objectMapper;
   private final EventService eventService;
@@ -192,7 +197,6 @@ public class ApplicationService {
    */
   @Transactional
   public boolean updateEvidence(UUID applicationId, UpdateEvidenceCommand command) {
-
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
@@ -201,8 +205,20 @@ public class ApplicationService {
     }
     final ApplicationEntity application = applicationOpt.get();
     validateEtag(application, command.geteTag());
+
+    EvidenceEntity evidenceEntity = evidenceMapper.toEvidenceEntity(command);
+    if (application.getEvidence() != null) {
+      evidenceEntity.setEvidenceId(application.getEvidence().getEvidenceId());
+      evidenceEntity.setCreatedAt(application.getEvidence().getCreatedAt());
+      evidenceEntity.setCreatedBy(application.getEvidence().getCreatedBy());
+    } else {
+      evidenceEntity.setCreatedBy(userContext.getCurrentUser());
+    }
+    evidenceEntity.setModifiedBy(userContext.getCurrentUser());
+    EvidenceEntity savedEvidence = evidenceRepository.save(evidenceEntity);
+
+    application.setEvidence(savedEvidence);
     application.setModifiedBy(userContext.getCurrentUser());
-    application.setEvidence(command.getAdditionalProperties());
     repository.save(application);
     eventService.record(command);
     return true;

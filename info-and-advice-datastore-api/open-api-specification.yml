@@ -220,7 +220,7 @@ components:
         declaration:
           $ref: "#/components/schemas/DeclarationResponse"
         evidence:
-          type: object
+          $ref: "#/components/schemas/EvidenceResponse"
         reasonForReapplication:
           type: string
         meansAssessmentRequired:
@@ -377,7 +377,27 @@ components:
           type: integer
           format: int64
           description: ETag value for optimistic concurrency control
-      additionalProperties: true
+        evidenceExemptionCode:
+          type: string
+        evidenceExemptionReason:
+          type: string
+          maxLength: 400
+        incomeEvidenceChecklist:
+          type: object
+        expenditureCapitalEvidenceChecklist:
+          type: object
+
+    EvidenceResponse:
+      type: object
+      properties:
+        evidenceExemptionCode:
+          type: string
+        evidenceExemptionReason:
+          type: string
+        incomeEvidenceChecklist:
+          type: object
+        expenditureCapitalEvidenceChecklist:
+          type: object
 
     UpdateMeansDataCommand:
       type: object

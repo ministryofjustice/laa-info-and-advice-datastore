@@ -10,6 +10,7 @@ import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 
 @SpringBootTest(properties = {"feature.disable-jpa-auditing=true"})
 @ImportAutoConfiguration(
@@ -22,6 +23,7 @@ class SpringBootMicroserviceApplicationTests {
   @MockitoBean private ClientDetailsRepository clientDetailsRepository;
   @MockitoBean private ApplicationRepository applicationRepository;
   @MockitoBean private EligibilityResultRepository eligibilityResultRepository;
+  @MockitoBean private EvidenceRepository evidenceRepository;
   @MockitoBean private EventRepository eventRepository;
 
   @Test

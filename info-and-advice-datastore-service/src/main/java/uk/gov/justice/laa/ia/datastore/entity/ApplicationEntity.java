@@ -14,7 +14,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -50,9 +49,9 @@ public class ApplicationEntity {
   @Column(name = "provider_office_id", nullable = false)
   private UUID providerOfficeId;
 
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "evidence", nullable = true, columnDefinition = "json")
-  private Map<String, Object> evidence;
+  @OneToOne(cascade = CascadeType.ALL)
+  @JoinColumn(name = "evidence_id", nullable = true)
+  private EvidenceEntity evidence;
 
   @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "declaration_id", nullable = true)

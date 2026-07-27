@@ -32,9 +32,6 @@ public class EvidenceEntity {
   @Column(name = "evidence_id")
   private UUID evidenceId;
 
-  @Column(name = "case_id", nullable = false)
-  private String caseId;
-
   @Column(name = "evidence_exemption_code")
   private String evidenceExemptionCode;
 
