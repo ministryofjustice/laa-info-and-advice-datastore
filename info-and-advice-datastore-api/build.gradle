@@ -31,6 +31,8 @@ openApiGenerate {
     configOptions = [
             generateBuilders    : "true",
             interfaceOnly       : "true", // This will only generate interfaces, not implementations
+            implicitHeaders     : "true",
+            implicitHeadersRegex: '^(X-Authorization)$',
             serializableModel   : "true",
             skipDefaultInterface: "true",
             useJakartaEe        : "true",

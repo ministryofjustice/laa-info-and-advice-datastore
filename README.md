@@ -93,10 +93,11 @@ TOKEN=$(curl -s -X POST http://host.docker.internal:9090/default/token \
   -d "grant_type=client_credentials&client_id=test&client_secret=test" \
   | jq -r .access_token)
 
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v0/applications
+curl -H "Authorization: Bearer $TOKEN" -H "X-Authorization: Bearer $TOKEN" http://localhost:8080/api/v0/applications
 ```
 
-The mock server automatically issues tokens with the `DataStore.Access` role for `client_credentials` grants.
+The mock server automatically issues tokens with the `DataStore.Access` role for `client_credentials` grants and includes a providerFirmId so the same token can be used for both 
+auth headers when developing.
 
 ### Run application with Entra authentication
 

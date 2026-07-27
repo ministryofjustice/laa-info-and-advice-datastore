@@ -28,6 +28,7 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: '#/components/parameters/XAuthorizationHeader'
       responses:
         '200':
           description: Success
@@ -52,6 +53,7 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: '#/components/parameters/XAuthorizationHeader'
       responses:
         '200':
           description: Success
@@ -77,6 +79,7 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: '#/components/parameters/XAuthorizationHeader'
       requestBody:
         required: true
         content:
@@ -97,6 +100,8 @@ paths:
         - application
       operationId: startApplication
       summary: Start an application for a client
+      parameters:
+        - $ref: '#/components/parameters/XAuthorizationHeader'
       requestBody:
         required: true
         description: Information required to start an application
@@ -128,6 +133,7 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: '#/components/parameters/XAuthorizationHeader'
       requestBody:
         required: true
         description: Confirmation of the evidence statement for the application.
@@ -157,6 +163,7 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: '#/components/parameters/XAuthorizationHeader'
       requestBody:
         required: true
         description: Confirmation of the declaration statement for the application.
@@ -174,6 +181,15 @@ paths:
         '500': { description: Internal server error }
 
 components:
+  parameters:
+    XAuthorizationHeader:
+      name: X-Authorization
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Bearer prefix required. JWT representing the user, providerFirmId claim required.
+
   schemas:
     ClientDetails:
       $ref: "./open-api-applications/client-details-components.yml#/components/schemas/ClientDetails"
