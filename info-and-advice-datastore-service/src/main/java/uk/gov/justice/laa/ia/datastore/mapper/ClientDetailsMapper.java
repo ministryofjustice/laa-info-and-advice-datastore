@@ -29,6 +29,9 @@ public abstract class ClientDetailsMapper {
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(source = "createAddressCommand", target = "address")
+  @Mapping(source = "noFixedAbode", target = "noFixedAbode")
+  @Mapping(target = "dataRetentionEventUuid", ignore = true)
+  @Mapping(target = "dataRetentionDate", ignore = true)
   @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")
   @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
   public abstract ClientDetailsEntity toClientDetailsEntity(

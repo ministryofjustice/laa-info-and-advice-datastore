@@ -236,7 +236,7 @@ components:
         declaration:
           $ref: "#/components/schemas/DeclarationResponse"
         evidence:
-          type: object
+          $ref: "#/components/schemas/EvidenceResponse"
         reasonForReapplication:
           type: string
         meansAssessmentRequired:
@@ -249,8 +249,20 @@ components:
           type: string
         referenceNumber:
           type: string
+        laaReference:
+          type: string
         applicationType:
           type: string
+        scopingQuestions:
+          type: object
+        isMeansTested:
+          type: boolean
+        ufn:
+          type: string
+          maxLength: 9
+        dateDeclarationWasSigned:
+          type: string
+          format: date
         determinationId:
           type: string
           format: uuid
@@ -381,7 +393,27 @@ components:
           type: integer
           format: int64
           description: ETag value for optimistic concurrency control
-      additionalProperties: true
+        evidenceExemptionCode:
+          type: string
+        evidenceExemptionReason:
+          type: string
+          maxLength: 400
+        incomeEvidenceChecklist:
+          type: object
+        expenditureCapitalEvidenceChecklist:
+          type: object
+
+    EvidenceResponse:
+      type: object
+      properties:
+        evidenceExemptionCode:
+          type: string
+        evidenceExemptionReason:
+          type: string
+        incomeEvidenceChecklist:
+          type: object
+        expenditureCapitalEvidenceChecklist:
+          type: object
 
     UpdateMeansDataCommand:
       type: object
@@ -403,6 +435,10 @@ components:
         applicationId:
           type: string
           format: uuid
+        indication:
+          type: boolean
+        contribution:
+          type: string
         eligibilityResult:
           type: object
         createdAt:

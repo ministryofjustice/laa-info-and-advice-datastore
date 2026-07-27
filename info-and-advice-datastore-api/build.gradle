@@ -4,7 +4,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.1.0'
+version = '0.2.2'
 
 repositories {
     mavenCentral()
@@ -62,16 +62,6 @@ publishing {
             from components.java
             groupId = 'uk.gov.justice.laa.ia.datastore'
             artifactId = 'info-and-advice-datastore-api'
-        }
-    }
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = 'https://maven.pkg.github.com/ministryofjustice/laa-info-and-advice-datastore'
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")?.trim() ?: project.findProperty('gitPackageUser')
-                password = System.getenv("GITHUB_TOKEN")?.trim() ?: project.findProperty('gitPackageKey')
-            }
         }
     }
 }

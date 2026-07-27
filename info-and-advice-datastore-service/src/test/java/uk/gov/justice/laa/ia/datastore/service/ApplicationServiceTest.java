@@ -31,6 +31,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
@@ -38,6 +39,7 @@ import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
+import uk.gov.justice.laa.ia.datastore.mapper.EvidenceMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
@@ -48,6 +50,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 
 /** Unit tests for the {@link ApplicationService}. */
 @ExtendWith(MockitoExtension.class)
@@ -55,8 +58,10 @@ import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
   @Mock private EligibilityResultRepository eligibilityResultRepository;
+  @Mock private EvidenceRepository evidenceRepository;
   @Mock private ApplicationMapper mapper;
   @Mock private DeclarationMapper declarationMapper;
+  @Mock private EvidenceMapper evidenceMapper;
   @Mock private UserContext userContext;
   @Mock private ObjectMapper objectMapper;
   @Mock private EventService eventService;
@@ -341,50 +346,56 @@ public class ApplicationServiceTest {
   @Test
   void updateEvidence_shouldUpdateEvidence_whenApplicationExistsAndEvidenceDoesNotExist() {
     // Arrange
-    final var evidenceMap = EvidenceGenerator.createEvidenceMap();
-    final var command =
-        UpdateEvidenceCommand.builder().eTag(0L).additionalProperties(evidenceMap).build();
+    final var command = EvidenceGenerator.createUpdateEvidenceCommand(0L);
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
+    final EvidenceEntity savedEvidence =
+        EvidenceEntity.builder().evidenceId(UUID.randomUUID()).build();
 
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(evidenceMapper.toEvidenceEntity(command)).thenReturn(EvidenceEntity.builder().build());
+    when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(savedEvidence);
 
     // Act
     final boolean result = sut.updateEvidence(application.getId(), command);
 
     // Assert
     assertTrue(result);
-    assertThat(application.getEvidence()).isSameAs(evidenceMap);
-    assertThat(application.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
-    assertThat(application.getModifiedAt()).isNotNull();
+    assertThat(application.getEvidence()).isSameAs(savedEvidence);
+    assertThat(application.getModifiedBy()).isEqualTo("TEST_USER");
+    verify(evidenceRepository, times(1)).save(any(EvidenceEntity.class));
     verify(repo, times(1)).save(application);
   }
 
   @Test
   void updateEvidence_shouldUpdateEvidence_whenApplicationExistsAndEvidenceExists() {
     // Arrange
+    final UUID existingEvidenceId = UUID.randomUUID();
+    final EvidenceEntity existingEvidence =
+        EvidenceEntity.builder().evidenceId(existingEvidenceId).createdBy("ORIGINAL_USER").build();
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder -> builder.evidence(EvidenceGenerator.createEvidenceMap()));
-    final var originalEvidence = application.getEvidence();
-    final var evidenceMap = EvidenceGenerator.createEvidenceMap();
-    final var command =
-        UpdateEvidenceCommand.builder().eTag(0L).additionalProperties(evidenceMap).build();
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(existingEvidence));
+    final var command = EvidenceGenerator.createUpdateEvidenceCommand(0L);
+    final EvidenceEntity mappedEvidence = EvidenceEntity.builder().build();
+    final EvidenceEntity savedEvidence =
+        EvidenceEntity.builder().evidenceId(existingEvidenceId).build();
+
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(evidenceMapper.toEvidenceEntity(command)).thenReturn(mappedEvidence);
+    when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(savedEvidence);
 
     // Act
     final boolean result = sut.updateEvidence(application.getId(), command);
 
     // Assert
     assertTrue(result);
-    assertThat(application.getEvidence()).isSameAs(evidenceMap);
-    assertThat(application.getEvidence()).isNotSameAs(originalEvidence);
-    assertThat(application.getModifiedBy()).isEqualTo(userContext.getCurrentUser());
-    assertThat(application.getModifiedAt()).isNotNull();
+    assertThat(application.getEvidence()).isSameAs(savedEvidence);
+    assertThat(mappedEvidence.getEvidenceId()).isEqualTo(existingEvidenceId);
+    verify(evidenceRepository, times(1)).save(mappedEvidence);
     verify(repo, times(1)).save(application);
   }
 
@@ -466,13 +477,15 @@ public class ApplicationServiceTest {
   @Test
   void shouldRecordEvent_whenEvidenceUpdated() {
     // Arrange
-    final var evidenceMap = EvidenceGenerator.createEvidenceMap();
-    final var command =
-        UpdateEvidenceCommand.builder().eTag(0L).additionalProperties(evidenceMap).build();
+    final var command = EvidenceGenerator.createUpdateEvidenceCommand(0L);
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
+    when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(evidenceMapper.toEvidenceEntity(command)).thenReturn(EvidenceEntity.builder().build());
+    when(evidenceRepository.save(any(EvidenceEntity.class)))
+        .thenReturn(EvidenceEntity.builder().build());
 
     // Act
     sut.updateEvidence(application.getId(), command);

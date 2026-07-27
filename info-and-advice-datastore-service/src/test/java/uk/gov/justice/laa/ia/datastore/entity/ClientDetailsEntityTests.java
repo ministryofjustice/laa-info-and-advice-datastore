@@ -5,16 +5,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 
 /** Unit tests for the {@link ClientDetailsEntity}. */
 @ExtendWith(MockitoExtension.class)
 public class ClientDetailsEntityTests {
 
   @Test
-  void givenClientDetailsEntityWithNoAddress_thenHasFixedAddressReturnsFalse() {
+  void givenClientDetailsEntityWithNoFixedAbode_thenHasFixedAddressReturnsFalse() {
     // Arrange
-    final ClientDetailsEntity entity = new ClientDetailsEntity();
+    final ClientDetailsEntity entity = ClientDetailsEntity.builder().noFixedAbode(true).build();
 
     // Act
     final boolean hasFixedAddress = entity.hasFixedAddress();
@@ -24,10 +23,9 @@ public class ClientDetailsEntityTests {
   }
 
   @Test
-  void givenClientDetailsEntityWithAddress_thenHasFixedAddressReturnsTrue() {
+  void givenClientDetailsEntityWithFixedAbode_thenHasFixedAddressReturnsTrue() {
     // Arrange
-    final ClientDetailsEntity entity =
-        ClientDetailsEntity.builder().address(AddressEntityGenerator.createWithId(null)).build();
+    final ClientDetailsEntity entity = ClientDetailsEntity.builder().noFixedAbode(false).build();
 
     // Act
     final boolean hasFixedAddress = entity.hasFixedAddress();
