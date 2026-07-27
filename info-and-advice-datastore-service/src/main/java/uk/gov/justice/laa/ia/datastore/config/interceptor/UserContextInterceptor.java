@@ -1,13 +1,16 @@
 package uk.gov.justice.laa.ia.datastore.config.interceptor;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Base64;
+import java.io.IOException;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationManagerResolver;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
@@ -17,26 +20,54 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 @Component
 @RequiredArgsConstructor
 public class UserContextInterceptor implements HandlerInterceptor {
+  private static final String AUTHORIZATION_HEADER = "X-Authorization";
+  private static final String BEARER_PREFIX = "Bearer ";
 
   private final UserContext userContext;
-  private ObjectMapper objectMapper = new ObjectMapper();
-  private static final String AUTHORIZATION_HEADER = "Authorization";
+  private final AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver;
 
   @Override
-  public boolean preHandle(
-      HttpServletRequest request, HttpServletResponse response, Object handler) {
+  public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
+      throws IOException {
+    Jwt authenticatedJwt;
     try {
-      String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
-      String[] chunks = authorizationHeader.split("\\.");
-      String payload = new String(Base64.getDecoder().decode(chunks[1]));
-      JsonNode payloadNode = objectMapper.readTree(payload);
-      UUID providerFirmId = UUID.fromString(payloadNode.get("providerFirmId").asText());
-      userContext.setProviderFirmId(providerFirmId);
+      authenticatedJwt = authenticateJwt(request);
     } catch (Exception e) {
-      log.error("Error parsing JWT token: {}", e.getMessage());
-      return false; // Reject the request if there's an error parsing the token
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      return false;
     }
+    try {
+      populateUserContext(authenticatedJwt);
+      return true;
+    } catch (IllegalArgumentException e) {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      response.getWriter().write("Missing or invalid format for providerFirmId claim in JWT");
+      return false;
+    }
+  }
 
-    return true; // Continue with the next interceptor or the handler itself
+  private String extractBearerToken(String authorizationHeader) {
+    if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
+      throw new IllegalArgumentException("Missing or invalid X-Authorization header");
+    }
+    return authorizationHeader.substring(BEARER_PREFIX.length());
+  }
+
+  private Jwt authenticateJwt(HttpServletRequest request) {
+    final AuthenticationManager authMgr = authenticationManagerResolver.resolve(request);
+    final String jwt = extractBearerToken(request.getHeader(AUTHORIZATION_HEADER));
+    final Authentication authentication =
+        authMgr.authenticate(new BearerTokenAuthenticationToken(jwt));
+    final Jwt authenticatedJwt = (Jwt) authentication.getPrincipal();
+    return authenticatedJwt;
+  }
+
+  private void populateUserContext(Jwt authenticatedJwt) {
+    final String providerFirmIdClaim = authenticatedJwt.getClaimAsString("providerFirmId");
+    if (providerFirmIdClaim == null || providerFirmIdClaim.isEmpty()) {
+      throw new IllegalArgumentException("Missing providerFirmId claim in JWT");
+    }
+    final UUID providerFirmId = UUID.fromString(providerFirmIdClaim);
+    userContext.setProviderFirmId(providerFirmId);
   }
 }
