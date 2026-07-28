@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,6 +39,8 @@ import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 @Service
 public class ApplicationService {
 
+  private final EntityManager entityManager;
+
   private static final int DEFAULT_PAGE_SIZE = 25;
 
   private final ApplicationRepository repository;
@@ -61,6 +64,7 @@ public class ApplicationService {
 
     entity.setApplicationState(ApplicationState.DRAFT);
     ApplicationEntity saved = repository.save(entity);
+    entityManager.refresh(saved);
     eventService.record(startApplication);
     return applicationMapper.toApplication(saved);
   }
