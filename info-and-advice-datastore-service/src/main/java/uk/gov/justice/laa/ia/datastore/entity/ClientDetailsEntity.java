@@ -40,7 +40,7 @@ public class ClientDetailsEntity {
   @Column(name = "first_name", nullable = false)
   private String firstName;
 
-  @Column(name = "last_name", nullable = false)
+  @Column(name = "surname", nullable = false)
   private String lastName;
 
   @Column(name = "date_of_birth", nullable = false)
@@ -53,22 +53,31 @@ public class ClientDetailsEntity {
   @JoinColumn(name = "address_id", nullable = true)
   private AddressEntity address;
 
+  @Column(name = "no_fixed_abode", nullable = false)
+  private boolean noFixedAbode;
+
+  @Column(name = "data_retention_event_uuid")
+  private UUID dataRetentionEventUuid;
+
+  @Column(name = "data_retention_date")
+  private Instant dataRetentionDate;
+
   @Transient
   public boolean hasFixedAddress() {
-    return address != null;
+    return !noFixedAbode;
   }
 
   @Column(name = "created_at")
   @CreationTimestamp
   private Instant createdAt;
 
-  @Column(name = "last_modified_at")
+  @Column(name = "modified_at")
   @UpdateTimestamp
   private Instant modifiedAt;
 
   @Column(name = "created_by", nullable = false)
   private String createdBy;
 
-  @Column(name = "last_modified_by", nullable = false)
+  @Column(name = "modified_by", nullable = false)
   private String modifiedBy;
 }

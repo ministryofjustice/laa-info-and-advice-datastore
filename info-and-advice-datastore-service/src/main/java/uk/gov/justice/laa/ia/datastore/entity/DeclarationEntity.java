@@ -46,10 +46,10 @@ public class DeclarationEntity {
   @Column(name = "created_by", nullable = false)
   private String createdBy;
 
-  @Column(name = "last_modified_at", nullable = false)
+  @Column(name = "modified_at", nullable = false)
   @UpdateTimestamp
   private Instant modifiedAt;
 
-  @Column(name = "last_modified_by", nullable = false)
+  @Column(name = "modified_by", nullable = false)
   private String modifiedBy;
 }

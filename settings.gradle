@@ -19,7 +19,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'laa-info-and-advice-service'
+rootProject.name = 'laa-info-and-advice-datastore'
 
 include 'info-and-advice-datastore-api'
 include 'info-and-advice-datastore-service'

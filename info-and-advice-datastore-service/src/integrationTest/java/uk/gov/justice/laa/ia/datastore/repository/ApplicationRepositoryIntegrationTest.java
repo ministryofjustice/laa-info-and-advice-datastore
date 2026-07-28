@@ -7,10 +7,10 @@ import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for the ApplicationRepository. */
@@ -23,7 +23,12 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
               builder.withDefaultClientDetails();
-              builder.evidence(EvidenceGenerator.createEvidenceMap());
+              builder.evidence(
+                  EvidenceEntity.builder()
+                      .evidenceExemptionCode("EXEMPT_01")
+                      .createdBy("TEST_USER")
+                      .modifiedBy("TEST_USER")
+                      .build());
               builder.declaration(DeclarationEntityGenerator.createWithoutId(null));
             });
     final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
@@ -63,7 +68,12 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
 
   @Test
   void shouldSaveEvidenceWhenSavingApplication() {
-    final var evidence = EvidenceGenerator.createEvidenceMap();
+    final var evidence =
+        EvidenceEntity.builder()
+            .evidenceExemptionCode("EXEMPT_01")
+            .createdBy("TEST_USER")
+            .modifiedBy("TEST_USER")
+            .build();
     final ApplicationEntity entity =
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
@@ -73,7 +83,8 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
     clearCache();
     final ApplicationEntity getEntity =
         applicationRepository.findById(savedEntity.getId()).orElseThrow();
-    assertThat(getEntity.getEvidence()).isEqualTo(evidence);
+    assertThat(getEntity.getEvidence().getEvidenceExemptionCode())
+        .isEqualTo(evidence.getEvidenceExemptionCode());
   }
 
   private final String referenceNumberRegex = "L-\\w{3}-\\w{3}";
