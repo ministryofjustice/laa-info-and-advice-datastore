@@ -35,6 +35,7 @@ public abstract class ApplicationMapper {
   @Mapping(source = "declaration", target = "declaration")
   @Mapping(source = "evidence", target = "evidence")
   @Mapping(source = "mostRecentEligibilityResult", target = "eligibilityResult")
+  @Mapping(source = "etag", target = "eTag")
   public abstract ApplicationResponse toApplication(ApplicationEntity entity);
 
   /** Maps an {@link StartApplicationCommand} to an {@link ApplicationEntity}. */

@@ -1,0 +1,62 @@
+components:
+  schemas:
+    StartApplicationCommand:
+      type: object
+      required:
+        - client
+        - applicationType
+        - providerOfficeId
+      properties:
+        client:
+          $ref: '../client-details-components.yml#/components/schemas/CreateClientCommand'
+        applicationType:
+          type: string
+          enum:
+            - RCW
+            - CLA
+        providerOfficeId:
+          type: string
+          format: uuid
+
+    DeclarationCommand:
+      type: object
+      required:
+        - eTag
+        - declarationConfirmation
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+        declarationConfirmation:
+          type: boolean
+
+    UpdateEvidenceCommand:
+      type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+        evidenceExemptionCode:
+          type: string
+        evidenceExemptionReason:
+          type: string
+          maxLength: 400
+        incomeEvidenceChecklist:
+          type: object
+        expenditureCapitalEvidenceChecklist:
+          type: object
+
+    UpdateMeansDataCommand:
+      type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+      additionalProperties: true

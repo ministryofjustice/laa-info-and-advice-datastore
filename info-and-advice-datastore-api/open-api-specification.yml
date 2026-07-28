@@ -4,443 +4,49 @@ info:
   title: Info and Advice Datastore API
 paths:
   /api/v0/applications:
-    get:
-      tags:
-        - application
-      summary: Get applications
-      operationId: getApplications
-      parameters:
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 0
-        - name: size
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 25
-        - name: officeId
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-        - $ref: '#/components/parameters/XAuthorizationHeader'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationResponses"
-        '401': { description: Unauthorized }
-        '403': { description: Forbidden }
-        '500': { description: Internal server error }
-
+    $ref: './open-api-applications/paths/applications.yml'
   /api/v0/applications/{id}:
-    get:
-      tags:
-        - application
-      summary: Get application by ID
-      operationId: getApplication
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: '#/components/parameters/XAuthorizationHeader'
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationResponse"
-        '401': { description: Unauthorized }
-        '403': { description: Forbidden }
-        '404': { description: Not found }
-        '500': { description: Internal server error }
-
+    $ref: './open-api-applications/paths/application-by-id.yml'
   /api/v0/applications/{id}:update-means-data:
-    put:
-      tags:
-        - application
-      operationId: updateMeansData
-      summary: Update means data for an application
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: '#/components/parameters/XAuthorizationHeader'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMeansDataCommand'
-      responses:
-        '204': { description: Application means data updated successfully }
-        '400': { description: Bad request }
-        '401': { description: Unauthorized }
-        '403': { description: Forbidden }
-        '404': { description: Not found }
-        '409': { description: Conflict - ETag mismatch }
-        '500': { description: Internal server error }
+    $ref: './open-api-applications/paths/application-update-means-data.yml'
   /api/v0/applications:start-application:
-    post:
-      tags:
-        - application
-      operationId: startApplication
-      summary: Start an application for a client
-      parameters:
-        - $ref: '#/components/parameters/XAuthorizationHeader'
-      requestBody:
-        required: true
-        description: Information required to start an application
-        content:
-          application/json:
-            schema: 
-              $ref: '#/components/schemas/StartApplicationCommand'
-      responses:
-        '201':
-          description: Application created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApplicationResponse'
-        '400' : { description: Bad request }
-        '401' : { description: Unauthorized }
-        '403' : { description: Forbidden }
-        '500' : { description: Internal server error }
+    $ref: './open-api-applications/paths/application-start.yml'
   /api/v0/applications/{id}:update-evidence:
-    put:
-      tags:
-        - application
-      summary: Update evidence for an application
-      operationId: updateEvidence
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: '#/components/parameters/XAuthorizationHeader'
-      requestBody:
-        required: true
-        description: Confirmation of the evidence statement for the application.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateEvidenceCommand'
-      responses:
-        '204': { description: Evidence updated successfully }
-        '400': { description: Bad request }
-        '401': { description: Unauthorized }
-        '403': { description: Forbidden }
-        '404': { description: Application not found }
-        '409': { description: Conflict - ETag mismatch }
-        '500': { description: Internal server error }
-
+    $ref: './open-api-applications/paths/application-update-evidence.yml'
   /api/v0/applications/{id}/declaration:
-    put:
-      tags:
-        - application
-      summary: Update declaration for an application
-      operationId: updateDeclaration
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: '#/components/parameters/XAuthorizationHeader'
-      requestBody:
-        required: true
-        description: Confirmation of the declaration statement for the application.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DeclarationCommand'
-      responses:
-        '204': { description: Declaration updated successfully }
-        '400': { description: Bad request }
-        '401': { description: Unauthorized }
-        '403': { description: Forbidden }
-        '404': { description: Application not found }
-        '409': { description: Conflict - ETag mismatch }
-        '500': { description: Internal server error }
+    $ref: './open-api-applications/paths/application-declaration.yml'
 
 components:
   parameters:
     XAuthorizationHeader:
-      name: X-Authorization
-      in: header
-      required: true
-      schema:
-        type: string
-      description: Bearer prefix required. JWT representing the user, providerFirmId claim required.
+      $ref: './open-api-applications/components/parameters.yml#/components/parameters/XAuthorizationHeader'
 
   schemas:
     ClientDetails:
-      $ref: "./open-api-applications/client-details-components.yml#/components/schemas/ClientDetails"
-
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ClientDetails'
     Address:
-      $ref: "./open-api-applications/client-details-components.yml#/components/schemas/Address"
-    
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/Address'
     ApplicationResponse:
-      type: object
-      required:
-        - id
-        - individualLegalAidNumber
-        - client
-        - providerFirmId
-        - providerOfficeId
-        - createdAt
-        - createdBy
-        - modifiedAt
-        - modifiedBy
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 
-        individualLegalAidNumber:
-          type: string
-          format: uuid
-          example:
-          description:
-        client:
-          $ref: "#/components/schemas/ClientDetails"
-        providerFirmId:
-          type: string 
-          format: uuid
-          example:
-          description:
-        providerOfficeId:
-          type: string 
-          format: uuid
-          example: 
-          description:
-        applicationState:
-          $ref: "#/components/schemas/ApplicationState"
-        declaration:
-          $ref: "#/components/schemas/DeclarationResponse"
-        evidence:
-          $ref: "#/components/schemas/EvidenceResponse"
-        reasonForReapplication:
-          type: string
-        meansAssessmentRequired:
-          type: boolean
-        typeOfNonMeans:
-          type: boolean
-        ecfFlag:
-          type: boolean
-        contribution:
-          type: string
-        referenceNumber:
-          type: string
-        laaReference:
-          type: string
-        applicationType:
-          type: string
-        scopingQuestions:
-          type: object
-        isMeansTested:
-          type: boolean
-        ufn:
-          type: string
-          maxLength: 9
-        dateDeclarationWasSigned:
-          type: string
-          format: date
-        determinationId:
-          type: string
-          format: uuid
-        eligibilityResult:
-          $ref: "#/components/schemas/EligibilityResultResponse"
-        createdAt:
-          type: string
-          format: date-time
-        createdBy:
-          type: string
-        modifiedAt:
-          type: string
-          format: date-time
-        modifiedBy:
-          type: string
-        eTag:
-          type: integer
-          format: int64
-          description: ETag value for optimistic concurrency control
-
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApplicationResponse'
     ApplicationSummary:
-      type: object
-      description: Slim representation of an application for use in list views
-      required:
-        - id
-        - referenceNumber
-        - modifiedAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        clientFirstName:
-          type: string
-        clientLastName:
-          type: string
-        referenceNumber:
-          type: string
-        modifiedAt:
-          type: string
-          format: date-time
-
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApplicationSummary'
     ApplicationResponses:
-      type: object
-      properties:
-        content:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApplicationSummary"
-        page:
-          type: integer
-        size:
-          type: integer
-        totalElements:
-          type: integer
-          format: int64
-        totalPages:
-          type: integer
-
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApplicationResponses'
     DeclarationResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        clientDeclarationStatus:
-          $ref: "#/components/schemas/ClientDeclarationStatus"
-        declarationConfirmation:
-          type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        createdBy:
-          type: string
-        modifiedAt:
-          type: string
-          format: date-time
-        modifiedBy:
-          type: string
-
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/DeclarationResponse'
     ClientDeclarationStatus:
-      type: string
-      enum:
-        - DRAFT
-
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ClientDeclarationStatus'
     ApplicationState:
-      type: string
-      enum:
-        - DRAFT
-
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApplicationState'
     StartApplicationCommand:
-      type: object
-      required:
-        - client
-        - applicationType
-        - providerOfficeId
-      properties:
-        client: 
-          $ref: "./open-api-applications/client-details-components.yml#/components/schemas/CreateClientCommand"
-        applicationType:
-          type: string
-          enum:
-            - RCW
-            - CLA
-        providerOfficeId:
-          type: string
-          format: uuid
-            
-
+      $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/StartApplicationCommand'
     DeclarationCommand:
-      type: object
-      required:
-        - eTag
-        - declarationConfirmation
-      properties:
-        eTag:
-          type: integer
-          format: int64
-          description: ETag value for optimistic concurrency control
-        declarationConfirmation:
-          type: boolean
-
+      $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/DeclarationCommand'
     UpdateEvidenceCommand:
-      type: object
-      required:
-        - eTag
-      properties:
-        eTag:
-          type: integer
-          format: int64
-          description: ETag value for optimistic concurrency control
-        evidenceExemptionCode:
-          type: string
-        evidenceExemptionReason:
-          type: string
-          maxLength: 400
-        incomeEvidenceChecklist:
-          type: object
-        expenditureCapitalEvidenceChecklist:
-          type: object
-
+      $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateEvidenceCommand'
     EvidenceResponse:
-      type: object
-      properties:
-        evidenceExemptionCode:
-          type: string
-        evidenceExemptionReason:
-          type: string
-        incomeEvidenceChecklist:
-          type: object
-        expenditureCapitalEvidenceChecklist:
-          type: object
-
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EvidenceResponse'
     UpdateMeansDataCommand:
-      type: object
-      required:
-        - eTag
-      properties:
-        eTag:
-          type: integer
-          format: int64
-          description: ETag value for optimistic concurrency control
-      additionalProperties: true
-
+      $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateMeansDataCommand'
     EligibilityResultResponse:
-      type: object
-      properties:
-        eligibilityResultId:
-          type: string
-          format: uuid
-        applicationId:
-          type: string
-          format: uuid
-        indication:
-          type: boolean
-        contribution:
-          type: string
-        eligibilityResult:
-          type: object
-        createdAt:
-          type: string
-          format: date-time
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResultResponse'

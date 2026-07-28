@@ -1,0 +1,9 @@
+components:
+  parameters:
+    XAuthorizationHeader:
+      name: X-Authorization
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Bearer prefix required. JWT representing the user, providerFirmId claim required.
