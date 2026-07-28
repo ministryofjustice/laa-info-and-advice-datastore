@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
@@ -20,6 +21,7 @@ import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
     })
 class SpringBootMicroserviceApplicationTests {
 
+  @MockitoBean private EntityManager entityManager;
   @MockitoBean private ClientDetailsRepository clientDetailsRepository;
   @MockitoBean private ApplicationRepository applicationRepository;
   @MockitoBean private EligibilityResultRepository eligibilityResultRepository;

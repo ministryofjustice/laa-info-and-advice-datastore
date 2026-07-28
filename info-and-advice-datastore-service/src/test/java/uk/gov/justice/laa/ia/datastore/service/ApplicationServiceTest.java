@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +66,7 @@ public class ApplicationServiceTest {
   @Mock private UserContext userContext;
   @Mock private ObjectMapper objectMapper;
   @Mock private EventService eventService;
+  @Mock private EntityManager entityManager;
 
   @InjectMocks private ApplicationService sut;
 

@@ -34,6 +34,10 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
             });
     ApplicationEntity savedEntity = applicationRepository.save(entity);
 
+    clearCache();
+    ApplicationEntity refreshedEntity =
+        applicationRepository.findById(savedEntity.getId()).orElseThrow();
+
     // Act & Assert
     mockMvc
         .perform(get("/api/v0/applications/{id}", savedEntity.getId()).withBearerReadToken())
@@ -44,7 +48,8 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
                 .value(savedEntity.getClientDetails().getId().toString()))
         .andExpect(jsonPath("$.applicationType").value(savedEntity.getApplicationType()))
         .andExpect(
-            jsonPath("$.providerOfficeId").value(savedEntity.getProviderOfficeId().toString()));
+            jsonPath("$.providerOfficeId").value(savedEntity.getProviderOfficeId().toString()))
+        .andExpect(jsonPath("$.referenceNumber").value(refreshedEntity.getReferenceNumber()));
   }
 
   @Test
