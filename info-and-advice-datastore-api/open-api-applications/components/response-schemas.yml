@@ -1,0 +1,193 @@
+components:
+  schemas:
+    ClientDetails:
+      $ref: '../client-details-components.yml#/components/schemas/ClientDetails'
+
+    Address:
+      $ref: '../client-details-components.yml#/components/schemas/Address'
+
+    ApplicationResponse:
+      type: object
+      required:
+        - id
+        - individualLegalAidNumber
+        - client
+        - providerFirmId
+        - providerOfficeId
+        - createdAt
+        - createdBy
+        - modifiedAt
+        - modifiedBy
+      properties:
+        id:
+          type: string
+          format: uuid
+          example:
+        individualLegalAidNumber:
+          type: string
+          format: uuid
+          example:
+          description:
+        client:
+          $ref: '#/components/schemas/ClientDetails'
+        providerFirmId:
+          type: string
+          format: uuid
+          example:
+          description:
+        providerOfficeId:
+          type: string
+          format: uuid
+          example:
+          description:
+        applicationState:
+          $ref: '#/components/schemas/ApplicationState'
+        declaration:
+          $ref: '#/components/schemas/DeclarationResponse'
+        evidence:
+          $ref: '#/components/schemas/EvidenceResponse'
+        reasonForReapplication:
+          type: string
+        meansAssessmentRequired:
+          type: boolean
+        typeOfNonMeans:
+          type: boolean
+        ecfFlag:
+          type: boolean
+        contribution:
+          type: string
+        referenceNumber:
+          type: string
+        laaReference:
+          type: string
+        applicationType:
+          type: string
+        scopingQuestions:
+          type: object
+        isMeansTested:
+          type: boolean
+        ufn:
+          type: string
+          maxLength: 9
+        dateDeclarationWasSigned:
+          type: string
+          format: date
+        determinationId:
+          type: string
+          format: uuid
+        eligibilityResult:
+          $ref: '#/components/schemas/EligibilityResultResponse'
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+        modifiedBy:
+          type: string
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+
+    ApplicationSummary:
+      type: object
+      description: Slim representation of an application for use in list views
+      required:
+        - id
+        - referenceNumber
+        - modifiedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientFirstName:
+          type: string
+        clientLastName:
+          type: string
+        referenceNumber:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+
+    ApplicationResponses:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationSummary'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    DeclarationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientDeclarationStatus:
+          $ref: '#/components/schemas/ClientDeclarationStatus'
+        declarationConfirmation:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+        modifiedBy:
+          type: string
+
+    ClientDeclarationStatus:
+      type: string
+      enum:
+        - DRAFT
+
+    ApplicationState:
+      type: string
+      enum:
+        - DRAFT
+
+    EvidenceResponse:
+      type: object
+      properties:
+        evidenceExemptionCode:
+          type: string
+        evidenceExemptionReason:
+          type: string
+        incomeEvidenceChecklist:
+          type: object
+        expenditureCapitalEvidenceChecklist:
+          type: object
+
+    EligibilityResultResponse:
+      type: object
+      properties:
+        eligibilityResultId:
+          type: string
+          format: uuid
+        applicationId:
+          type: string
+          format: uuid
+        indication:
+          type: boolean
+        contribution:
+          type: string
+        eligibilityResult:
+          type: object
+        createdAt:
+          type: string
+          format: date-time

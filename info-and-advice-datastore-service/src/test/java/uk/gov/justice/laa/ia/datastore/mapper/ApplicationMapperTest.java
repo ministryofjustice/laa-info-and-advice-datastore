@@ -90,6 +90,7 @@ public class ApplicationMapperTest {
                   Set.of(
                       EligibilityResultEntityGenerator.createEligibilityResult(
                           UUID.randomUUID(), "ELIGIBLE", 100)));
+              builder.etag(1969);
             });
 
     final ApplicationResponse mappedModel = sut.toApplication(application);
@@ -122,6 +123,7 @@ public class ApplicationMapperTest {
         mappedModel.getClient().getAddress().getAddressLine1());
     assertEligibiltyEquals(
         application.getMostRecentEligibilityResult(), mappedModel.getEligibilityResult());
+    assertEquals(application.getEtag(), mappedModel.geteTag());
   }
 
   @Test

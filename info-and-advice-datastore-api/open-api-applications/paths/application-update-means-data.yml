@@ -1,0 +1,27 @@
+put:
+  tags:
+    - application
+  operationId: updateMeansData
+  summary: Update means data for an application
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/request-schemas.yml#/components/schemas/UpdateMeansDataCommand'
+  responses:
+    '204': { description: Application means data updated successfully }
+    '400': { description: Bad request }
+    '401': { description: Unauthorized }
+    '403': { description: Forbidden }
+    '404': { description: Not found }
+    '409': { description: Conflict - ETag mismatch }
+    '500': { description: Internal server error }
