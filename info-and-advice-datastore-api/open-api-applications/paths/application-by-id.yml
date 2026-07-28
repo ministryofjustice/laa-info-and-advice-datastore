@@ -1,0 +1,24 @@
+get:
+  tags:
+    - application
+  summary: Get application by ID
+  operationId: getApplication
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
+  responses:
+    '200':
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApplicationResponse'
+    '401': { description: Unauthorized }
+    '403': { description: Forbidden }
+    '404': { description: Not found }
+    '500': { description: Internal server error }
