@@ -48,6 +48,24 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if client version changed
+        id: client-version-check
+        run: |
+          CURRENT=$(grep "^version" info-and-advice-datastore-client/build.gradle | cut -d"'" -f2)
+          PREVIOUS=$(git show HEAD~1:info-and-advice-datastore-client/build.gradle | grep "^version" | cut -d"'" -f2)
+          if [ "$CURRENT" != "$PREVIOUS" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish client package
+        if: steps.client-version-check.outputs.changed == 'true'
+        run: ./gradlew :info-and-advice-datastore-client:publishMavenJavaPublicationToMavenRepository
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Test coverage verification
         run: ./gradlew jacocoTestCoverageVerification
 
