@@ -1,0 +1,70 @@
+plugins {
+    id 'org.openapi.generator' version '7.24.0'
+    id 'io.freefair.lombok' version '9.5.0'
+    id 'uk.gov.justice.service.laa.laa-spring-boot-gradle-plugin'
+    id 'maven-publish'
+}
+
+version = '0.1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'org.springframework.security:spring-security-oauth2-client'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.11'
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.22.1")
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.28'
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
+}
+
+sourceSets.main.java.srcDirs += ['generated/src/main/java']
+
+checkstyleMain.exclude "*"
+
+openApiGenerate {
+    generatorName = "java"
+    library = "resttemplate"
+    inputSpec = "$rootDir/info-and-advice-datastore-api/open-api-specification.yml".toString()
+    outputDir = "$rootDir/info-and-advice-datastore-client/generated".toString()
+    apiPackage = "uk.gov.justice.laa.ia.datastore.client.api"
+    invokerPackage = "uk.gov.justice.laa.ia.datastore.client.invoker"
+    modelPackage = "uk.gov.justice.laa.ia.datastore.client.model"
+    configOptions = [
+            generateBuilders : "true",
+            serializableModel: "true",
+            useJakartaEe     : "true",
+            useTags          : "true",
+            dateLibrary      : "java8",
+    ]
+}
+
+compileJava.dependsOn 'openApiGenerate'
+
+clean {
+    delete "$rootDir/info-and-advice-datastore-client/generated"
+}
+
+tasks.named('bootJar') {
+    enabled = false
+}
+
+tasks.named('bootRun') {
+    enabled = false
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = 'uk.gov.justice.laa.ia.datastore'
+            artifactId = 'info-and-advice-datastore-client'
+        }
+    }
+}

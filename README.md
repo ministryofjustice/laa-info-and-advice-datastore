@@ -186,6 +186,100 @@ With credentials in `~/.m2/settings.xml`:
 
 The API package is versioned independently of the service. The version is bumped manually in `info-and-advice-datastore-api/build.gradle` whenever the API contract changes. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
 
+## Using the Client Package
+
+The `info-and-advice-datastore-client` module is published to GitHub Packages and provides a ready-to-use, auto-configured HTTP client for calling this API from another Spring Boot service. It is generated from the same OpenAPI spec as the API package.
+
+### What's included
+
+- **Generated HTTP client** : `ApplicationApi` — a fully callable RestTemplate-backed client class for every endpoint
+- **Model classes** : the same request/response types as the API package, under `uk.gov.justice.laa.ia.datastore.client.model`
+- **Spring Boot autoconfiguration** : a `DatastoreApiClientConfiguration` that registers an `ApplicationApi` bean with both auth headers handled automatically
+
+### Adding the dependency
+
+**Gradle:**
+```gradle
+implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client:0.1.0'
+```
+
+**Maven:**
+```xml
+<dependency>
+  <groupId>uk.gov.justice.laa.ia.datastore</groupId>
+  <artifactId>info-and-advice-datastore-client</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+> See [Repository configuration](#repository-configuration) above — the same GitHub Packages setup applies.
+
+### Consumer configuration
+
+Add the following to your `application.yml`:
+
+```yaml
+laa:
+  datastore:
+    client:
+      base-url: https://datastore.laa.gov.uk         # base URL of the datastore service
+      client-registration-id: datastore              # matches a spring.security.oauth2.client.registration.* entry
+```
+
+The `client-registration-id` must correspond to an OAuth2 client registration configured in your app that is set up for a **client credentials** grant against Entra. For example:
+
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          datastore:
+            client-id: ${DATASTORE_CLIENT_ID}
+            client-secret: ${DATASTORE_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+        provider:
+          datastore:
+            token-uri: https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token
+```
+
+### Auth headers
+
+The autoconfigured client attaches two Bearer tokens to every request automatically:
+
+| Header | Source |
+|---|---|
+| `Authorization` | Acquired via the OAuth2 client credentials grant using `client-registration-id` — proves the calling service is trusted |
+| `X-Authorization` | The JWT of the currently authenticated user, forwarded from the active Spring `SecurityContext` — must contain a `providerFirmId` claim (UUID) |
+
+The `X-Authorization` token is taken directly from the incoming request's security context, so it is propagated transparently as long as your service authenticates its own callers via Spring Security.
+
+### Usage
+
+Once the dependency and configuration are in place, inject `ApplicationApi` directly:
+
+```java
+@Service
+@RequiredArgsConstructor
+public class ApplicationService {
+    private final ApplicationApi datastoreApi;
+
+    public ApplicationResponse getApplication(UUID id) {
+        return datastoreApi.getApplication(id);
+    }
+
+    public ApplicationResponse startApplication(StartApplicationCommand command) {
+        return datastoreApi.startApplication(command);
+    }
+}
+```
+
+No auth boilerplate is required at the call site — both tokens are handled by the client's `RestTemplate` interceptor.
+
+### Versioning
+
+The client package is versioned independently of both the service and the API package. The version is bumped manually in `info-and-advice-datastore-client/build.gradle` whenever the API contract changes. The client and API packages should be kept in sync with each other. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
+
 
 
 ### Commit conventions
