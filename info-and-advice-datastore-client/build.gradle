@@ -20,7 +20,7 @@ dependencies {
     implementation platform("com.fasterxml.jackson:jackson-bom:2.22.1")
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-    implementation 'io.swagger.core.v3:swagger-annotations:2.2.28'
+    implementation 'io.swagger.core.v3:swagger-annotations:2.2.52'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
