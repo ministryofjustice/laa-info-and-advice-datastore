@@ -200,7 +200,7 @@ The `info-and-advice-datastore-client` module is published to GitHub Packages an
 
 **Gradle:**
 ```gradle
-implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client:0.1.0'
+implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client:0.1.1'
 ```
 
 **Maven:**

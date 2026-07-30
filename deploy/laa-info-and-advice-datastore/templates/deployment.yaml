@@ -101,18 +101,15 @@ spec:
                 secretKeyRef:
                   name: rds-postgresql-instance-output
                   key: database_username
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: rds-postgresql-instance-output
-                  key: database_password
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
                   name: rds-postgresql-instance-output
                   key: rds_instance_endpoint
             - name: DB_URL
-              value: "jdbc:postgresql://$(DB_HOST)/$(DB_NAME)"
+              value: "jdbc:aws-wrapper:postgresql://$(DB_HOST)/$(DB_NAME)?wrapperPlugins=iam&sslmode=require"
+            - name: DB_DRIVER_CLASS
+              value: "software.amazon.jdbc.Driver"
       {{- with .Values.volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}

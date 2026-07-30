@@ -18,7 +18,7 @@ fullnameOverride: ""
 
 serviceAccount:
   create: false
-  name: "cd-serviceaccount"
+  name: "laa-info-and-advice-datastore-staging"
 
 podAnnotations: {}
 podLabels: {}
