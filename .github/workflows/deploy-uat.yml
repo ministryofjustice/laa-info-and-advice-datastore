@@ -107,6 +107,9 @@ jobs:
         with:
           image: info-and-advice-datastore:scan
           args: --file=Dockerfile --severity-threshold=high --policy-path=.snyk
+  zap-scan:
+    name: ZAP Security Scanning
+    uses: ./.github/workflows/zap-scanning.yml
 
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -118,6 +121,7 @@ jobs:
       - integration-tests
       - snyk-scan-docker-image
       - snyk-scan-app
+      - zap-scan
     steps:
       - name: Checkout
         uses: actions/checkout@v7
