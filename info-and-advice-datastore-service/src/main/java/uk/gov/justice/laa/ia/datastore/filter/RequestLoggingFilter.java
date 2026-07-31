@@ -5,14 +5,25 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/** Filter to log incoming HTTP requests (path, HTTP method, client IP, status, duration). */
+/**
+ * Filter to log incoming HTTP requests with structured MDC context. Successful (2xx) requests are
+ * logged at DEBUG to avoid noise in production. Client errors (4xx) are logged at WARN and server
+ * errors (5xx) at ERROR.
+ */
 @Component
+@Order(2)
 @Slf4j
 public class RequestLoggingFilter extends OncePerRequestFilter {
+
+  private static final List<String> REQUEST_MDC_KEYS =
+      List.of("method", "path", "statusCode", "durationMs", "clientIp");
 
   @Override
   protected void doFilterInternal(
@@ -25,21 +36,35 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
       ipAddress = forwardedFor.split(",")[0].trim();
     }
 
-    String urlPath = request.getRequestURI();
+    String path = request.getRequestURI();
     String method = request.getMethod();
 
     long startTime = System.currentTimeMillis();
     try {
       filterChain.doFilter(request, response);
     } finally {
-      long duration = System.currentTimeMillis() - startTime;
-      log.info(
-          "HTTP Request: method={}, path={}, ip={}, status={}, duration={}ms",
-          method,
-          urlPath,
-          ipAddress,
-          response.getStatus(),
-          duration);
+      long durationMs = System.currentTimeMillis() - startTime;
+      logRequest(method, path, ipAddress, response.getStatus(), durationMs);
+    }
+  }
+
+  private void logRequest(
+      String method, String path, String clientIp, int status, long durationMs) {
+    MDC.put("method", method);
+    MDC.put("path", path);
+    MDC.put("statusCode", String.valueOf(status));
+    MDC.put("durationMs", String.valueOf(durationMs));
+    MDC.put("clientIp", clientIp);
+    try {
+      if (status >= 500) {
+        log.error("api.request");
+      } else if (status >= 400) {
+        log.warn("api.request");
+      } else {
+        log.debug("api.request");
+      }
+    } finally {
+      REQUEST_MDC_KEYS.forEach(MDC::remove);
     }
   }
 

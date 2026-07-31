@@ -1,6 +1,6 @@
 spring:
   application:
-    name: LAA Information and Advice Datastore
+    name: laa-info-and-advice-datastore
 
   # example database
   datasource:
@@ -34,6 +34,19 @@ management:
     web:
       exposure:
         include: health
+
+logging:
+  level:
+    root: ${ROOT_LOGGING_LEVEL:info}
+  structured:
+    format:
+      console: ecs
+    ecs:
+      service:
+        name: ${spring.application.name}
+        version: ${spring.application.version:unknown}
+        environment: ${spring.profiles.active:default}
+        node_name: ${HOSTNAME:unknown}
 
 laa:
   springboot.starter:
