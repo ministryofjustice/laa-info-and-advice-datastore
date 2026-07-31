@@ -4,6 +4,9 @@
 
 replicaCount: 1
 
+env:
+  SPRING_PROFILES_ACTIVE: uat
+
 image:
   repository: nginx
   pullPolicy: IfNotPresent

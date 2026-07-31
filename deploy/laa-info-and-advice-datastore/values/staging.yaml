@@ -6,6 +6,9 @@
 # and we are ready for live users, staging replicaCount should match production
 replicaCount: 2
 
+env:
+  SPRING_PROFILES_ACTIVE: staging
+
 image:
   repository: nginx
   pullPolicy: IfNotPresent
