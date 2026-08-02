@@ -1,12 +1,11 @@
 package uk.gov.justice.laa.ia.datastore.repository.specification;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.domain.Specification;
-
-import lombok.experimental.ExtensionMethod;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;

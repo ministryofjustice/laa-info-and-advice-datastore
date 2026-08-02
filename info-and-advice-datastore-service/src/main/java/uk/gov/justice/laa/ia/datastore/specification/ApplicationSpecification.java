@@ -1,9 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.specification;
 
 import java.util.UUID;
-
 import org.springframework.data.jpa.domain.Specification;
-
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 
 /** The specification for filtering ApplicationEntity at a database level. */

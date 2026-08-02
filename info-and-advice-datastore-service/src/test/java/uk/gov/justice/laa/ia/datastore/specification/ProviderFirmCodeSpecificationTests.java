@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.specification;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.junit.jupiter.api.Test;
 
 /**
