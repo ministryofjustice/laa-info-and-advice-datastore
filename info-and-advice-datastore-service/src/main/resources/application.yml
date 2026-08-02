@@ -51,20 +51,21 @@ logging:
 laa:
   springboot.starter:
     oauth2:
+      scopes-claim-path: scp
       resourceserver:
         jwt:
           tenants:
             - issuer-uri: ${LAA_OAUTH2_ISSUER_URI:https://placeholder.issuer.uri/v2.0}
               audiences:
                 - ${LAA_OAUTH2_AUDIENCE:api://placeholder-audience}
-      authorized-roles: '[
-        {
-          "name": "DataStore.Access",
-          "uris": [
-            {"method":["GET","POST","PUT","PATCH","DELETE"],"uri":"/api/v0/**"}
-          ]
-        }
-      ]'
+      authorized-scopes: '[
+          {
+            "name": "DataStore.Access",
+            "uris": [
+              {"method":["GET","POST","PUT","PATCH","DELETE"],"uri":"/api/v0/**"}
+            ]
+          }
+        ]'
       unprotected-uris: [ "/actuator/**", "/swagger-ui.html",
                           "/swagger-ui/**", "/v3/api-docs/**", "/favicon.ico",
-                          "/open-api-specification.yml" ]
+                          "/open-api-specification.yml", "/error" ]
