@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -49,7 +48,7 @@ public class UserContextInterceptorTests {
   @Test
   void preHandle_shouldAuthenticate_xAuthorizatonHeader() throws Exception {
     // Arrange
-    when(mockJwt.getClaimAsString("providerFirmId")).thenReturn(UUID.randomUUID().toString());
+    when(mockJwt.getClaim("FIRM_CODE")).thenReturn("123456");
 
     // Act & Assert
     assertTrue(interceptor.preHandle(request, response, null));
@@ -58,14 +57,14 @@ public class UserContextInterceptorTests {
   @Test
   void preHandle_shouldPopulateUserContext_whenValidJwt() throws Exception {
     // Arrange
-    UUID expectedProviderFirmId = UUID.randomUUID();
-    when(mockJwt.getClaimAsString("providerFirmId")).thenReturn(expectedProviderFirmId.toString());
+    String expectedProviderFirmCode = "123456";
+    when(mockJwt.getClaim("FIRM_CODE")).thenReturn(expectedProviderFirmCode);
 
     // Act & Assert
     assertTrue(interceptor.preHandle(request, response, null));
 
     // Assert
-    assertThat(userContext.getProviderFirmId()).isEqualTo(expectedProviderFirmId);
+    assertThat(userContext.getProviderFirmCode()).isEqualTo(expectedProviderFirmCode);
   }
 
   @Test
@@ -82,16 +81,15 @@ public class UserContextInterceptorTests {
   }
 
   @Test
-  void preHandle_whenMissingProviderFirmIdClaim_shouldReturnUnauthorized() throws Exception {
+  void preHandle_whenMissingProviderFirmCodeClaim_shouldReturnUnauthorized() throws Exception {
     // Arrange
-    when(mockJwt.getClaimAsString("providerFirmId")).thenReturn(null);
+    when(mockJwt.getClaim("FIRM_CODE")).thenReturn(null);
 
     // Act & Assert
     assertFalse(interceptor.preHandle(request, response, null));
 
     // Assert
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
-    assertThat(response.getContentAsString())
-        .contains("Missing or invalid format for providerFirmId claim in JWT");
+    assertThat(response.getContentAsString()).contains("Missing or invalid FIRM_CODE claim in JWT");
   }
 }

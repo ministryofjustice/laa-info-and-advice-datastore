@@ -87,7 +87,7 @@ public class ApplicationService {
     int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
 
     Specification<ApplicationEntity> specificationToApply =
-        ApplicationSpecification.filterByProviderFirmId(userContext.getProviderFirmId());
+        ApplicationSpecification.filterByProviderFirmCode(userContext.getProviderFirmCode());
     if (additionalFilteringSpecification != null) {
       specificationToApply = specificationToApply.and(additionalFilteringSpecification);
     }
@@ -104,7 +104,7 @@ public class ApplicationService {
    */
   public Optional<ApplicationResponse> getApplication(UUID applicationId) {
     var findApplicationByIdSpecification =
-        ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId());
+        ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode());
     return repository
         .findOne(findApplicationByIdSpecification)
         .map(applicationMapper::toApplication);
@@ -122,7 +122,7 @@ public class ApplicationService {
   public boolean updateMeansData(UUID applicationId, UpdateMeansDataCommand command) {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
-            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -168,7 +168,7 @@ public class ApplicationService {
   public boolean updateClientDeclaration(UUID applicationId, DeclarationCommand command) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
-            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -203,7 +203,7 @@ public class ApplicationService {
   public boolean updateEvidence(UUID applicationId, UpdateEvidenceCommand command) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
-            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
       return false;
     }

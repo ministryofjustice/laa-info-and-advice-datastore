@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.client.config;
 
 import java.io.IOException;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -11,12 +12,12 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
 import org.springframework.web.client.RestTemplate;
+
 import uk.gov.justice.laa.ia.datastore.client.api.ApplicationApi;
 import uk.gov.justice.laa.ia.datastore.client.invoker.ApiClient;
 
@@ -60,7 +61,7 @@ public class DatastoreApiClientConfiguration {
    * <p>{@code Authorization} is acquired via the OAuth2 client credentials grant using the
    * configured registration ID. {@code X-Authorization} is the JWT of the currently authenticated
    * user, forwarded from the active security context so the datastore can extract the {@code
-   * providerFirmId} claim.
+   * FIRM_CODE} claim.
    */
   private record DatastoreAuthInterceptor(
       OAuth2AuthorizedClientManager clientManager, String clientRegistrationId)

@@ -34,8 +34,8 @@ public class EventEntity {
   @Column(name = "changed_by", nullable = false)
   private String changedBy;
 
-  @Column(name = "provider_firm_id")
-  private UUID providerFirmId;
+  @Column(name = "provider_firm_code")
+  private String providerFirmCode;
 
   @Column(name = "provider_office_id")
   private UUID providerOfficeId;

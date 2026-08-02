@@ -3,7 +3,6 @@ package uk.gov.justice.laa.ia.datastore.config.interceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -41,7 +40,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
       return true;
     } catch (IllegalArgumentException e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.getWriter().write("Missing or invalid format for providerFirmId claim in JWT");
+      response.getWriter().write("Missing or invalid FIRM_CODE claim in JWT");
       return false;
     }
   }
@@ -63,11 +62,10 @@ public class UserContextInterceptor implements HandlerInterceptor {
   }
 
   private void populateUserContext(Jwt authenticatedJwt) {
-    final String providerFirmIdClaim = authenticatedJwt.getClaimAsString("providerFirmId");
-    if (providerFirmIdClaim == null || providerFirmIdClaim.isEmpty()) {
-      throw new IllegalArgumentException("Missing providerFirmId claim in JWT");
+    final Object providerFirmCodeClaim = authenticatedJwt.getClaim("FIRM_CODE");
+    if (providerFirmCodeClaim == null || providerFirmCodeClaim.toString().isEmpty()) {
+      throw new IllegalArgumentException("Missing FIRM_CODE claim in JWT");
     }
-    final UUID providerFirmId = UUID.fromString(providerFirmIdClaim);
-    userContext.setProviderFirmId(providerFirmId);
+    userContext.setProviderFirmCode(providerFirmCodeClaim.toString());
   }
 }

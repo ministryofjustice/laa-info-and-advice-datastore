@@ -15,8 +15,8 @@ import org.springframework.web.context.annotation.RequestScope;
 @Getter
 @Setter
 public class UserContext {
-  /** The provider firm ID. */
-  private UUID providerFirmId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+  /** The user's firm code. */
+  private String providerFirmCode = "";
 
   /** The provider office ID. */
   private UUID providerOfficeId = UUID.fromString("00000000-0000-0000-0000-000000000000");

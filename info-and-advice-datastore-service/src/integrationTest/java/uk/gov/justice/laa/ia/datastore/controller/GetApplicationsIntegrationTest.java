@@ -1,24 +1,25 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-import lombok.experimental.ExtensionMethod;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import static org.hamcrest.Matchers.hasSize;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import lombok.experimental.ExtensionMethod;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
@@ -38,19 +39,19 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   void setupApplications() {
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     clearCache();
   }
 
@@ -83,14 +84,14 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
             builder ->
                 builder
                     .withDefaultClientDetails()
-                    .providerFirmId(PROVIDER_FIRM_ID)
+                    .providerFirmCode(FIRM_CODE)
                     .providerOfficeId(officeId)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
             builder ->
                 builder
                     .withDefaultClientDetails()
-                    .providerFirmId(PROVIDER_FIRM_ID)
+                    .providerFirmCode(FIRM_CODE)
                     .providerOfficeId(officeId)));
     clearCache();
     // Act & Assert

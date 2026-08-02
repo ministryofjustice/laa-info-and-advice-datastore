@@ -1,26 +1,26 @@
 package uk.gov.justice.laa.ia.datastore.specification;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link ApplicationSpecification#filterByFirmCode(String)}. These do not test the
- * filtering behaviour and instead focus on the validation of the firmCode parameter.
+ * Unit tests for {@link ApplicationSpecification#filterByProviderFirmCode(String)}. These do not
+ * test the filtering behaviour and instead focus on the validation of the providerFirmCode
+ * parameter.
  */
-public class FirmCodeSpecificationTests {
+public class ProviderFirmCodeSpecificationTests {
 
   @Test
-  void givenNullFirmCode_whenFilterByFirmCode_thenThrows() {
-    assertThatThrownBy(() -> ApplicationSpecification.filterByFirmCode(null))
+  void givenNullProviderFirmCode_whenFilterByProviderFirmCode_thenThrows() {
+    assertThatThrownBy(() -> ApplicationSpecification.filterByProviderFirmCode(null))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("firmCode must not be null or blank");
+        .hasMessage("providerFirmCode must not be null or blank");
   }
 
   @Test
-  void givenBlankFirmCode_whenFilterByFirmCode_thenThrows() {
-    assertThatThrownBy(() -> ApplicationSpecification.filterByFirmCode(""))
+  void givenBlankProviderFirmCode_whenFilterByProviderFirmCode_thenThrows() {
+    assertThatThrownBy(() -> ApplicationSpecification.filterByProviderFirmCode(""))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("firmCode must not be null or blank");
+        .hasMessage("providerFirmCode must not be null or blank");
   }
 }

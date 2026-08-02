@@ -43,8 +43,8 @@ public class ApplicationEntity {
   @Column(name = "etag", nullable = false)
   private long etag;
 
-  @Column(name = "provider_firm_id", nullable = false)
-  private UUID providerFirmId;
+  @Column(name = "provider_firm_code", nullable = false)
+  private String providerFirmCode;
 
   @Column(name = "provider_office_id", nullable = false)
   private UUID providerOfficeId;
