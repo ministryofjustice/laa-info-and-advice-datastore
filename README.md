@@ -81,7 +81,6 @@ Builds and runs the app, postgres, and a mock OAuth2 server. Requires `.env` to 
 
 ```bash
 cp .env.example .env
-./gradlew :info-and-advice-datastore-service:bootJar
 docker-compose up -d --build
 ```
 

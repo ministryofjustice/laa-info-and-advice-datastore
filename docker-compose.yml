@@ -17,7 +17,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - LAA_OAUTH2_ISSUER_URI=http://host.docker.internal:9090/default
       - LAA_OAUTH2_AUDIENCE=default
-      
+
   postgres:
     image: postgres:18
     container_name: laa-info-and-advice-datastore
