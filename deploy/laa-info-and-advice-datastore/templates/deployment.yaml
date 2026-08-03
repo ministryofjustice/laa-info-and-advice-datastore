@@ -93,6 +93,11 @@ spec:
                 secretKeyRef:
                   name: laa-info-and-advice-datastore-entra
                   key: LAA_OAUTH2_AUDIENCE
+            - name: TRUSTED_CALLER_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: laa-info-and-advice-datastore-entra
+                  key: TRUSTED_CALLER_AUDIENCE
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
