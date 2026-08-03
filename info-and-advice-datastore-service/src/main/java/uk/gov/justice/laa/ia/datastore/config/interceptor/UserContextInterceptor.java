@@ -1,13 +1,15 @@
 package uk.gov.justice.laa.ia.datastore.config.interceptor;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import uk.gov.justice.laa.ia.datastore.config.TrustedCallerJwtDecoder;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 
@@ -55,12 +57,12 @@ public class UserContextInterceptor implements HandlerInterceptor {
   }
 
   private void populateUserContext(Jwt authenticatedJwt) {
-    final Object providerFirmCodeClaim = authenticatedJwt.getClaim("FIRM_CODE");
+    final String providerFirmCodeClaim = authenticatedJwt.getClaimAsString("FIRM_CODE");
 
-    if (providerFirmCodeClaim == null || providerFirmCodeClaim.toString().isEmpty()) {
+    if (providerFirmCodeClaim == null || providerFirmCodeClaim.isEmpty()) {
       throw new IllegalArgumentException("Missing FIRM_CODE claim in JWT");
     }
 
-    userContext.setProviderFirmCode(providerFirmCodeClaim.toString());
+    userContext.setProviderFirmCode(providerFirmCodeClaim);
   }
 }
