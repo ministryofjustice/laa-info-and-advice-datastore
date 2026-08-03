@@ -111,6 +111,7 @@ cp .env.example .env
 |---|---|
 | `LAA_OAUTH2_ISSUER_URI` | Entra token issuer URI, e.g. `https://login.microsoftonline.com/<tenant-id>/v2.0` |
 | `LAA_OAUTH2_AUDIENCE` | Application (client) ID of this app registration in Entra |
+| `TRUSTED_CALLER_AUDIENCE` | Application ID of a trusted caller (e.g. RCW API) whose forwarded `X-Authorization` token this API also accepts |
 
 Then export the variables and run:
 

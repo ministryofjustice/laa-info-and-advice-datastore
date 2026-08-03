@@ -7,18 +7,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationManagerResolver;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
+import uk.gov.justice.laa.ia.datastore.config.TrustedCallerJwtDecoder;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 
 /** Tests to ensure the UserContext is populated from the interceptor ok. */
@@ -26,20 +23,16 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 public class UserContextInterceptorTests {
 
   private final UserContext userContext = new UserContext();
-  private final AuthenticationManagerResolver<HttpServletRequest> mockAuthMgrResolver =
-      mock(AuthenticationManagerResolver.class);
-  private final AuthenticationManager mockAuthMgr = mock(AuthenticationManager.class);
-  private final Authentication mockAuthentication = mock(Authentication.class);
+  private final TrustedCallerJwtDecoder mockTrustedCallerJwtDecoder =
+      mock(TrustedCallerJwtDecoder.class);
   private final Jwt mockJwt = mock(Jwt.class);
   private final UserContextInterceptor interceptor =
-      new UserContextInterceptor(userContext, mockAuthMgrResolver);
+      new UserContextInterceptor(userContext, mockTrustedCallerJwtDecoder);
   private final MockHttpServletRequest request;
   private final MockHttpServletResponse response;
 
   UserContextInterceptorTests() {
-    when(mockAuthMgrResolver.resolve(any(HttpServletRequest.class))).thenReturn(mockAuthMgr);
-    when(mockAuthMgr.authenticate(any())).thenReturn(mockAuthentication);
-    when(mockAuthentication.getPrincipal()).thenReturn(mockJwt);
+    when(mockTrustedCallerJwtDecoder.decode(any())).thenReturn(mockJwt);
     request = new MockHttpServletRequest();
     request.addHeader("X-Authorization", "Bearer valid.jwt.token");
     response = new MockHttpServletResponse();
@@ -70,8 +63,8 @@ public class UserContextInterceptorTests {
   @Test
   void preHandle_shouldReturnUnauthorized_whenAuthenticationFails() throws Exception {
     // Arrange
-    when(mockAuthMgr.authenticate(any()))
-        .thenThrow(new AuthenticationException("Authentication failed") {});
+    when(mockTrustedCallerJwtDecoder.decode(any()))
+        .thenThrow(new BadJwtException("Authentication failed"));
 
     // Act & Assert
     assertFalse(interceptor.preHandle(request, response, null));
