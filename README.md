@@ -95,7 +95,7 @@ TOKEN=$(curl -s -X POST http://host.docker.internal:9090/default/token \
 curl -H "Authorization: Bearer $TOKEN" -H "X-Authorization: Bearer $TOKEN" http://localhost:8080/api/v0/applications
 ```
 
-The mock server automatically issues tokens with the `DataStore.Access` role for `client_credentials` grants and includes a providerFirmId so the same token can be used for both 
+The mock server automatically issues tokens with the `DataStore.Access` scope for `client_credentials` grants and includes a `FIRM_CODE` claim so the same token can be used for both 
 auth headers when developing.
 
 ### Run application with Entra authentication
@@ -110,6 +110,7 @@ cp .env.example .env
 |---|---|
 | `LAA_OAUTH2_ISSUER_URI` | Entra token issuer URI, e.g. `https://login.microsoftonline.com/<tenant-id>/v2.0` |
 | `LAA_OAUTH2_AUDIENCE` | Application (client) ID of this app registration in Entra |
+| `TRUSTED_CALLER_AUDIENCE` | Application ID of a trusted caller (e.g. RCW API) whose forwarded `X-Authorization` token this API also accepts |
 
 Then export the variables and run:
 
@@ -249,7 +250,7 @@ The autoconfigured client attaches two Bearer tokens to every request automatica
 | Header | Source |
 |---|---|
 | `Authorization` | Acquired via the OAuth2 client credentials grant using `client-registration-id` — proves the calling service is trusted |
-| `X-Authorization` | The JWT of the currently authenticated user, forwarded from the active Spring `SecurityContext` — must contain a `providerFirmId` claim (UUID) |
+| `X-Authorization` | The JWT of the currently authenticated user, forwarded from the active Spring `SecurityContext` — must contain a `FIRM_CODE` claim |
 
 The `X-Authorization` token is taken directly from the incoming request's security context, so it is propagated transparently as long as your service authenticates its own callers via Spring Security.
 

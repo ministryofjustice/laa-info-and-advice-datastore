@@ -30,7 +30,7 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
                     builder -> {
                       builder
                           .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                          .providerFirmId(PROVIDER_FIRM_ID);
+                          .providerFirmCode(FIRM_CODE);
                     }))
             .getId();
     clearCache();
@@ -79,7 +79,7 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
                     builder -> {
                       builder
                           .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                          .providerFirmId(PROVIDER_FIRM_ID);
+                          .providerFirmCode(FIRM_CODE);
                     }))
             .getId();
     clearCache();

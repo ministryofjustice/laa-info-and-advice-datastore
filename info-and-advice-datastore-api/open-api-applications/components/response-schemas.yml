@@ -12,7 +12,7 @@ components:
         - id
         - individualLegalAidNumber
         - client
-        - providerFirmId
+        - providerFirmCode
         - providerOfficeId
         - createdAt
         - createdBy
@@ -30,9 +30,8 @@ components:
           description:
         client:
           $ref: '#/components/schemas/ClientDetails'
-        providerFirmId:
+        providerFirmCode:
           type: string
-          format: uuid
           example:
           description:
         providerOfficeId:

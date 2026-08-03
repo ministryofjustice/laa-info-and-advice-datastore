@@ -36,8 +36,7 @@ class EventServiceTest {
     final Object payload = new Object();
     final JsonNode payloadNode = new ObjectMapper().createObjectNode();
     when(userContext.getCurrentUser()).thenReturn("test-user");
-    when(userContext.getProviderFirmId())
-        .thenReturn(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getProviderOfficeId())
         .thenReturn(UUID.fromString("00000000-0000-0000-0000-000000000001"));
     when(request.getMethod()).thenReturn("POST");
@@ -53,8 +52,7 @@ class EventServiceTest {
     verify(repository).save(captor.capture());
     EventEntity saved = captor.getValue();
     assertThat(saved.getChangedBy()).isEqualTo("test-user");
-    assertThat(saved.getProviderFirmId())
-        .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    assertThat(saved.getProviderFirmCode()).isEqualTo("123456");
     assertThat(saved.getProviderOfficeId())
         .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000001"));
     assertThat(saved.getHttpMethod()).isEqualTo("POST");

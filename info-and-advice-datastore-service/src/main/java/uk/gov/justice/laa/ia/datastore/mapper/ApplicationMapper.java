@@ -45,7 +45,7 @@ public abstract class ApplicationMapper {
   @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
-  @Mapping(target = "providerFirmId", expression = "java(userContext.getProviderFirmId())")
+  @Mapping(target = "providerFirmCode", expression = "java(userContext.getProviderFirmCode())")
   @Mapping(target = "applicationState", ignore = true)
   @Mapping(target = "referenceNumber", ignore = true)
   @Mapping(target = "laaReference", ignore = true)

@@ -96,7 +96,7 @@ public class ApplicationMapperTest {
     final ApplicationResponse mappedModel = sut.toApplication(application);
 
     assertEquals(application.getId(), mappedModel.getId());
-    assertEquals(application.getProviderFirmId(), mappedModel.getProviderFirmId());
+    assertEquals(application.getProviderFirmCode(), mappedModel.getProviderFirmCode());
     assertEquals(application.getProviderOfficeId(), mappedModel.getProviderOfficeId());
     assertEquals(application.getApplicationState(), mappedModel.getApplicationState());
     assertEquals(application.getReasonForReapplication(), mappedModel.getReasonForReapplication());
@@ -156,16 +156,16 @@ public class ApplicationMapperTest {
   }
 
   @Test
-  void startApplicationCommand_toApplication_shouldSetProviderFirmId() {
+  void startApplicationCommand_toApplication_shouldSetProviderFirmCode() {
     // Arrange
-    final UUID providerFirmId = UUID.randomUUID();
-    when(userContext.getProviderFirmId()).thenReturn(providerFirmId);
+    final String providerFirmCode = "123456";
+    when(userContext.getProviderFirmCode()).thenReturn(providerFirmCode);
     final StartApplicationCommand cmd = StartApplicationCommandGenerator.create(null);
     // Act
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
 
     // Assert
-    assertEquals(providerFirmId, mappedModel.getProviderFirmId());
+    assertEquals(providerFirmCode, mappedModel.getProviderFirmCode());
   }
 
   private static void assertEligibiltyEquals(

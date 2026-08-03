@@ -13,11 +13,10 @@ public class TestJwtConfig {
 
   public static final String ACCESS_TOKEN = "datastore-access-token";
 
-  /** Stub {@link JwtDecoder} seeded with a token containing the DataStore.Access role. */
+  /** Stub {@link JwtDecoder} seeded with a token containing the DataStore.Access scope. */
   @Bean
   public JwtDecoder jwtDecoder() {
     return StubJwtDecoder.of(
-        new StubJwtToken(
-            ACCESS_TOKEN, "test-user", new String[] {"DataStore.Access"}, null, Map.of()));
+        new StubJwtToken(ACCESS_TOKEN, "test-user", null, null, Map.of("scp", "DataStore.Access")));
   }
 }

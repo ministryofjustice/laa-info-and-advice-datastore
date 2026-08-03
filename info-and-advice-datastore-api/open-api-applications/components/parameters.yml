@@ -6,4 +6,4 @@ components:
       required: true
       schema:
         type: string
-      description: Bearer prefix required. JWT representing the user, providerFirmId claim required.
+      description: Bearer prefix required. JWT representing the user, FIRM_CODE claim required.

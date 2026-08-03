@@ -30,7 +30,7 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
               builder
                   .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
                   .referenceNumber("L-ABC-123")
-                  .providerFirmId(PROVIDER_FIRM_ID);
+                  .providerFirmCode(FIRM_CODE);
             });
     ApplicationEntity savedEntity = applicationRepository.save(entity);
 

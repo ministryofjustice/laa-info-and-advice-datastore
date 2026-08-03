@@ -3,16 +3,12 @@ package uk.gov.justice.laa.ia.datastore.config.interceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationManagerResolver;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import uk.gov.justice.laa.ia.datastore.config.TrustedCallerJwtDecoder;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 
 /** Interceptor that will provide data for the UserContext request scope. */
@@ -24,7 +20,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final UserContext userContext;
-  private final AuthenticationManagerResolver<HttpServletRequest> authenticationManagerResolver;
+  private final TrustedCallerJwtDecoder trustedCallerJwtDecoder;
 
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -41,7 +37,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
       return true;
     } catch (IllegalArgumentException e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.getWriter().write("Missing or invalid format for providerFirmId claim in JWT");
+      response.getWriter().write("Missing or invalid FIRM_CODE claim in JWT");
       return false;
     }
   }
@@ -54,20 +50,17 @@ public class UserContextInterceptor implements HandlerInterceptor {
   }
 
   private Jwt authenticateJwt(HttpServletRequest request) {
-    final AuthenticationManager authMgr = authenticationManagerResolver.resolve(request);
     final String jwt = extractBearerToken(request.getHeader(AUTHORIZATION_HEADER));
-    final Authentication authentication =
-        authMgr.authenticate(new BearerTokenAuthenticationToken(jwt));
-    final Jwt authenticatedJwt = (Jwt) authentication.getPrincipal();
-    return authenticatedJwt;
+    return trustedCallerJwtDecoder.decode(jwt);
   }
 
   private void populateUserContext(Jwt authenticatedJwt) {
-    final String providerFirmIdClaim = authenticatedJwt.getClaimAsString("providerFirmId");
-    if (providerFirmIdClaim == null || providerFirmIdClaim.isEmpty()) {
-      throw new IllegalArgumentException("Missing providerFirmId claim in JWT");
+    final String providerFirmCodeClaim = authenticatedJwt.getClaimAsString("FIRM_CODE");
+
+    if (providerFirmCodeClaim == null || providerFirmCodeClaim.isEmpty()) {
+      throw new IllegalArgumentException("Missing FIRM_CODE claim in JWT");
     }
-    final UUID providerFirmId = UUID.fromString(providerFirmIdClaim);
-    userContext.setProviderFirmId(providerFirmId);
+
+    userContext.setProviderFirmCode(providerFirmCodeClaim);
   }
 }

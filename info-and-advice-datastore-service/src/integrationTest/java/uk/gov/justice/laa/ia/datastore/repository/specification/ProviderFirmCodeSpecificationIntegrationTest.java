@@ -3,7 +3,6 @@ package uk.gov.justice.laa.ia.datastore.repository.specification;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,34 +12,34 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
-/** Integration tests for the ProviderFirmIdSpecification. */
+/** Integration tests for the ProviderFirmCodeSpecification. */
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
-public class ProviderFirmIdSpecificationIntegrationTest extends BaseIntegrationTest {
+public class ProviderFirmCodeSpecificationIntegrationTest extends BaseIntegrationTest {
   @Test
-  void whenProviderFirmIdSpecificationIsUsed_thenReturnApplicationsWithMatchingProviderFirmId() {
+  void whenProviderFirmCodeSpecificationIsUsed_thenReturnApplicationsWithMatchingCode() {
     // Arrange
-    final UUID providerFirmId = UUID.randomUUID();
-    final ApplicationEntity applicationWithMatchingProviderFirmId =
+    final String providerFirmCode = "123456";
+    final ApplicationEntity applicationWithMatchingProviderFirmCode =
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
-              builder.withDefaultClientDetails().providerFirmId(providerFirmId);
+              builder.withDefaultClientDetails().providerFirmCode(providerFirmCode);
             });
-    final ApplicationEntity applicationWithDifferentProviderFirmId =
+    final ApplicationEntity applicationWithDifferentProviderFirmCode =
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
-              builder.withDefaultClientDetails().providerFirmId(UUID.randomUUID());
+              builder.withDefaultClientDetails().providerFirmCode("654321");
             });
-    applicationRepository.saveAndFlush(applicationWithMatchingProviderFirmId);
-    applicationRepository.saveAndFlush(applicationWithDifferentProviderFirmId);
+    applicationRepository.saveAndFlush(applicationWithMatchingProviderFirmCode);
+    applicationRepository.saveAndFlush(applicationWithDifferentProviderFirmCode);
     clearCache();
     final Specification<ApplicationEntity> specification =
-        ApplicationSpecification.filterByProviderFirmId(providerFirmId);
+        ApplicationSpecification.filterByProviderFirmCode(providerFirmCode);
 
     // Act
     final List<ApplicationEntity> applications = applicationRepository.findAll(specification);
 
     // Assert
     assertThat(applications).hasSize(1);
-    assertThat(applications.iterator().next().getProviderFirmId()).isEqualTo(providerFirmId);
+    assertThat(applications.iterator().next().getProviderFirmCode()).isEqualTo(providerFirmCode);
   }
 }

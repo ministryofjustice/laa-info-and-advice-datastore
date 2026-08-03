@@ -38,19 +38,19 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   void setupApplications() {
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     clearCache();
   }
 
@@ -83,14 +83,14 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
             builder ->
                 builder
                     .withDefaultClientDetails()
-                    .providerFirmId(PROVIDER_FIRM_ID)
+                    .providerFirmCode(FIRM_CODE)
                     .providerOfficeId(officeId)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
             builder ->
                 builder
                     .withDefaultClientDetails()
-                    .providerFirmId(PROVIDER_FIRM_ID)
+                    .providerFirmCode(FIRM_CODE)
                     .providerOfficeId(officeId)));
     clearCache();
     // Act & Assert
