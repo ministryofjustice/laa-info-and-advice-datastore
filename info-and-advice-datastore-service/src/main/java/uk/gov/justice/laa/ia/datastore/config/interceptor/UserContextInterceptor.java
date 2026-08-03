@@ -56,9 +56,11 @@ public class UserContextInterceptor implements HandlerInterceptor {
 
   private void populateUserContext(Jwt authenticatedJwt) {
     final Object providerFirmCodeClaim = authenticatedJwt.getClaim("FIRM_CODE");
+
     if (providerFirmCodeClaim == null || providerFirmCodeClaim.toString().isEmpty()) {
       throw new IllegalArgumentException("Missing FIRM_CODE claim in JWT");
     }
+
     userContext.setProviderFirmCode(providerFirmCodeClaim.toString());
   }
 }
