@@ -1,0 +1,14 @@
+# Reusable building block: Postgres for the datastore API.
+services:
+  postgres:
+    image: postgres:18@sha256:3a82e1f56c8f0f5616a11103ac3d47e632c3938698946a7ad26da0df1334744a
+    container_name: laa-info-and-advice-datastore
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: laa_info_advice_datastore
+      POSTGRES_USER: ${DB_USERNAME:-laa_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-laa_password}
+    volumes:
+      - /var/lib/postgresql/18/docker
