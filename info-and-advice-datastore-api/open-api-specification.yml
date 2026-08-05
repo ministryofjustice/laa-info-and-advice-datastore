@@ -13,6 +13,8 @@ paths:
     $ref: './open-api-applications/paths/application-start.yml'
   /api/v0/applications/{id}:update-evidence:
     $ref: './open-api-applications/paths/application-update-evidence.yml'
+  /api/v0/applications/{id}:update-scoping-data:
+    $ref: './open-api-applications/paths/application-update-scoping-data.yml'
   /api/v0/applications/{id}/declaration:
     $ref: './open-api-applications/paths/application-declaration.yml'
 
@@ -48,5 +50,7 @@ components:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EvidenceResponse'
     UpdateMeansDataCommand:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateMeansDataCommand'
+    UpdateScopingDataCommand:
+      $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateScopingDataCommand'
     EligibilityResultResponse:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResultResponse'

@@ -44,6 +44,7 @@ jacocoTestCoverageVerification {
 
 dependencies {
     implementation project(':info-and-advice-datastore-api')
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.11'
     implementation platform("com.fasterxml.jackson:jackson-bom:2.22.1")
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
