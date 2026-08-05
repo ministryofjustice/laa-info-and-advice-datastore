@@ -61,7 +61,7 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  void shouldUpdateDeclarationWithoutDateSigned() throws Exception {
+  void shouldReturnBadRequest_whenDateSignedIsMissing() throws Exception {
     // Arrange
     final UUID applicationId =
         applicationRepository
@@ -74,29 +74,58 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
             .getId();
     clearCache();
     final String payload =
-        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
+        """
+        {"eTag": 0, "declarationConfirmation": true}
+        """;
 
-    // Act
+    // Act + Assert - dateSigned is required
     mockMvc
         .perform(
             patch(TestConstants.UpdateDeclarationData, applicationId)
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isNoContent());
+        .andExpect(status().isBadRequest());
+  }
 
-    // Assert
-    final DeclarationEntity updatedEntity =
-        applicationRepository.findById(applicationId).orElseThrow().getDeclaration();
+  @Test
+  void shouldReturnBadRequest_whenDateSignedIsInFuture() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)))
+            .getId();
+    clearCache();
 
-    assertThat(updatedEntity.isDeclarationConfirmation()).isTrue();
-    assertThat(updatedEntity.getDateSigned()).isNull();
+    final String payload =
+        """
+        {"eTag": 0, "declarationConfirmation": true, "dateSigned": "2099-01-01"}
+        """;
+
+    // Act + Assert - dateSigned must not be in the future
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateDeclarationData, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
   void shouldReturnNotFoundWhenApplicationDoesNotExist() throws Exception {
     final String payload =
-        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
+        toJson(
+            DeclarationCommand.builder()
+                .eTag(0L)
+                .declarationConfirmation(true)
+                .dateSigned(java.time.LocalDate.now())
+                .build());
     mockMvc
         .perform(
             patch(TestConstants.UpdateDeclarationData, UUID.randomUUID())
@@ -120,7 +149,12 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
             .getId();
     clearCache();
     final String payload =
-        toJson(DeclarationCommand.builder().eTag(99L).declarationConfirmation(true).build());
+        toJson(
+            DeclarationCommand.builder()
+                .eTag(99L)
+                .declarationConfirmation(true)
+                .dateSigned(java.time.LocalDate.now())
+                .build());
 
     // Act + Assert - send with stale eTag 99 (actual is 0)
     mockMvc

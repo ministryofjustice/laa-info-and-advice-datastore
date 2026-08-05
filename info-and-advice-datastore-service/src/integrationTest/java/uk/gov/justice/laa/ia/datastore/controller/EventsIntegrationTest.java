@@ -69,7 +69,12 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
   void shouldRecordEvent_whenDeclarationUpdated() throws Exception {
     final UUID applicationId = savedApplicationId();
     final String payload =
-        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
+        toJson(
+            DeclarationCommand.builder()
+                .eTag(0L)
+                .declarationConfirmation(true)
+                .dateSigned(java.time.LocalDate.now())
+                .build());
 
     mockMvc
         .perform(
@@ -113,6 +118,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                         DeclarationCommand.builder()
                             .eTag(0L)
                             .declarationConfirmation(true)
+                            .dateSigned(java.time.LocalDate.now())
                             .build())))
         .andExpect(status().isNoContent());
 

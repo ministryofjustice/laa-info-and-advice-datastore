@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
@@ -67,7 +66,6 @@ public class ApplicationControllerTest {
   private final ObjectMapper objectMapper =
       new ObjectMapper()
           .registerModule(new JavaTimeModule())
-          .registerModule(new JsonNullableModule())
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   @MockitoBean private ApplicationService applicationService;
@@ -204,7 +202,11 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(0L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     when(applicationService.updateClientDeclaration(
             eq(applicationId), any(DeclarationCommand.class)))
         .thenReturn(true);
@@ -223,7 +225,11 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(0L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     when(applicationService.updateClientDeclaration(any(UUID.class), any(DeclarationCommand.class)))
         .thenReturn(false);
 
@@ -294,7 +300,11 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(2L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(2L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     doThrow(new EtagMismatchException(2L, 5L))
         .when(applicationService)
         .updateClientDeclaration(eq(applicationId), any(DeclarationCommand.class));
