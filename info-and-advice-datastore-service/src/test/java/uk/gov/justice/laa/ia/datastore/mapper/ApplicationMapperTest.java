@@ -26,7 +26,7 @@ import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerato
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
-import uk.gov.justice.laa.ia.datastore.model.EligibilityResultResponse;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityResult;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 
 /** Tests for the mapper behaviour. */
@@ -169,10 +169,8 @@ public class ApplicationMapperTest {
   }
 
   private static void assertEligibiltyEquals(
-      EligibilityResultEntity expected, EligibilityResultResponse model) {
-    assertEquals(expected.getEligibilityResultId(), model.getEligibilityResultId());
-    assertEquals(expected.getApplicationId(), model.getApplicationId());
-    assertEquals(expected.getCreatedAt(), model.getCreatedAt().toInstant());
-    assertEquals(expected.getResultJson(), model.getEligibilityResult());
+      EligibilityResultEntity expected, EligibilityResult model) {
+    assertEquals(expected.getData(), model.getData());
+    assertEquals(expected.getResultJson(), model.getResult());
   }
 }

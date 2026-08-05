@@ -18,9 +18,7 @@ public class EligibilityMapperTest {
 
     final var mappedModel = eligibilityMapper.toEligibilityResult(entity);
 
-    assertEquals(entity.getApplicationId(), mappedModel.getApplicationId());
-    assertEquals(entity.getCreatedAt(), mappedModel.getCreatedAt());
-    assertEquals(entity.getEligibilityResultId(), mappedModel.getEligibilityResultId());
-    assertEquals(entity.getResultJson(), mappedModel.getEligibilityResult());
+    assertEquals(entity.getData(), mappedModel.getData());
+    assertEquals(entity.getResultJson(), mappedModel.getResult());
   }
 }

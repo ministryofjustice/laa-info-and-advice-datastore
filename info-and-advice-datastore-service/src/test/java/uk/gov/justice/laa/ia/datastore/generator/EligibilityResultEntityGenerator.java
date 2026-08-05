@@ -24,9 +24,13 @@ public class EligibilityResultEntityGenerator {
       Consumer<EligibilityResultEntity.EligibilityResultEntityBuilder> customizer) {
 
     JsonNode dummyJson = objectMapper.createObjectNode().put("test", "data");
+    JsonNode dummyData = objectMapper.createObjectNode().put("question", "answer");
 
     var builder =
-        EligibilityResultEntity.builder().applicationId(UUID.randomUUID()).resultJson(dummyJson);
+        EligibilityResultEntity.builder()
+            .applicationId(UUID.randomUUID())
+            .data(dummyData)
+            .resultJson(dummyJson);
 
     if (customizer != null) {
       customizer.accept(builder);
@@ -40,10 +44,12 @@ public class EligibilityResultEntityGenerator {
       UUID applicationId, String status, int score) {
     JsonNode resultJson =
         new ObjectMapper().createObjectNode().put("status", status).put("score", score);
+    JsonNode data = new ObjectMapper().createObjectNode().put("question", "answer");
     return EligibilityResultEntityGenerator.createWithoutId(
         builder -> {
           builder
               .applicationId(applicationId)
+              .data(data)
               .resultJson(resultJson)
               .createdAt(Instant.now())
               .createdBy("SYSTEM");

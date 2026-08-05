@@ -16,8 +16,6 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
-import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
-import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
@@ -49,9 +47,8 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId = savedApplicationId();
     final String payload =
         """
-        {"eTag": 0, "determinationId": "%s", "meansAssessmentRequired": true}
-        """
-            .formatted(UUID.randomUUID());
+        {"eTag": 0, "data": {"question": "answer"}, "result": {"status": "ELIGIBLE"}}
+        """;
 
     mockMvc
         .perform(

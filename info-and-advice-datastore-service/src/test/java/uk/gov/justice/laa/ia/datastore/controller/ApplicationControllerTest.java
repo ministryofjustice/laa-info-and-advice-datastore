@@ -166,7 +166,7 @@ public class ApplicationControllerTest {
   void updateMeansData_returnsOkStatus() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
-    String body = "{\"eTag\":0,\"some\":\"data\"}";
+    String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
     when(applicationService.updateMeansData(eq(id), any(UpdateMeansDataCommand.class)))
         .thenReturn(true);
 
@@ -183,7 +183,7 @@ public class ApplicationControllerTest {
   void updateMeansData_returns404_whenApplicationDoesNotExist() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
-    String body = "{\"eTag\":0,\"some\":\"data\"}";
+    String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
     when(applicationService.updateMeansData(eq(id), any(UpdateMeansDataCommand.class)))
         .thenReturn(false);
 
@@ -194,6 +194,54 @@ public class ApplicationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void updateMeansData_returns400_whenDataMissing() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"eTag\":0,\"result\":{\"status\":\"ELIGIBLE\"}}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never()).updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
+  }
+
+  @Test
+  void updateMeansData_returns400_whenResultMissing() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"}}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never()).updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
+  }
+
+  @Test
+  void updateMeansData_returns400_whenEtagMissing() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never()).updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
   }
 
   @Test
@@ -272,7 +320,7 @@ public class ApplicationControllerTest {
   void updateMeansData_returns409_whenEtagMismatch() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
-    String body = "{\"eTag\":2,\"some\":\"data\"}";
+    String body = "{\"eTag\":2,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
     doThrow(new EtagMismatchException(2L, 5L))
         .when(applicationService)
         .updateMeansData(eq(id), any(UpdateMeansDataCommand.class));

@@ -1,7 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
@@ -131,26 +130,15 @@ public class ApplicationService {
     ApplicationEntity application = applicationOpt.get();
     validateEtag(application, command.geteTag());
 
-    ObjectNode jsonNode = (ObjectNode) objectMapper.valueToTree(command);
-    jsonNode.remove("eTag");
-
-    // Save the result to the new table
     EligibilityResultEntity resultEntity =
         EligibilityResultEntity.builder()
             .applicationId(applicationId)
-            .resultJson(jsonNode)
+            .data(objectMapper.valueToTree(command.getData()))
+            .resultJson(objectMapper.valueToTree(command.getResult()))
             .createdBy(userContext.getCurrentUser())
             .build();
 
     eligibilityResultRepository.save(resultEntity);
-
-    // Update application fields if present in the JSON
-    if (jsonNode.has("determinationId")) {
-      application.setDeterminationId(UUID.fromString(jsonNode.get("determinationId").asText()));
-    }
-    if (jsonNode.has("meansAssessmentRequired")) {
-      application.setMeansAssessmentRequired(jsonNode.get("meansAssessmentRequired").asBoolean());
-    }
 
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
