@@ -17,6 +17,7 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
@@ -80,6 +81,16 @@ public class ApplicationController implements ApplicationApi {
   @Override
   public ResponseEntity<Void> updateEvidence(UUID id, UpdateEvidenceCommand updateEvidenceCommand) {
     if (service.updateEvidence(id, updateEvidenceCommand)) {
+      return ResponseEntity.noContent().build();
+    } else {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
+  @Override
+  public ResponseEntity<Void> updateScopingData(
+      UUID id, UpdateScopingDataCommand updateScopingDataCommand) {
+    if (service.updateScopingData(id, updateScopingDataCommand)) {
       return ResponseEntity.noContent().build();
     } else {
       return ResponseEntity.notFound().build();

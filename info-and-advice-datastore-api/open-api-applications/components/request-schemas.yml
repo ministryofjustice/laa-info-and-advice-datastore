@@ -60,3 +60,17 @@ components:
           format: int64
           description: ETag value for optimistic concurrency control
       additionalProperties: true
+
+    UpdateScopingDataCommand:
+      type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+        scopingQuestions:
+          type: object
+          nullable: true
+          additionalProperties: true

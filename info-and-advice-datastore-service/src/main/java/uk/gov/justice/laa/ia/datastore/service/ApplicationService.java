@@ -29,6 +29,7 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
@@ -232,5 +233,35 @@ public class ApplicationService {
     if (application.getEtag() != providedEtag) {
       throw new EtagMismatchException(providedEtag, application.getEtag());
     }
+  }
+
+  /**
+   * Update scoping data for an application.
+   *
+   * @param applicationId the application ID
+   * @param command the scoping data command including eTag for optimistic concurrency control
+   * @return true if application updated, false if not found
+   * @throws EtagMismatchException if the eTag does not match the current entity value
+   */
+  @Transactional
+  public boolean updateScopingData(UUID applicationId, UpdateScopingDataCommand command) {
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
+    if (applicationOpt.isEmpty()) {
+      return false;
+    }
+
+    ApplicationEntity application = applicationOpt.get();
+    validateEtag(application, command.geteTag());
+
+    application.setScopingQuestions(
+        command.getScopingQuestions().isPresent()
+            ? objectMapper.valueToTree(command.getScopingQuestions().get())
+            : null);
+    application.setModifiedBy(userContext.getCurrentUser());
+    repository.save(application);
+    eventService.record(command);
+    return true;
   }
 }
