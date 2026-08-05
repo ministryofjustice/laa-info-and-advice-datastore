@@ -6,5 +6,5 @@ docker-up:
 # Sign in via real Entra ID instead of the default mock-oauth2-server - see .env.entra.
 docker-up-entra:
 	op run --env-file=.env \
-				 --env-file=.env.entra \
+		--env-file=.env.entra \
 		-- docker compose up -d --build
