@@ -70,7 +70,8 @@ public class ApplicationController implements ApplicationApi {
   }
 
   @Override
-  public ResponseEntity<Void> updateDeclaration(UUID id, DeclarationCommand declarationCommand) {
+  public ResponseEntity<Void> updateDeclarationData(
+      UUID id, DeclarationCommand declarationCommand) {
     if (service.updateClientDeclaration(id, declarationCommand)) {
       return ResponseEntity.noContent().build();
     } else {

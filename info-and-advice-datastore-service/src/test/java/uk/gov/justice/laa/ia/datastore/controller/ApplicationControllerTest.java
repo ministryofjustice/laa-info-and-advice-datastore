@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
@@ -65,6 +67,7 @@ public class ApplicationControllerTest {
   private final ObjectMapper objectMapper =
       new ObjectMapper()
           .registerModule(new JavaTimeModule())
+          .registerModule(new JsonNullableModule())
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   @MockitoBean private ApplicationService applicationService;
@@ -209,7 +212,7 @@ public class ApplicationControllerTest {
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isNoContent());
@@ -227,7 +230,7 @@ public class ApplicationControllerTest {
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isNotFound());
@@ -299,7 +302,7 @@ public class ApplicationControllerTest {
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isConflict());

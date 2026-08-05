@@ -15,8 +15,8 @@ paths:
     $ref: './open-api-applications/paths/application-update-evidence.yml'
   /api/v0/applications/{id}:update-scoping-data:
     $ref: './open-api-applications/paths/application-update-scoping-data.yml'
-  /api/v0/applications/{id}/declaration:
-    $ref: './open-api-applications/paths/application-declaration.yml'
+  /api/v0/applications/{id}:update-declaration-data:
+    $ref: './open-api-applications/paths/application-update-declaration-data.yml'
 
 components:
   parameters:

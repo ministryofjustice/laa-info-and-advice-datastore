@@ -30,6 +30,10 @@ components:
           description: ETag value for optimistic concurrency control
         declarationConfirmation:
           type: boolean
+        dateSigned:
+          type: string
+          format: date
+          nullable: true
 
     UpdateEvidenceCommand:
       type: object
