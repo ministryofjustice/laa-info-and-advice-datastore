@@ -52,5 +52,5 @@ components:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateMeansDataCommand'
     UpdateScopingDataCommand:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateScopingDataCommand'
-    EligibilityResultResponse:
-      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResultResponse'
+    EligibilityResult:
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResult'
