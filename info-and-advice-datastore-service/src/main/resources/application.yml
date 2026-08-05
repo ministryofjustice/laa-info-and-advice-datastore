@@ -33,7 +33,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, prometheus
+    health:
+      show-details: always
 
 logging:
   level:
