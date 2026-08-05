@@ -25,4 +25,5 @@ out/
 .vscode/
 
 ### Environment variables ###
-.env
+.env*
+!*.example

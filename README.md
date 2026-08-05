@@ -81,7 +81,7 @@ Builds and runs the app, postgres, and a mock OAuth2 server. Requires `.env` to 
 
 ```bash
 cp .env.example .env
-docker-compose up -d --build
+make docker-up
 ```
 
 Get an access token and call the API:
@@ -98,13 +98,22 @@ curl -H "Authorization: Bearer $TOKEN" -H "X-Authorization: Bearer $TOKEN" http:
 The mock server automatically issues tokens with the `DataStore.Access` scope for `client_credentials` grants and includes a `FIRM_CODE` claim so the same token can be used for both 
 auth headers when developing.
 
+Stop the stack with `make docker-down`.
+
+#### Switching between the mock IdP and real Entra ID
+
+By default, `make docker-up` validates tokens against the `mock-oauth2-server` container. 
+
+To instead validate real Entra ID tokens (e.g. when running as part of the full stack from [laa-record-controlled-work](https://github.com/ministryofjustice/laa-record-controlled-work)),
+run `make docker-up-entra` - this relies on having a `.env.entra` file, which you can copy from `.env.entra.example`.
+
+Variable substitution falls back to the mock server defaults when unset. `.env.entra` is the single source of truth for this API's own Entra config, whether it's run standalone or as part of the full stack.
+
 ### Run application with Entra authentication
 
-Copy `.env.example` to `.env` and uncomment the Entra values, filling in the tenant ID and application (client) ID:
-
-```bash
-cp .env.example .env
-```
+Copy `.env.entra.example` to `.env.entra` (kept out of git, unlike `.env.entra.example` - it only
+ever holds 1Password references, never real secret values, so there's nothing developer-specific
+to set up). Export the variables and run:
 
 | Variable | Description |
 |---|---|
@@ -115,12 +124,9 @@ cp .env.example .env
 Then export the variables and run:
 
 ```bash
-set -a && source .env && set +a
+set -a && source .env.entra && set +a
 ./gradlew :info-and-advice-datastore-service:bootRun
 ```
-
-> **Note:** The app must be run directly (not via Docker) when using Entra, as
-> Docker containers on a VPN may not be able to resolve `login.microsoftonline.com`.
 
 ## Using the API Package
 
