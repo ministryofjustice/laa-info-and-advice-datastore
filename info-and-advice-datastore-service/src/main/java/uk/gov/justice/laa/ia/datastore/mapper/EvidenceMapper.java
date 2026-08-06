@@ -1,10 +1,12 @@
 package uk.gov.justice.laa.ia.datastore.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.model.EvidenceResponse;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
@@ -12,7 +14,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 /** The mapper between EvidenceEntity and evidence-related API models. */
 @Mapper(
     componentModel = "spring",
-    uses = {DateTimeMapper.class},
+    uses = {DateTimeMapper.class, JsonNodeMapper.class},
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public abstract class EvidenceMapper {
 

@@ -1,12 +1,15 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.util.UUID;
-import lombok.experimental.ExtensionMethod;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import lombok.experimental.ExtensionMethod;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
@@ -43,6 +46,40 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                 .content(payload))
         .andExpect(status().isNoContent())
         .andReturn();
+  }
+
+  @Test
+  void shouldReturnEvidenceChecklistsAsProperJsonOnGet() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)))
+            .getId();
+    clearCache();
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
+
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateEvidence, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNoContent());
+    clearCache();
+
+    // Act & Assert: the checklist payloads must round-trip as plain JSON, not as
+    // serialized JsonNode bean properties (e.g. "object", "nodeType", "containerNode").
+    mockMvc
+        .perform(get("/api/v0/applications/{id}", applicationId).withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.evidence.incomeEvidenceChecklist.wageSlips").value(true))
+        .andExpect(
+            jsonPath("$.evidence.expenditureCapitalEvidenceChecklist.bankStatements").value(true));
   }
 
   @Test
