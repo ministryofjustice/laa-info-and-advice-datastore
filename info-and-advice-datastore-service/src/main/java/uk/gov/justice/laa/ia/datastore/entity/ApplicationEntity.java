@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -56,6 +58,7 @@ public class ApplicationEntity {
   @JoinColumn(name = "declaration_id", nullable = true)
   private DeclarationEntity declaration;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "application_state", nullable = false)
   private ApplicationState applicationState;
 

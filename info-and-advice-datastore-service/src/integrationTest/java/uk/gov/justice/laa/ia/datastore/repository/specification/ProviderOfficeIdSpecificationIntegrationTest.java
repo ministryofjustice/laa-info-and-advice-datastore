@@ -39,7 +39,8 @@ public class ProviderOfficeIdSpecificationIntegrationTest extends BaseIntegratio
     clearCache();
 
     // create specification
-    Specification<ApplicationEntity> specification = ApplicationSpecification.filterBy(officeId);
+    Specification<ApplicationEntity> specification =
+        ApplicationSpecification.filterBy(officeId, null);
 
     // Act
     List<ApplicationEntity> applications = applicationRepository.findAll(specification);

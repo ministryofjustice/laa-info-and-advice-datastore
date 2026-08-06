@@ -22,6 +22,11 @@ get:
       schema:
         type: string
         format: uuid
+    - name: status
+      in: query
+      required: false
+      schema:
+        $ref: '../components/response-schemas.yml#/components/schemas/ApplicationState'
     - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
   responses:
     '200':
