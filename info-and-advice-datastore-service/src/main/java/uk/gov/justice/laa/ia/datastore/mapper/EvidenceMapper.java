@@ -12,7 +12,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 /** The mapper between EvidenceEntity and evidence-related API models. */
 @Mapper(
     componentModel = "spring",
-    uses = {DateTimeMapper.class},
+    uses = {DateTimeMapper.class, JsonNodeMapper.class},
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public abstract class EvidenceMapper {
 

@@ -1,7 +1,9 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.UUID;
@@ -63,6 +65,16 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
         .isEqualTo("same_matter");
     assertThat(updatedApplication.getScopingQuestions().get("priorLegalAidReason").asText())
         .isEqualTo("Previous matter was related");
+
+    // Assert: scopingQuestions must round-trip as plain JSON on GET, not as
+    // serialized JsonNode bean properties (e.g. "object", "nodeType", "containerNode").
+    mockMvc
+        .perform(get("/api/v0/applications/{id}", applicationId).withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.scopingQuestions.priorLegalAid").value("same_matter"))
+        .andExpect(
+            jsonPath("$.scopingQuestions.priorLegalAidReason")
+                .value("Previous matter was related"));
   }
 
   @Test

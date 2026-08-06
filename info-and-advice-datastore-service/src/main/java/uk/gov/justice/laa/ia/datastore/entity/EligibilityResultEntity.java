@@ -35,6 +35,10 @@ public class EligibilityResultEntity {
   private UUID applicationId;
 
   @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "data")
+  private JsonNode data;
+
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "result_json", nullable = false)
   private JsonNode resultJson;
 

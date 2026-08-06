@@ -75,9 +75,9 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID officeId = UUID.randomUUID();
     final StartApplicationCommand cmd =
-        StartApplicationCommand.builder().providerOfficeId(officeId).build();
+        StartApplicationCommand.builder().providerOfficeCode(officeId.toString()).build();
     final ApplicationEntity entity = new ApplicationEntity();
-    entity.setProviderOfficeId(officeId);
+    entity.setProviderOfficeCode(officeId.toString());
     entity.setClientDetails(ClientDetailsEntity.builder().build());
     final UUID generatedId = UUID.randomUUID();
     final String user = "TEST_USER";
@@ -99,7 +99,7 @@ public class ApplicationServiceTest {
 
     // Assert
     assertThat(result.getId()).isEqualTo(generatedId);
-    assertThat(entity.getProviderOfficeId()).isEqualTo(officeId);
+    assertThat(entity.getProviderOfficeCode()).isEqualTo(officeId.toString());
     assertThat(entity.getApplicationState()).isEqualTo(ApplicationState.DRAFT);
 
     verify(repo, times(1)).save(entity);
@@ -193,14 +193,19 @@ public class ApplicationServiceTest {
     final Instant originalModifiedAt = Instant.now().minusSeconds(60);
     final ApplicationEntity application =
         ApplicationEntity.builder().id(applicationId).modifiedAt(originalModifiedAt).build();
-    final UpdateMeansDataCommand command = UpdateMeansDataCommand.builder().eTag(0L).build();
-    final ObjectNode objectNode = new ObjectMapper().createObjectNode();
+    final Object data = new ObjectMapper().createObjectNode().put("question", "answer");
+    final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final UpdateMeansDataCommand command =
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
+    final ObjectNode dataNode = new ObjectMapper().createObjectNode().put("question", "answer");
+    final ObjectNode resultNode = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
     final String user = "TEST_USER";
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn(user);
-    when(objectMapper.valueToTree(command)).thenReturn(objectNode);
+    when(objectMapper.valueToTree(data)).thenReturn(dataNode);
+    when(objectMapper.valueToTree(meansResult)).thenReturn(resultNode);
 
     // Act
     boolean result = sut.updateMeansData(applicationId, command);
@@ -211,7 +216,8 @@ public class ApplicationServiceTest {
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
-    assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(objectNode);
+    assertThat(resultCaptor.getValue().getData()).isEqualTo(dataNode);
+    assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(resultNode);
   }
 
   @Test
@@ -420,12 +426,16 @@ public class ApplicationServiceTest {
   void shouldRecordEvent_whenMeansDataUpdated() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
-    final UpdateMeansDataCommand command = UpdateMeansDataCommand.builder().eTag(0L).build();
+    final Object data = new ObjectMapper().createObjectNode().put("question", "answer");
+    final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final UpdateMeansDataCommand command =
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode objectNode = new ObjectMapper().createObjectNode();
     final ApplicationEntity application = ApplicationEntity.builder().id(applicationId).build();
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(objectMapper.valueToTree(command)).thenReturn(objectNode);
+    when(objectMapper.valueToTree(data)).thenReturn(objectNode);
+    when(objectMapper.valueToTree(meansResult)).thenReturn(objectNode);
 
     // Act
     sut.updateMeansData(applicationId, command);

@@ -13,7 +13,7 @@ components:
         - individualLegalAidNumber
         - client
         - providerFirmCode
-        - providerOfficeId
+        - providerOfficeCode
         - createdAt
         - createdBy
         - modifiedAt
@@ -34,9 +34,8 @@ components:
           type: string
           example:
           description:
-        providerOfficeId:
+        providerOfficeCode:
           type: string
-          format: uuid
           example:
           description:
         applicationState:
@@ -68,14 +67,11 @@ components:
         ufn:
           type: string
           maxLength: 9
-        dateDeclarationWasSigned:
-          type: string
-          format: date
         determinationId:
           type: string
           format: uuid
         eligibilityResult:
-          $ref: '#/components/schemas/EligibilityResultResponse'
+          $ref: '#/components/schemas/EligibilityResult'
         createdAt:
           type: string
           format: date-time
@@ -139,6 +135,9 @@ components:
           $ref: '#/components/schemas/ClientDeclarationStatus'
         declarationConfirmation:
           type: boolean
+        dateSigned:
+          type: string
+          format: date
         createdAt:
           type: string
           format: date-time
@@ -159,6 +158,7 @@ components:
       type: string
       enum:
         - DRAFT
+        - COMPLETED
 
     EvidenceResponse:
       type: object
@@ -172,21 +172,12 @@ components:
         expenditureCapitalEvidenceChecklist:
           type: object
 
-    EligibilityResultResponse:
+    EligibilityResult:
       type: object
       properties:
-        eligibilityResultId:
-          type: string
-          format: uuid
-        applicationId:
-          type: string
-          format: uuid
-        indication:
-          type: boolean
-        contribution:
-          type: string
-        eligibilityResult:
+        data:
           type: object
-        createdAt:
-          type: string
-          format: date-time
+          description: The means assessment question and answer data
+        result:
+          type: object
+          description: The means assessment calculation result

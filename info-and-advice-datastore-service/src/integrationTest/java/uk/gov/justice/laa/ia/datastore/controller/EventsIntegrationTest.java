@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,9 +50,8 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId = savedApplicationId();
     final String payload =
         """
-        {"eTag": 0, "determinationId": "%s", "meansAssessmentRequired": true}
-        """
-            .formatted(UUID.randomUUID());
+        {"eTag": 0, "data": {"question": "answer"}, "result": {"status": "ELIGIBLE"}}
+        """;
 
     mockMvc
         .perform(
@@ -68,17 +68,22 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
   void shouldRecordEvent_whenDeclarationUpdated() throws Exception {
     final UUID applicationId = savedApplicationId();
     final String payload =
-        toJson(DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build());
+        toJson(
+            DeclarationCommand.builder()
+                .eTag(0L)
+                .declarationConfirmation(true)
+                .dateSigned(java.time.LocalDate.now())
+                .build());
 
     mockMvc
         .perform(
-            put(TestConstants.UpdateDeclaration, applicationId)
+            patch(TestConstants.UpdateDeclarationData, applicationId)
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNoContent());
 
-    assertSingleEventRecorded("PUT", applicationId.toString(), payload);
+    assertSingleEventRecorded("PATCH", applicationId.toString(), payload);
   }
 
   @Test
@@ -104,7 +109,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
 
     mockMvc
         .perform(
-            put(TestConstants.UpdateDeclaration, applicationId)
+            patch(TestConstants.UpdateDeclarationData, applicationId)
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
@@ -112,6 +117,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                         DeclarationCommand.builder()
                             .eTag(0L)
                             .declarationConfirmation(true)
+                            .dateSigned(java.time.LocalDate.now())
                             .build())))
         .andExpect(status().isNoContent());
 
@@ -130,7 +136,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
             .toList();
     assertThat(events).hasSize(2);
     assertThat(events.get(0).getSequenceNumber()).isLessThan(events.get(1).getSequenceNumber());
-    assertThat(events.get(0).getUrlPath()).contains("/declaration");
+    assertThat(events.get(0).getUrlPath()).contains(":update-declaration-data");
     assertThat(events.get(1).getUrlPath()).contains(":update-evidence");
   }
 
@@ -144,7 +150,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     assertThat(event.getUrlPath()).contains(expectedUrlContains);
     assertThat(event.getChangedBy()).isEqualTo("SYSTEM");
     assertThat(event.getProviderFirmCode()).isEqualTo(FIRM_CODE);
-    assertThat(event.getProviderOfficeId()).isEqualTo(PROVIDER_OFFICE_ID);
+    assertThat(event.getProviderOfficeCode()).isEqualTo(PROVIDER_OFFICE_CODE);
     assertThat(event.getSequenceNumber()).isNotNull();
     assertThat(event.getCreatedAt()).isNotNull();
     assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(expectedPayload));
@@ -158,7 +164,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                     builder
                         .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
                         .providerFirmCode(FIRM_CODE)
-                        .providerOfficeId(PROVIDER_OFFICE_ID)))
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
         .getId();
   }
 }

@@ -18,7 +18,8 @@ import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
       ClientDetailsMapper.class,
       DeclarationMapper.class,
       EligibilityMapper.class,
-      EvidenceMapper.class
+      EvidenceMapper.class,
+      JsonNodeMapper.class
     },
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public abstract class ApplicationMapper {
@@ -52,7 +53,6 @@ public abstract class ApplicationMapper {
   @Mapping(target = "scopingQuestions", ignore = true)
   @Mapping(target = "isMeansTested", ignore = true)
   @Mapping(target = "ufn", ignore = true)
-  @Mapping(target = "dateDeclarationWasSigned", ignore = true)
   @Mapping(target = "dataRetentionEventUuid", ignore = true)
   @Mapping(target = "dataRetentionDate", ignore = true)
   @Mapping(target = "evidence", ignore = true)

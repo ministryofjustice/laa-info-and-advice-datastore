@@ -5,7 +5,7 @@ components:
       required:
         - client
         - applicationType
-        - providerOfficeId
+        - providerOfficeCode
       properties:
         client:
           $ref: '../client-details-components.yml#/components/schemas/CreateClientCommand'
@@ -14,15 +14,15 @@ components:
           enum:
             - RCW
             - CLA
-        providerOfficeId:
+        providerOfficeCode:
           type: string
-          format: uuid
 
     DeclarationCommand:
       type: object
       required:
         - eTag
         - declarationConfirmation
+        - dateSigned
       properties:
         eTag:
           type: integer
@@ -30,6 +30,10 @@ components:
           description: ETag value for optimistic concurrency control
         declarationConfirmation:
           type: boolean
+        dateSigned:
+          type: string
+          format: date
+          x-extra-annotation: "@jakarta.validation.constraints.PastOrPresent"
 
     UpdateEvidenceCommand:
       type: object
@@ -54,12 +58,19 @@ components:
       type: object
       required:
         - eTag
+        - data
+        - result
       properties:
         eTag:
           type: integer
           format: int64
           description: ETag value for optimistic concurrency control
-      additionalProperties: true
+        data:
+          type: object
+          description: The means assessment question and answer data
+        result:
+          type: object
+          description: The means assessment calculation result
 
     UpdateScopingDataCommand:
       type: object

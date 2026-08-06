@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -37,8 +36,7 @@ class EventServiceTest {
     final JsonNode payloadNode = new ObjectMapper().createObjectNode();
     when(userContext.getCurrentUser()).thenReturn("test-user");
     when(userContext.getProviderFirmCode()).thenReturn("123456");
-    when(userContext.getProviderOfficeId())
-        .thenReturn(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+    when(userContext.getProviderOfficeCode()).thenReturn("00000000-0000-0000-0000-000000000001");
     when(request.getMethod()).thenReturn("POST");
     when(request.getRequestURI()).thenReturn("/api/v0/applications:start-application");
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
@@ -53,8 +51,7 @@ class EventServiceTest {
     EventEntity saved = captor.getValue();
     assertThat(saved.getChangedBy()).isEqualTo("test-user");
     assertThat(saved.getProviderFirmCode()).isEqualTo("123456");
-    assertThat(saved.getProviderOfficeId())
-        .isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+    assertThat(saved.getProviderOfficeCode()).isEqualTo("00000000-0000-0000-0000-000000000001");
     assertThat(saved.getHttpMethod()).isEqualTo("POST");
     assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-application");
     assertThat(saved.getPayload()).isEqualTo(payloadNode);
