@@ -23,6 +23,7 @@ components:
       required:
         - eTag
         - declarationConfirmation
+        - dateSigned
       properties:
         eTag:
           type: integer
@@ -30,6 +31,10 @@ components:
           description: ETag value for optimistic concurrency control
         declarationConfirmation:
           type: boolean
+        dateSigned:
+          type: string
+          format: date
+          x-extra-annotation: "@jakarta.validation.constraints.PastOrPresent"
 
     UpdateEvidenceCommand:
       type: object
