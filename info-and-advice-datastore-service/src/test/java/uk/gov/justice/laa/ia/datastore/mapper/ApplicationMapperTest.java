@@ -97,7 +97,7 @@ public class ApplicationMapperTest {
 
     assertEquals(application.getId(), mappedModel.getId());
     assertEquals(application.getProviderFirmCode(), mappedModel.getProviderFirmCode());
-    assertEquals(application.getProviderOfficeCode(), mappedModel.getProviderOfficeCode());
+    assertEquals(application.getProviderOfficeId(), mappedModel.getProviderOfficeId());
     assertEquals(application.getApplicationState(), mappedModel.getApplicationState());
     assertEquals(application.getReasonForReapplication(), mappedModel.getReasonForReapplication());
     assertEquals(

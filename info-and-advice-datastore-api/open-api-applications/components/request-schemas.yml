@@ -5,7 +5,7 @@ components:
       required:
         - client
         - applicationType
-        - providerOfficeCode
+        - providerOfficeId
       properties:
         client:
           $ref: '../client-details-components.yml#/components/schemas/CreateClientCommand'
@@ -14,8 +14,9 @@ components:
           enum:
             - RCW
             - CLA
-        providerOfficeCode:
+        providerOfficeId:
           type: string
+          format: uuid
 
     DeclarationCommand:
       type: object

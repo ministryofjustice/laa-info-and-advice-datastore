@@ -36,7 +36,7 @@ public class ApplicationEntityGenerator {
     var builder =
         ApplicationEntity.builder()
             .providerFirmCode("123456")
-            .providerOfficeCode(UUID.randomUUID().toString())
+            .providerOfficeId(UUID.randomUUID())
             .applicationState(ApplicationState.DRAFT)
             .referenceNumber("L-56C-FTQ")
             .applicationType("RCW")

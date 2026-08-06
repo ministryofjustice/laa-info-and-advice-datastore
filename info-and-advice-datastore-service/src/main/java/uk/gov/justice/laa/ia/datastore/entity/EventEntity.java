@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,8 +37,8 @@ public class EventEntity {
   @Column(name = "provider_firm_code")
   private String providerFirmCode;
 
-  @Column(name = "provider_office_code")
-  private String providerOfficeCode;
+  @Column(name = "provider_office_id")
+  private UUID providerOfficeId;
 
   @Column(name = "http_method", nullable = false)
   private String httpMethod;

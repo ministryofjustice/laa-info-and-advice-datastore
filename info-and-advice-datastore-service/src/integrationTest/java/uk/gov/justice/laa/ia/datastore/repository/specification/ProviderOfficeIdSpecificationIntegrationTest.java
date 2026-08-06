@@ -14,25 +14,25 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
-/** Integration tests for the ProviderOfficeCodeSpecification. */
+/** Integration tests for the ProviderOfficeIdSpecification. */
 @WithMockUser()
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
-public class ProviderOfficeCodeSpecificationIntegrationTest extends BaseIntegrationTest {
+public class ProviderOfficeIdSpecificationIntegrationTest extends BaseIntegrationTest {
   @Test
   void whenOfficeIdSpecificationIsUsed_thenReturnApplicationsWithMatchingOfficeId() {
     // Arrange
-    String officeId = UUID.randomUUID().toString();
+    UUID officeId = UUID.randomUUID();
     final ApplicationEntity applicationWithMatchingOfficeId =
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
               builder.withDefaultClientDetails();
-              builder.providerOfficeCode(officeId);
+              builder.providerOfficeId(officeId);
             });
     final ApplicationEntity applicationWithDifferentOfficeId =
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
               builder.withDefaultClientDetails();
-              builder.providerOfficeCode(UUID.randomUUID().toString());
+              builder.providerOfficeId(UUID.randomUUID());
             });
     applicationRepository.saveAndFlush(applicationWithMatchingOfficeId);
     applicationRepository.saveAndFlush(applicationWithDifferentOfficeId);
@@ -47,6 +47,6 @@ public class ProviderOfficeCodeSpecificationIntegrationTest extends BaseIntegrat
     // Assert
 
     assertThat(applications).hasSize(1);
-    assertThat(applications.iterator().next().getProviderOfficeCode()).isEqualTo(officeId);
+    assertThat(applications.iterator().next().getProviderOfficeId()).isEqualTo(officeId);
   }
 }

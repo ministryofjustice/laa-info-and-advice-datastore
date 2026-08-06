@@ -13,7 +13,7 @@ components:
         - individualLegalAidNumber
         - client
         - providerFirmCode
-        - providerOfficeCode
+        - providerOfficeId
         - createdAt
         - createdBy
         - modifiedAt
@@ -34,8 +34,9 @@ components:
           type: string
           example:
           description:
-        providerOfficeCode:
+        providerOfficeId:
           type: string
+          format: uuid
           example:
           description:
         applicationState:
