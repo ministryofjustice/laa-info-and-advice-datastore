@@ -159,6 +159,7 @@ components:
       type: string
       enum:
         - DRAFT
+        - COMPLETED
 
     EvidenceResponse:
       type: object
