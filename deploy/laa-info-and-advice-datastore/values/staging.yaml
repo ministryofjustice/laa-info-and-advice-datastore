@@ -48,6 +48,20 @@ service:
   type: ClusterIP
   port: 80
 
+# allows the RCW API pod (different namespace) to reach this svc; cluster default-deny otherwise blocks it
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              cloud-platform.justice.gov.uk/namespace: laa-record-controlled-work-api-staging
+      ports:
+        - protocol: TCP
+          port: 8080
+
 ingress:
   enabled: true
   className: modsec-non-prod
