@@ -21,7 +21,6 @@ get:
       required: false
       schema:
         type: string
-        format: uuid
     - name: status
       in: query
       required: false

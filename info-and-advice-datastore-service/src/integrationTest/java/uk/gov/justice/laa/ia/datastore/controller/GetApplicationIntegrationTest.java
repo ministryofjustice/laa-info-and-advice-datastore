@@ -47,8 +47,7 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
             jsonPath("$.individualLegalAidNumber")
                 .value(savedEntity.getClientDetails().getId().toString()))
         .andExpect(jsonPath("$.applicationType").value(savedEntity.getApplicationType()))
-        .andExpect(
-            jsonPath("$.providerOfficeId").value(savedEntity.getProviderOfficeId().toString()))
+        .andExpect(jsonPath("$.providerOfficeCode").value(savedEntity.getProviderOfficeCode()))
         .andExpect(jsonPath("$.referenceNumber").value(refreshedEntity.getReferenceNumber()));
   }
 

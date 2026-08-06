@@ -29,7 +29,7 @@ public class EventService {
         EventEntity.builder()
             .changedBy(userContext.getCurrentUser())
             .providerFirmCode(userContext.getProviderFirmCode())
-            .providerOfficeId(userContext.getProviderOfficeId())
+            .providerOfficeCode(userContext.getProviderOfficeCode())
             .httpMethod(request.getMethod())
             .urlPath(request.getRequestURI())
             .payload(objectMapper.valueToTree(payload))

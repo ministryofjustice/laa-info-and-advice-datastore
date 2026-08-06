@@ -31,7 +31,8 @@ public class ApplicationSpecification {
   }
 
   /** Setups a specification for filtering ApplicationEntity. */
-  public static Specification<ApplicationEntity> filterBy(UUID officeId, ApplicationState status) {
+  public static Specification<ApplicationEntity> filterBy(
+      String officeId, ApplicationState status) {
     return hasOfficeId(officeId).and(hasStatus(status));
   }
 
@@ -45,11 +46,11 @@ public class ApplicationSpecification {
   }
 
   /** Returns a specification that filters ApplicationEntity by officeId. */
-  protected static Specification<ApplicationEntity> hasOfficeId(UUID officeId) {
-    if (officeId == null) {
+  protected static Specification<ApplicationEntity> hasOfficeId(String officeId) {
+    if (officeId == null || officeId.isBlank()) {
       return Specification.unrestricted();
     }
     return (root, query, criteriaBuilder) ->
-        criteriaBuilder.equal(root.get("providerOfficeId"), officeId);
+        criteriaBuilder.equal(root.get("providerOfficeCode"), officeId);
   }
 }

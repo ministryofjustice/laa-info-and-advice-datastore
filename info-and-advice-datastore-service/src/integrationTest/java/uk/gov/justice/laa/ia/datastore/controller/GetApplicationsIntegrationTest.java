@@ -85,14 +85,14 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
                 builder
                     .withDefaultClientDetails()
                     .providerFirmCode(FIRM_CODE)
-                    .providerOfficeId(officeId)));
+                    .providerOfficeCode(officeId.toString())));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
             builder ->
                 builder
                     .withDefaultClientDetails()
                     .providerFirmCode(FIRM_CODE)
-                    .providerOfficeId(officeId)));
+                    .providerOfficeCode(officeId.toString())));
     clearCache();
     // Act & Assert
     mockMvc
