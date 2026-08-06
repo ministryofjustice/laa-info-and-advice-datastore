@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,6 +39,9 @@ public class DeclarationEntity {
 
   @Column(name = "declaration_confirmation", nullable = false)
   private boolean declarationConfirmation;
+
+  @Column(name = "date_signed")
+  private LocalDate dateSigned;
 
   @Column(name = "created_at", nullable = false)
   @CreationTimestamp

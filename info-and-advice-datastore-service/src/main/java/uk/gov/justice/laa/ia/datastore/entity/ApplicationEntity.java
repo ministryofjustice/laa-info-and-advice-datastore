@@ -13,7 +13,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -79,9 +78,6 @@ public class ApplicationEntity {
 
   @Column(name = "ufn", length = 9)
   private String ufn;
-
-  @Column(name = "date_declaration_was_signed")
-  private LocalDate dateDeclarationWasSigned;
 
   @Column(name = "data_retention_event_uuid")
   private UUID dataRetentionEventUuid;

@@ -243,10 +243,7 @@ public class ApplicationService {
     ApplicationEntity application = applicationOpt.get();
     validateEtag(application, command.geteTag());
 
-    application.setScopingQuestions(
-        command.getScopingQuestions().isPresent()
-            ? objectMapper.valueToTree(command.getScopingQuestions().get())
-            : null);
+    application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
     eventService.record(command);

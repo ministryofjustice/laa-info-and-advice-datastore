@@ -68,9 +68,6 @@ components:
         ufn:
           type: string
           maxLength: 9
-        dateDeclarationWasSigned:
-          type: string
-          format: date
         determinationId:
           type: string
           format: uuid
@@ -139,6 +136,9 @@ components:
           $ref: '#/components/schemas/ClientDeclarationStatus'
         declarationConfirmation:
           type: boolean
+        dateSigned:
+          type: string
+          format: date
         createdAt:
           type: string
           format: date-time

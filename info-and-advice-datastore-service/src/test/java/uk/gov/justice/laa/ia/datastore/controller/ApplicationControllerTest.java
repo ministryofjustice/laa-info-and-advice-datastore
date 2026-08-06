@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -249,7 +250,11 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(0L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     when(applicationService.updateClientDeclaration(
             eq(applicationId), any(DeclarationCommand.class)))
         .thenReturn(true);
@@ -257,7 +262,7 @@ public class ApplicationControllerTest {
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isNoContent());
@@ -268,14 +273,18 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(0L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     when(applicationService.updateClientDeclaration(any(UUID.class), any(DeclarationCommand.class)))
         .thenReturn(false);
 
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isNotFound());
@@ -339,7 +348,11 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(2L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(2L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     doThrow(new EtagMismatchException(2L, 5L))
         .when(applicationService)
         .updateClientDeclaration(eq(applicationId), any(DeclarationCommand.class));
@@ -347,7 +360,7 @@ public class ApplicationControllerTest {
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isConflict());

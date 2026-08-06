@@ -1,8 +1,8 @@
-put:
+patch:
   tags:
     - application
-  summary: Update declaration for an application
-  operationId: updateDeclaration
+  summary: Update declaration data for an application
+  operationId: updateDeclarationData
   parameters:
     - name: id
       in: path
