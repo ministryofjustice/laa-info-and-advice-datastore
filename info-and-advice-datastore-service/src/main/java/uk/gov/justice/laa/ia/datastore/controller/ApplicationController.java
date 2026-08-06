@@ -38,7 +38,7 @@ public class ApplicationController implements ApplicationApi {
 
   @Override
   public ResponseEntity<ApplicationResponses> getApplications(
-      Integer page, Integer size, UUID officeId) {
+      Integer page, Integer size, String officeId) {
     final Specification<ApplicationEntity> filterBy = ApplicationSpecification.filterBy(officeId);
     final Page<ApplicationSummary> result = service.getAllApplications(filterBy, page, size);
     final ApplicationResponses responses =

@@ -16,7 +16,6 @@ components:
             - CLA
         providerOfficeId:
           type: string
-          format: uuid
 
     DeclarationCommand:
       type: object

@@ -30,12 +30,12 @@ public class ApplicationSpecification {
   }
 
   /** Setups a specification for filtering ApplicationEntity. */
-  public static Specification<ApplicationEntity> filterBy(UUID officeId) {
+  public static Specification<ApplicationEntity> filterBy(String officeId) {
     return hasOfficeId(officeId);
   }
 
   /** Returns a specification that filters ApplicationEntity by officeId. */
-  protected static Specification<ApplicationEntity> hasOfficeId(UUID officeId) {
+  protected static Specification<ApplicationEntity> hasOfficeId(String officeId) {
     if (officeId == null) {
       return Specification.unrestricted();
     }

@@ -73,7 +73,7 @@ public class ApplicationServiceTest {
   @Test
   void shouldCreateApplication() {
     // Arrange
-    final UUID officeId = UUID.randomUUID();
+    final String officeId = UUID.randomUUID().toString();
     final StartApplicationCommand cmd =
         StartApplicationCommand.builder().providerOfficeId(officeId).build();
     final ApplicationEntity entity = new ApplicationEntity();

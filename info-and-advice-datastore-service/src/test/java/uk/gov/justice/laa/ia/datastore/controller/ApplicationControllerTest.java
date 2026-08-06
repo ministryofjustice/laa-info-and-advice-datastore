@@ -133,7 +133,7 @@ public class ApplicationControllerTest {
   @Test
   void filterApplications_returnsOkStatus_andFilteredApplications() throws Exception {
     // Arrange
-    final UUID officeId = UUID.fromString("019f1461-02ae-71f8-b731-c6d63bb59e6d");
+    final String officeId = "019f1461-02ae-71f8-b731-c6d63bb59e6d";
     ApplicationSummary application1 =
         new ApplicationSummary(UUID.randomUUID(), "REF-001", null)
             .clientFirstName("Alice")
@@ -153,7 +153,7 @@ public class ApplicationControllerTest {
             get("/api/v0/applications")
                 .param("page", "0")
                 .param("size", "25")
-                .param("officeId", officeId.toString()))
+                .param("officeId", officeId))
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.content", hasSize(2)))

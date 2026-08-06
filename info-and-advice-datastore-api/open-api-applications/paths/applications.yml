@@ -21,7 +21,6 @@ get:
       required: false
       schema:
         type: string
-        format: uuid
     - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
   responses:
     '200':

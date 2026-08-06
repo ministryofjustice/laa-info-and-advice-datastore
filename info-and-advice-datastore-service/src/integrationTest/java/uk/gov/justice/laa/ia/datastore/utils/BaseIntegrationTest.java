@@ -52,7 +52,7 @@ public abstract class BaseIntegrationTest {
   @MockitoBean private UserContextInterceptor userContextInterceptor;
   @MockitoBean private UserContext userContext;
   protected static final String FIRM_CODE = "123456";
-  protected static final UUID PROVIDER_OFFICE_ID = UUID.randomUUID();
+  protected static final String PROVIDER_OFFICE_ID = UUID.randomUUID().toString();
 
   @BeforeEach
   void setUp() throws Exception {

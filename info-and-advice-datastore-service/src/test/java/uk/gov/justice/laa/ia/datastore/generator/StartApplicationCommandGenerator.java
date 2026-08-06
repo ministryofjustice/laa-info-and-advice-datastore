@@ -13,7 +13,7 @@ public class StartApplicationCommandGenerator {
         StartApplicationCommand.builder()
             .client(CreateClientCommandGenerator.create(null))
             .applicationType(StartApplicationCommand.ApplicationTypeEnum.RCW)
-            .providerOfficeId(UUID.randomUUID());
+            .providerOfficeId(UUID.randomUUID().toString());
 
     if (customizer != null) {
       customizer.accept(builder);

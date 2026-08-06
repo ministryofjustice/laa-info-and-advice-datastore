@@ -77,7 +77,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   void shouldGetApplicationsSuccessfully_withOfficeIdFilter() throws Exception {
     // Arrange
     setupApplications();
-    final UUID officeId = UUID.randomUUID();
+    final String officeId = UUID.randomUUID().toString();
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
             builder ->
@@ -95,10 +95,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     clearCache();
     // Act & Assert
     mockMvc
-        .perform(
-            get("/api/v0/applications")
-                .param("officeId", officeId.toString())
-                .withBearerReadToken())
+        .perform(get("/api/v0/applications").param("officeId", officeId).withBearerReadToken())
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.content", hasSize(2)))

@@ -26,26 +26,27 @@ public class ProviderOfficeIdSpecificationIntegrationTest extends BaseIntegratio
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
               builder.withDefaultClientDetails();
-              builder.providerOfficeId(officeId);
+              builder.providerOfficeId(officeId.toString());
             });
     final ApplicationEntity applicationWithDifferentOfficeId =
         ApplicationEntityGenerator.createWithoutId(
             builder -> {
               builder.withDefaultClientDetails();
-              builder.providerOfficeId(UUID.randomUUID());
+              builder.providerOfficeId(UUID.randomUUID().toString());
             });
     applicationRepository.saveAndFlush(applicationWithMatchingOfficeId);
     applicationRepository.saveAndFlush(applicationWithDifferentOfficeId);
     clearCache();
 
     // create specification
-    Specification<ApplicationEntity> specification = ApplicationSpecification.filterBy(officeId);
+    Specification<ApplicationEntity> specification =
+        ApplicationSpecification.filterBy(officeId.toString());
 
     // Act
     List<ApplicationEntity> applications = applicationRepository.findAll(specification);
     // Assert
 
     assertThat(applications).hasSize(1);
-    assertThat(applications.iterator().next().getProviderOfficeId()).isEqualTo(officeId);
+    assertThat(applications.iterator().next().getProviderOfficeId()).isEqualTo(officeId.toString());
   }
 }

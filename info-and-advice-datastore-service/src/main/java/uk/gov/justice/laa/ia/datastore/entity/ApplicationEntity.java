@@ -47,7 +47,7 @@ public class ApplicationEntity {
   private String providerFirmCode;
 
   @Column(name = "provider_office_id", nullable = false)
-  private UUID providerOfficeId;
+  private String providerOfficeId;
 
   @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "evidence_id", nullable = true)
