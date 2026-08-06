@@ -50,9 +50,8 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId = savedApplicationId();
     final String payload =
         """
-        {"eTag": 0, "determinationId": "%s", "meansAssessmentRequired": true}
-        """
-            .formatted(UUID.randomUUID());
+        {"eTag": 0, "data": {"question": "answer"}, "result": {"status": "ELIGIBLE"}}
+        """;
 
     mockMvc
         .perform(

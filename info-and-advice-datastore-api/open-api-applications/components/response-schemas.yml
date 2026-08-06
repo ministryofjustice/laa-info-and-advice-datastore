@@ -71,7 +71,7 @@ components:
           type: string
           format: uuid
         eligibilityResult:
-          $ref: '#/components/schemas/EligibilityResultResponse'
+          $ref: '#/components/schemas/EligibilityResult'
         createdAt:
           type: string
           format: date-time
@@ -172,21 +172,12 @@ components:
         expenditureCapitalEvidenceChecklist:
           type: object
 
-    EligibilityResultResponse:
+    EligibilityResult:
       type: object
       properties:
-        eligibilityResultId:
-          type: string
-          format: uuid
-        applicationId:
-          type: string
-          format: uuid
-        indication:
-          type: boolean
-        contribution:
-          type: string
-        eligibilityResult:
+        data:
           type: object
-        createdAt:
-          type: string
-          format: date-time
+          description: The means assessment question and answer data
+        result:
+          type: object
+          description: The means assessment calculation result

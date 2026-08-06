@@ -18,7 +18,8 @@ import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
       ClientDetailsMapper.class,
       DeclarationMapper.class,
       EligibilityMapper.class,
-      EvidenceMapper.class
+      EvidenceMapper.class,
+      JsonNodeMapper.class
     },
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public abstract class ApplicationMapper {

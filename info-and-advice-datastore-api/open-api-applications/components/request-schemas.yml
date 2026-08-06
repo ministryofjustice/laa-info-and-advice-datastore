@@ -58,12 +58,19 @@ components:
       type: object
       required:
         - eTag
+        - data
+        - result
       properties:
         eTag:
           type: integer
           format: int64
           description: ETag value for optimistic concurrency control
-      additionalProperties: true
+        data:
+          type: object
+          description: The means assessment question and answer data
+        result:
+          type: object
+          description: The means assessment calculation result
 
     UpdateScopingDataCommand:
       type: object
