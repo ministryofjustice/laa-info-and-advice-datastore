@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.justice.laa.ia.datastore.config.JacksonConfig;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
@@ -41,11 +42,13 @@ import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
       ClientDetailsMapperImpl.class,
       AddressMapperImpl.class,
       DateTimeMapperImpl.class,
+      JsonNodeMapperImpl.class,
+      JacksonConfig.class,
     })
 public class ApplicationMapperTest {
   @Autowired private ApplicationMapper sut;
+  @Autowired private ObjectMapper objectMapper;
   @MockitoBean private UserContext userContext;
-  @MockitoBean private ObjectMapper objectMapper;
 
   @Test
   void toApplicationSummary_shouldMapSummaryFields() {
@@ -168,9 +171,8 @@ public class ApplicationMapperTest {
     assertEquals(providerFirmCode, mappedModel.getProviderFirmCode());
   }
 
-  private static void assertEligibiltyEquals(
-      EligibilityResultEntity expected, EligibilityResult model) {
-    assertEquals(expected.getData(), model.getData());
-    assertEquals(expected.getResultJson(), model.getResult());
+  private void assertEligibiltyEquals(EligibilityResultEntity expected, EligibilityResult model) {
+    assertEquals(expected.getData(), objectMapper.valueToTree(model.getData()));
+    assertEquals(expected.getResultJson(), objectMapper.valueToTree(model.getResult()));
   }
 }

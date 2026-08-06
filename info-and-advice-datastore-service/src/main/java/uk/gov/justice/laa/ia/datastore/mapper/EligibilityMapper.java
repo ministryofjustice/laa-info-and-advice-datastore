@@ -9,7 +9,7 @@ import uk.gov.justice.laa.ia.datastore.model.EligibilityResult;
 /** The mapper between EligibilityResultEntity and EligibilityResult. */
 @Mapper(
     componentModel = "spring",
-    uses = {DateTimeMapper.class},
+    uses = {DateTimeMapper.class, JsonNodeMapper.class},
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public interface EligibilityMapper {
   @Mapping(target = "data", source = "data")
