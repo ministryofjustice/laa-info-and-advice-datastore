@@ -1,7 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.generator;
 
 import java.util.Map;
-
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 
 /** Generator for creating evidence commands for testing purposes. */

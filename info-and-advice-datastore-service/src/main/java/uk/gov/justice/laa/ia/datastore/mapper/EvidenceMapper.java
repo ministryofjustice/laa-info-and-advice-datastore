@@ -1,12 +1,10 @@
 package uk.gov.justice.laa.ia.datastore.mapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.model.EvidenceResponse;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
