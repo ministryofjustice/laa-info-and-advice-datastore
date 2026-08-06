@@ -111,9 +111,7 @@ public class ApplicationControllerTest {
             .clientLastName("Jones");
 
     Page<ApplicationSummary> page = new PageImpl<>(List.of(application1, application2));
-    when(applicationService.getAllApplications(
-            eq(Specification.<ApplicationEntity>unrestricted()), eq(0), eq(25)))
-        .thenReturn(page);
+    when(applicationService.getAllApplications(any(), eq(0), eq(25))).thenReturn(page);
 
     // Act + Assert
     mockMvc

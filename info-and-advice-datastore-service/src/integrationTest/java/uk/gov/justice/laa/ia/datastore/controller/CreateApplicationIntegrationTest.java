@@ -37,7 +37,7 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.referenceNumber").exists())
-            .andExpect(jsonPath("$.providerOfficeId").exists())
+            .andExpect(jsonPath("$.providerOfficeCode").exists())
             .andExpect(jsonPath("$.client").exists())
             .andExpect(jsonPath("$.client.firstName").exists())
             .andExpect(jsonPath("$.client.lastName").exists())
@@ -62,7 +62,7 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(idString))
             .andExpect(jsonPath("$.referenceNumber").value(startReferenceNumber))
-            .andExpect(jsonPath("$.providerOfficeId").exists())
+            .andExpect(jsonPath("$.providerOfficeCode").exists())
             .andExpect(jsonPath("$.client").exists())
             .andExpect(jsonPath("$.applicationState").exists())
             .andReturn();
@@ -71,8 +71,8 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
     var getJson = objectMapper.readTree(getResult.getResponse().getContentAsString());
     assertThat(getJson.get("id").asText()).isEqualTo(idString);
     assertThat(getJson.get("referenceNumber").asText()).isEqualTo(startReferenceNumber);
-    assertThat(getJson.get("providerOfficeId").asText())
-        .isEqualTo(responseJson.get("providerOfficeId").asText());
+    assertThat(getJson.get("providerOfficeCode").asText())
+        .isEqualTo(responseJson.get("providerOfficeCode").asText());
     assertThat(getJson.get("applicationState").asText())
         .isEqualTo(responseJson.get("applicationState").asText());
 
@@ -87,6 +87,6 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(savedEntity.getReferenceNumber()).isEqualTo(startReferenceNumber);
     assertThat(savedEntity.getReferenceNumber()).matches("L-\\w{3}-\\w{3}");
     assertThat(savedEntity.getCreatedBy()).isEqualTo("SYSTEM");
-    assertThat(savedEntity.getProviderOfficeId()).isEqualTo(command.getProviderOfficeId());
+    assertThat(savedEntity.getProviderOfficeCode()).isEqualTo(command.getProviderOfficeCode());
   }
 }

@@ -150,7 +150,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     assertThat(event.getUrlPath()).contains(expectedUrlContains);
     assertThat(event.getChangedBy()).isEqualTo("SYSTEM");
     assertThat(event.getProviderFirmCode()).isEqualTo(FIRM_CODE);
-    assertThat(event.getProviderOfficeId()).isEqualTo(PROVIDER_OFFICE_ID);
+    assertThat(event.getProviderOfficeCode()).isEqualTo(PROVIDER_OFFICE_CODE);
     assertThat(event.getSequenceNumber()).isNotNull();
     assertThat(event.getCreatedAt()).isNotNull();
     assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(expectedPayload));
@@ -164,7 +164,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                     builder
                         .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
                         .providerFirmCode(FIRM_CODE)
-                        .providerOfficeId(PROVIDER_OFFICE_ID)))
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
         .getId();
   }
 }

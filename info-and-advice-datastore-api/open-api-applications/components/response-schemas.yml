@@ -13,7 +13,7 @@ components:
         - individualLegalAidNumber
         - client
         - providerFirmCode
-        - providerOfficeId
+        - providerOfficeCode
         - createdAt
         - createdBy
         - modifiedAt
@@ -34,9 +34,8 @@ components:
           type: string
           example:
           description:
-        providerOfficeId:
+        providerOfficeCode:
           type: string
-          format: uuid
           example:
           description:
         applicationState:
@@ -159,6 +158,7 @@ components:
       type: string
       enum:
         - DRAFT
+        - COMPLETED
 
     EvidenceResponse:
       type: object

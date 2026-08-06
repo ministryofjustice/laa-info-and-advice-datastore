@@ -75,9 +75,9 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID officeId = UUID.randomUUID();
     final StartApplicationCommand cmd =
-        StartApplicationCommand.builder().providerOfficeId(officeId).build();
+        StartApplicationCommand.builder().providerOfficeCode(officeId.toString()).build();
     final ApplicationEntity entity = new ApplicationEntity();
-    entity.setProviderOfficeId(officeId);
+    entity.setProviderOfficeCode(officeId.toString());
     entity.setClientDetails(ClientDetailsEntity.builder().build());
     final UUID generatedId = UUID.randomUUID();
     final String user = "TEST_USER";
@@ -99,7 +99,7 @@ public class ApplicationServiceTest {
 
     // Assert
     assertThat(result.getId()).isEqualTo(generatedId);
-    assertThat(entity.getProviderOfficeId()).isEqualTo(officeId);
+    assertThat(entity.getProviderOfficeCode()).isEqualTo(officeId.toString());
     assertThat(entity.getApplicationState()).isEqualTo(ApplicationState.DRAFT);
 
     verify(repo, times(1)).save(entity);

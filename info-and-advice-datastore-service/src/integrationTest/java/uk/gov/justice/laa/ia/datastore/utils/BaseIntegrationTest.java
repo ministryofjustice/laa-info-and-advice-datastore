@@ -52,13 +52,13 @@ public abstract class BaseIntegrationTest {
   @MockitoBean private UserContextInterceptor userContextInterceptor;
   @MockitoBean private UserContext userContext;
   protected static final String FIRM_CODE = "123456";
-  protected static final UUID PROVIDER_OFFICE_ID = UUID.randomUUID();
+  protected static final String PROVIDER_OFFICE_CODE = UUID.randomUUID().toString();
 
   @BeforeEach
   void setUp() throws Exception {
     when(userContextInterceptor.preHandle(any(), any(), any())).thenReturn(true);
     when(userContext.getProviderFirmCode()).thenReturn(FIRM_CODE);
-    when(userContext.getProviderOfficeId()).thenReturn(PROVIDER_OFFICE_ID);
+    when(userContext.getProviderOfficeCode()).thenReturn(PROVIDER_OFFICE_CODE);
     when(userContext.getCurrentUser()).thenReturn("SYSTEM");
   }
 
