@@ -6,7 +6,7 @@ kind: NetworkPolicy
 metadata:
   name: {{ .name }}
   labels:
-    {{- include "laa-info-and-advice-datastore.labels" $ | nindent 4 }}
+    {{- include "your-repo-name.labels" $ | nindent 4 }}
 spec:
   podSelector: {}
   policyTypes:
