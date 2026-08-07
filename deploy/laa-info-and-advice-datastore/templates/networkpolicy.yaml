@@ -2,13 +2,13 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "your-repo-name.fullname" . }}
+  name: {{ include "laa-info-and-advice-datastore.fullname" . }}
   labels:
-    {{- include "your-repo-name.labels" . | nindent 4 }}
+    {{- include "laa-info-and-advice-datastore.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
-      {{- include "your-repo-name.selectorLabels" . | nindent 6 }}
+      {{- include "laa-info-and-advice-datastore.selectorLabels" . | nindent 6 }}
   policyTypes:
     {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
   ingress:
