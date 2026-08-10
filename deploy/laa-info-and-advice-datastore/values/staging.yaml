@@ -51,16 +51,53 @@ service:
 # allows the RCW API pod (different namespace) to reach this svc; cluster default-deny otherwise blocks it
 networkPolicy:
   enabled: true
-  policyTypes:
-    - Ingress
-  ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              cloud-platform.justice.gov.uk/namespace: laa-record-controlled-work-api-staging
-      ports:
-        - protocol: TCP
-          port: 8080
+  policies:
+    - name: allow-ingress-controllers
+      policyTypes:
+        - Ingress
+      ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  component: ingress-controllers
+    - name: allow-prometheus-scraping
+      policyTypes:
+        - Ingress
+      ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  component: monitoring
+    - name: allow-rcw-api
+      policyTypes:
+        - Ingress
+      ingress:
+        - from:
+            - namespaceSelector:
+                matchLabels:
+                  cloud-platform.justice.gov.uk/namespace: laa-record-controlled-work-api-staging
+          ports:
+            - protocol: TCP
+              port: 8080
+    - name: allow-egress-dns
+      policyTypes:
+        - Egress
+      egress:
+        - ports:
+            - port: 53
+              protocol: UDP
+            - port: 53
+              protocol: TCP
+    - name: allow-egress-rds
+      policyTypes:
+        - Egress
+      egress:
+        - to:
+            - ipBlock:
+                cidr: 172.20.0.0/16
+          ports:
+            - port: 5432
+              protocol: TCP
 
 ingress:
   enabled: true
