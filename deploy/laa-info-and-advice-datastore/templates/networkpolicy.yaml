@@ -1,16 +1,23 @@
 {{- if .Values.networkPolicy.enabled -}}
+{{- range .Values.networkPolicy.policies }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "your-repo-name.fullname" . }}
+  name: {{ $.Release.Name }}-{{ .name }}
   labels:
-    {{- include "your-repo-name.labels" . | nindent 4 }}
+    {{- include "your-repo-name.labels" $ | nindent 4 }}
 spec:
-  podSelector:
-    matchLabels:
-      {{- include "your-repo-name.selectorLabels" . | nindent 6 }}
+  podSelector: {}
   policyTypes:
-    {{- toYaml .Values.networkPolicy.policyTypes | nindent 4 }}
+    {{- toYaml .policyTypes | nindent 4 }}
+  {{- if .ingress }}
   ingress:
-    {{- toYaml .Values.networkPolicy.ingress | nindent 4 }}
+    {{- toYaml .ingress | nindent 4 }}
+  {{- end }}
+  {{- if .egress }}
+  egress:
+    {{- toYaml .egress | nindent 4 }}
+  {{- end }}
+{{- end }}
 {{- end }}
