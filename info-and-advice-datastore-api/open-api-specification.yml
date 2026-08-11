@@ -54,3 +54,5 @@ components:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateScopingDataCommand'
     EligibilityResult:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResult'
+    ApiError:
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApiError'

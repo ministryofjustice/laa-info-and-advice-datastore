@@ -7,10 +7,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.jwt.BadJwtException;
@@ -27,7 +29,7 @@ public class UserContextInterceptorTests {
       mock(TrustedCallerJwtDecoder.class);
   private final Jwt mockJwt = mock(Jwt.class);
   private final UserContextInterceptor interceptor =
-      new UserContextInterceptor(userContext, mockTrustedCallerJwtDecoder);
+      new UserContextInterceptor(userContext, mockTrustedCallerJwtDecoder, new ObjectMapper());
   private final MockHttpServletRequest request;
   private final MockHttpServletResponse response;
 
@@ -71,6 +73,8 @@ public class UserContextInterceptorTests {
 
     // Assert
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
+    assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+    assertThat(response.getContentAsString()).contains("Invalid or missing authentication token");
   }
 
   @Test
@@ -83,6 +87,7 @@ public class UserContextInterceptorTests {
 
     // Assert
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
+    assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
     assertThat(response.getContentAsString()).contains("Missing or invalid FIRM_CODE claim in JWT");
   }
 }

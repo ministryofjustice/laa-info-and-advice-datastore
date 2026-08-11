@@ -181,3 +181,17 @@ components:
         result:
           type: object
           description: The means assessment calculation result
+
+    ApiError:
+      type: object
+      description: RFC 7807 problem detail returned for error responses
+      properties:
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+        status:
+          type: integer
+          description: The HTTP status code
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem
