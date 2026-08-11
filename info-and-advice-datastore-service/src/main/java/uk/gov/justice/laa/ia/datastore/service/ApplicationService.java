@@ -26,6 +26,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
@@ -245,6 +246,32 @@ public class ApplicationService {
 
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
     application.setModifiedBy(userContext.getCurrentUser());
+    repository.save(application);
+    eventService.record(command);
+    return true;
+  }
+
+  /**
+   * Update an application.
+   *
+   * @param applicationId the application ID
+   * @param command the update command including eTag for optimistic concurrency control
+   * @return true if application updated, false if not found
+   * @throws EtagMismatchException if the eTag does not match the current entity value
+   */
+  @Transactional
+  public boolean updateApplication(UUID applicationId, UpdateApplicationCommand command) {
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
+    if (applicationOpt.isEmpty()) {
+      return false;
+    }
+
+    ApplicationEntity application = applicationOpt.get();
+    validateEtag(application, command.geteTag());
+
+    applicationMapper.updateApplicationEntity(command, application);
     repository.save(application);
     eventService.record(command);
     return true;

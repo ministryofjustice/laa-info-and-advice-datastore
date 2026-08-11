@@ -85,3 +85,15 @@ components:
           type: object
           nullable: true
           additionalProperties: true
+
+    UpdateApplicationCommand:
+      type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+        applicationState:
+          $ref: 'response-schemas.yml#/components/schemas/ApplicationState'

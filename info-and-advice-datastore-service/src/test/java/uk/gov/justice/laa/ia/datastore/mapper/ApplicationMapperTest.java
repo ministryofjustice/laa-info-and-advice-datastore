@@ -26,9 +26,11 @@ import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityResult;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
@@ -174,5 +176,77 @@ public class ApplicationMapperTest {
   private void assertEligibiltyEquals(EligibilityResultEntity expected, EligibilityResult model) {
     assertEquals(expected.getData(), objectMapper.valueToTree(model.getData()));
     assertEquals(expected.getResultJson(), objectMapper.valueToTree(model.getResult()));
+  }
+
+  @Test
+  void updateApplicationEntity_shouldUpdateApplicationState_whenSet() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> builder.applicationState(ApplicationState.DRAFT));
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+
+    // Act
+    sut.updateApplicationEntity(command, application);
+
+    // Assert
+    assertEquals(ApplicationState.COMPLETED, application.getApplicationState());
+  }
+
+  @Test
+  void updateApplicationEntity_shouldLeaveApplicationStateUnchanged_whenNotSet() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> builder.applicationState(ApplicationState.DRAFT));
+    final UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+
+    // Act
+    sut.updateApplicationEntity(command, application);
+
+    // Assert
+    assertEquals(ApplicationState.DRAFT, application.getApplicationState());
+  }
+
+  @Test
+  void updateApplicationEntity_shouldSetModifiedBy() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final ApplicationEntity application = ApplicationEntityGenerator.createWithId(null);
+    final UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+
+    // Act
+    sut.updateApplicationEntity(command, application);
+
+    // Assert
+    assertEquals("USERCONTEXT:SYSTEM", application.getModifiedBy());
+  }
+
+  @Test
+  void updateApplicationEntity_shouldNotChangeProtectedFields() {
+    // Arrange
+    final ApplicationEntity application = ApplicationEntityGenerator.createWithId(null);
+    final UUID originalId = application.getId();
+    final String originalCreatedBy = application.getCreatedBy();
+    final var originalCreatedAt = application.getCreatedAt();
+    final var originalModifiedAt = application.getModifiedAt();
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+
+    // Act
+    sut.updateApplicationEntity(command, application);
+
+    // Assert
+    assertEquals(originalId, application.getId());
+    assertEquals(originalCreatedBy, application.getCreatedBy());
+    assertEquals(originalCreatedAt, application.getCreatedAt());
+    assertEquals(originalModifiedAt, application.getModifiedAt());
   }
 }
