@@ -47,6 +47,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
@@ -567,6 +568,66 @@ public class ApplicationServiceTest {
         () ->
             sut.updateEvidence(
                 application.getId(), UpdateEvidenceCommand.builder().eTag(99L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void shouldUpdateApplication() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act
+    boolean result = sut.updateApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result);
+    verify(mapper, times(1)).updateApplicationEntity(command, application);
+    verify(repo, times(1)).save(application);
+    verify(eventService, times(1)).record(command);
+  }
+
+  @Test
+  void shouldReturnFalse_whenUpdatingApplicationForUnknownApplication() {
+    // Arrange
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
+
+    // Act
+    boolean result =
+        sut.updateApplication(
+            UUID.randomUUID(), UpdateApplicationCommand.builder().eTag(0L).build());
+
+    // Assert
+    assertFalse(result);
+    verify(mapper, never()).updateApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any());
+  }
+
+  @Test
+  void updateApplication_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        EtagMismatchException.class,
+        () ->
+            sut.updateApplication(
+                applicationId, UpdateApplicationCommand.builder().eTag(99L).build()));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 }

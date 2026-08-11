@@ -42,6 +42,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
@@ -380,5 +381,76 @@ public class ApplicationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
         .andExpect(status().isConflict());
+  }
+
+  @Test
+  void updateApplication_returns204_whenApplicationExists() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+    when(applicationService.updateApplication(
+            eq(applicationId), any(UpdateApplicationCommand.class)))
+        .thenReturn(true);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void updateApplication_returns404_whenApplicationDoesNotExist() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+    when(applicationService.updateApplication(
+            eq(applicationId), any(UpdateApplicationCommand.class)))
+        .thenReturn(false);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void updateApplication_returns409_whenEtagMismatch() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(2L).build();
+    doThrow(new EtagMismatchException(2L, 5L))
+        .when(applicationService)
+        .updateApplication(eq(applicationId), any(UpdateApplicationCommand.class));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  void updateApplication_returns400_whenEtagMissing() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    String body = "{}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never())
+        .updateApplication(eq(applicationId), any(UpdateApplicationCommand.class));
   }
 }
