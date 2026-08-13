@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -21,9 +22,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
    * @return 409 Conflict response
    */
   @ExceptionHandler(EtagMismatchException.class)
-  public ResponseEntity<String> handleEtagMismatchException(EtagMismatchException exception) {
+  public ResponseEntity<ProblemDetail> handleEtagMismatchException(
+      EtagMismatchException exception) {
     log.warn("ETag mismatch: {}", exception.getMessage());
-    return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
   /**
@@ -34,11 +38,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
    * @return 409 Conflict response
    */
   @ExceptionHandler(OptimisticLockingFailureException.class)
-  public ResponseEntity<String> handleOptimisticLockingFailure(
+  public ResponseEntity<ProblemDetail> handleOptimisticLockingFailure(
       OptimisticLockingFailureException exception) {
     log.warn("Concurrent modification conflict: {}", exception.getMessage());
-    return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body("Conflict: resource was modified concurrently");
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT, "Conflict: resource was modified concurrently");
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
   /**
@@ -48,9 +54,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
    * @return the response status with error message
    */
   @ExceptionHandler(Exception.class)
-  public ResponseEntity<String> handleGenericException(Exception exception) {
+  public ResponseEntity<ProblemDetail> handleGenericException(Exception exception) {
     String logMessage = "An unexpected application error has occurred.";
     log.error(logMessage, exception);
-    return ResponseEntity.internalServerError().body(logMessage);
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, logMessage);
+    return ResponseEntity.internalServerError().body(problemDetail);
   }
 }

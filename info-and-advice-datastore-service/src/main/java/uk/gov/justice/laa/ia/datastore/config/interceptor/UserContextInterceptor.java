@@ -1,10 +1,14 @@
 package uk.gov.justice.laa.ia.datastore.config.interceptor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -21,6 +25,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
 
   private final UserContext userContext;
   private final TrustedCallerJwtDecoder trustedCallerJwtDecoder;
+  private final ObjectMapper objectMapper;
 
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -29,17 +34,23 @@ public class UserContextInterceptor implements HandlerInterceptor {
     try {
       authenticatedJwt = authenticateJwt(request);
     } catch (Exception e) {
-      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      writeUnauthorized(response, "Invalid or missing authentication token");
       return false;
     }
     try {
       populateUserContext(authenticatedJwt);
       return true;
     } catch (IllegalArgumentException e) {
-      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.getWriter().write("Missing or invalid FIRM_CODE claim in JWT");
+      writeUnauthorized(response, "Missing or invalid FIRM_CODE claim in JWT");
       return false;
     }
+  }
+
+  private void writeUnauthorized(HttpServletResponse response, String detail) throws IOException {
+    ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, detail);
+    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+    response.getWriter().write(objectMapper.writeValueAsString(problemDetail));
   }
 
   private String extractBearerToken(String authorizationHeader) {
