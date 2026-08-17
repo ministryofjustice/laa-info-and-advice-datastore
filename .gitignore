@@ -11,6 +11,7 @@ info-and-advice-datastore-client/generated
 
 info-and-advice-datastore-api/bin
 info-and-advice-datastore-service/bin
+info-and-advice-datastore-client/bin
 
 ### IntelliJ IDEA ###
 .idea
