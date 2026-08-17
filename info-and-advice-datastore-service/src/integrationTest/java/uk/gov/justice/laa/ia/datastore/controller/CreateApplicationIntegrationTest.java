@@ -24,7 +24,9 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldCreateApplicationSuccessfully() throws Exception {
     // Arrange
-    StartApplicationCommand command = StartApplicationCommandGenerator.create(null);
+    StartApplicationCommand command =
+        StartApplicationCommandGenerator.create(
+            builder -> builder.providerOfficeCode(PROVIDER_OFFICE_CODE));
 
     // Act
     MvcResult result =
@@ -88,5 +90,24 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(savedEntity.getReferenceNumber()).matches("L-\\w{3}-\\w{3}");
     assertThat(savedEntity.getCreatedBy()).isEqualTo("SYSTEM");
     assertThat(savedEntity.getProviderOfficeCode()).isEqualTo(command.getProviderOfficeCode());
+  }
+
+  @Test
+  void shouldReturnForbidden_whenProviderOfficeCodeNotAuthorized() throws Exception {
+    // Arrange
+    StartApplicationCommand command =
+        StartApplicationCommandGenerator.create(
+            builder -> builder.providerOfficeCode(UUID.randomUUID().toString()));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            post("/api/v0/applications:start-application")
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(command)))
+        .andExpect(status().isForbidden());
+
+    assertThat(applicationRepository.findAll()).isEmpty();
   }
 }

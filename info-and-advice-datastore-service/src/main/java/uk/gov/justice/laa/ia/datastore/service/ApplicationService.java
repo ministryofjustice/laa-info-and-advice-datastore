@@ -17,6 +17,7 @@ import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
+import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.EvidenceMapper;
@@ -58,9 +59,13 @@ public class ApplicationService {
    * Create an application.
    *
    * @return the full {@link ApplicationResponse} of the newly created application.
+   * @throws ProviderOfficeNotAuthorizedException if the requested provider office code is not one
+   *     of the user's authorized office codes
    */
   @Transactional
   public ApplicationResponse createApplication(StartApplicationCommand startApplication) {
+    validateProviderOfficeCode(startApplication.getProviderOfficeCode());
+
     ApplicationEntity entity = applicationMapper.toApplicationEntity(startApplication);
 
     entity.setApplicationState(ApplicationState.DRAFT);
@@ -102,13 +107,17 @@ public class ApplicationService {
    * Gets an Application or empty optional if not found.
    *
    * @return {@link ApplicationResponse}
+   * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
+   *     one of the user's authorized office codes
    */
   public Optional<ApplicationResponse> getApplication(UUID applicationId) {
     var findApplicationByIdSpecification =
         ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode());
-    return repository
-        .findOne(findApplicationByIdSpecification)
-        .map(applicationMapper::toApplication);
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(findApplicationByIdSpecification);
+    applicationOpt.ifPresent(
+        application -> validateProviderOfficeCode(application.getProviderOfficeCode()));
+    return applicationOpt.map(applicationMapper::toApplication);
   }
 
   /**
@@ -118,6 +127,8 @@ public class ApplicationService {
    * @param command the means data command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found
    * @throws EtagMismatchException if the eTag does not match the current entity value
+   * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
+   *     one of the user's authorized office codes
    */
   @Transactional
   public boolean updateMeansData(UUID applicationId, UpdateMeansDataCommand command) {
@@ -129,6 +140,7 @@ public class ApplicationService {
     }
 
     ApplicationEntity application = applicationOpt.get();
+    validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
 
     EligibilityResultEntity resultEntity =
@@ -153,6 +165,8 @@ public class ApplicationService {
    * @param command the declaration command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found.
    * @throws EtagMismatchException if the eTag does not match the current entity value
+   * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
+   *     one of the user's authorized office codes
    */
   @Transactional
   public boolean updateClientDeclaration(UUID applicationId, DeclarationCommand command) {
@@ -164,6 +178,7 @@ public class ApplicationService {
     }
 
     final ApplicationEntity application = applicationOpt.get();
+    validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
 
     DeclarationEntity declarationEntity = declarationMapper.toDeclarationEntity(command);
@@ -188,6 +203,8 @@ public class ApplicationService {
    * @param command the evidence command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found.
    * @throws EtagMismatchException if the eTag does not match the current entity value
+   * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
+   *     one of the user's authorized office codes
    */
   @Transactional
   public boolean updateEvidence(UUID applicationId, UpdateEvidenceCommand command) {
@@ -198,6 +215,7 @@ public class ApplicationService {
       return false;
     }
     final ApplicationEntity application = applicationOpt.get();
+    validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
 
     EvidenceEntity evidenceEntity = evidenceMapper.toEvidenceEntity(command);
@@ -224,6 +242,12 @@ public class ApplicationService {
     }
   }
 
+  private void validateProviderOfficeCode(String providerOfficeCode) {
+    if (!userContext.getOfficeCodes().contains(providerOfficeCode)) {
+      throw new ProviderOfficeNotAuthorizedException(providerOfficeCode);
+    }
+  }
+
   /**
    * Update scoping data for an application.
    *
@@ -231,6 +255,8 @@ public class ApplicationService {
    * @param command the scoping data command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found
    * @throws EtagMismatchException if the eTag does not match the current entity value
+   * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
+   *     one of the user's authorized office codes
    */
   @Transactional
   public boolean updateScopingData(UUID applicationId, UpdateScopingDataCommand command) {
@@ -242,6 +268,7 @@ public class ApplicationService {
     }
 
     ApplicationEntity application = applicationOpt.get();
+    validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
 
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
@@ -258,6 +285,8 @@ public class ApplicationService {
    * @param command the update command including eTag for optimistic concurrency control
    * @return true if application updated, false if not found
    * @throws EtagMismatchException if the eTag does not match the current entity value
+   * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
+   *     one of the user's authorized office codes
    */
   @Transactional
   public boolean updateApplication(UUID applicationId, UpdateApplicationCommand command) {
@@ -269,6 +298,7 @@ public class ApplicationService {
     }
 
     ApplicationEntity application = applicationOpt.get();
+    validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
 
     applicationMapper.updateApplicationEntity(command, application);

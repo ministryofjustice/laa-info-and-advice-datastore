@@ -31,7 +31,8 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final LocalDate dateSigned = LocalDate.of(2026, 8, 5);
@@ -70,7 +71,8 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final String payload =
@@ -98,7 +100,8 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -145,7 +148,8 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final String payload =
@@ -164,5 +168,41 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isConflict());
+  }
+
+  @Test
+  void shouldReturnForbidden_whenProviderOfficeCodeNotAuthorized() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(UUID.randomUUID().toString())))
+            .getId();
+    clearCache();
+    final String payload =
+        toJson(
+            DeclarationCommand.builder()
+                .eTag(0L)
+                .declarationConfirmation(true)
+                .dateSigned(java.time.LocalDate.now())
+                .build());
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateDeclarationData, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isForbidden());
+
+    clearCache();
+    assertThat(applicationRepository.findById(applicationId).orElseThrow().getDeclaration())
+        .isNull();
   }
 }

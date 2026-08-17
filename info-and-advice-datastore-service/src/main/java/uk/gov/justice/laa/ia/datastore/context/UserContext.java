@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.context;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Component;
@@ -17,8 +18,8 @@ public class UserContext {
   /** The user's firm code. */
   private String providerFirmCode = "";
 
-  /** The provider office code. */
-  private String providerOfficeCode = "";
+  /** The office codes the user is authorised for. */
+  private List<String> officeCodes = List.of();
 
   /** The current user. */
   private String currentUser = "SYSTEM";

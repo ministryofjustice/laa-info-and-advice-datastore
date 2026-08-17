@@ -38,7 +38,9 @@ public class EventRollbackIntegrationTest extends BaseIntegrationTest {
         .when(applicationRepository)
         .save(any(ApplicationEntity.class));
 
-    StartApplicationCommand command = StartApplicationCommandGenerator.create(null);
+    StartApplicationCommand command =
+        StartApplicationCommandGenerator.create(
+            builder -> builder.providerOfficeCode(PROVIDER_OFFICE_CODE));
 
     // Act
     mockMvc

@@ -31,6 +31,7 @@ public class UpdateApplicationIntegrationTest extends BaseIntegrationTest {
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
                             .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
                             .applicationState(ApplicationState.DRAFT)))
             .getId();
     clearCache();
@@ -69,6 +70,7 @@ public class UpdateApplicationIntegrationTest extends BaseIntegrationTest {
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
                             .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
                             .applicationState(ApplicationState.DRAFT)))
             .getId();
     clearCache();
@@ -121,7 +123,8 @@ public class UpdateApplicationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -138,5 +141,40 @@ public class UpdateApplicationIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isConflict());
+  }
+
+  @Test
+  void shouldReturnForbidden_whenProviderOfficeCodeNotAuthorized() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(UUID.randomUUID().toString())
+                            .applicationState(ApplicationState.DRAFT)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "applicationState": "COMPLETED"}
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isForbidden());
+
+    clearCache();
+    assertThat(applicationRepository.findById(applicationId).orElseThrow().getApplicationState())
+        .isEqualTo(ApplicationState.DRAFT);
   }
 }

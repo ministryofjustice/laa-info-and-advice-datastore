@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -30,7 +31,8 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                     builder -> {
                       builder
                           .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                          .providerFirmCode(FIRM_CODE);
+                          .providerFirmCode(FIRM_CODE)
+                          .providerOfficeCode(PROVIDER_OFFICE_CODE);
                     }))
             .getId();
     clearCache();
@@ -57,7 +59,8 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
@@ -104,7 +107,8 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                     builder -> {
                       builder
                           .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                          .providerFirmCode(FIRM_CODE);
+                          .providerFirmCode(FIRM_CODE)
+                          .providerOfficeCode(PROVIDER_OFFICE_CODE);
                     }))
             .getId();
     clearCache();
@@ -119,5 +123,35 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                 .content(payload))
         .andExpect(status().isConflict());
   }
+
   // 404
+
+  @Test
+  void shouldReturnForbidden_whenProviderOfficeCodeNotAuthorized() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(UUID.randomUUID().toString())))
+            .getId();
+    clearCache();
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateEvidence, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isForbidden());
+
+    clearCache();
+    assertThat(applicationRepository.findById(applicationId).orElseThrow().getEvidence()).isNull();
+  }
 }
