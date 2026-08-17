@@ -134,6 +134,7 @@ public class ApplicationServiceTest {
     final ApplicationSummary summary2 = new ApplicationSummary(entity2.getId(), "REF-002", null);
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
     when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
     when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
@@ -158,6 +159,7 @@ public class ApplicationServiceTest {
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1)));
     when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
 
     // Act
     final Page<ApplicationSummary> result =
@@ -171,6 +173,17 @@ public class ApplicationServiceTest {
     assertThat(result.getContent()).hasSize(1).contains(summary1);
     verify(repo, times(1)).findAll(any(Specification.class), any(Pageable.class));
     verify(mapper, times(1)).toApplicationSummary(any());
+  }
+
+  @Test
+  void shouldThrowException_whenGettingAllApplicationsWithNoAuthorizedOfficeCodes() {
+    // Arrange
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of());
+
+    // Act + Assert
+    assertThrows(IllegalArgumentException.class, () -> sut.getAllApplications(null, null, null));
+    verify(repo, never()).findAll(any(Specification.class), any(Pageable.class));
   }
 
   @Test

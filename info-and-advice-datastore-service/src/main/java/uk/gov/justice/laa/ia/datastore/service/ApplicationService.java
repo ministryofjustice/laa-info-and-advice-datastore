@@ -93,7 +93,8 @@ public class ApplicationService {
     int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
 
     Specification<ApplicationEntity> specificationToApply =
-        ApplicationSpecification.filterByProviderFirmCode(userContext.getProviderFirmCode());
+        ApplicationSpecification.filterByProviderContractInformation(
+            userContext.getProviderFirmCode(), userContext.getOfficeCodes());
     if (additionalFilteringSpecification != null) {
       specificationToApply = specificationToApply.and(additionalFilteringSpecification);
     }

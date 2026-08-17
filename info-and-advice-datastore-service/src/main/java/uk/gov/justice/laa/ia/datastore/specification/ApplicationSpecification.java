@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.specification;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -21,6 +22,13 @@ public class ApplicationSpecification {
             (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("id"), applicationId));
   }
 
+  /** Setups a specification for filtering ApplicationEntity by providerFirmCode and officeCodes. */
+  public static Specification<ApplicationEntity> filterByProviderContractInformation(
+      String providerFirmCode, List<String> officeCodes) {
+    return filterByProviderFirmCode(providerFirmCode)
+        .and(filterByProviderOfficesCodes(officeCodes));
+  }
+
   /** Setups a specification for filtering ApplicationEntity by providerFirmCode. */
   public static Specification<ApplicationEntity> filterByProviderFirmCode(String providerFirmCode) {
     if (providerFirmCode == null || providerFirmCode.isBlank()) {
@@ -28,6 +36,18 @@ public class ApplicationSpecification {
     }
     return (root, query, criteriaBuilder) ->
         criteriaBuilder.equal(root.get("providerFirmCode"), providerFirmCode);
+  }
+
+  /**
+   * Setups a specification for filtering ApplicationEntity by matching it's officeCode to the list
+   * of {@code officeCodes}.
+   */
+  public static Specification<ApplicationEntity> filterByProviderOfficesCodes(
+      List<String> officeCodes) {
+    if (officeCodes == null || officeCodes.isEmpty()) {
+      throw new IllegalArgumentException("officeCodes must not be null or empty");
+    }
+    return (root, query, criteriaBuilder) -> root.get("providerOfficeCode").in(officeCodes);
   }
 
   /** Setups a specification for filtering ApplicationEntity. */

@@ -49,4 +49,83 @@ public class ProviderOfficeCodeSpecificationIntegrationTest extends BaseIntegrat
     assertThat(applications).hasSize(1);
     assertThat(applications.iterator().next().getProviderOfficeCode()).isEqualTo(officeId);
   }
+
+  @Test
+  void whenProviderOfficesCodesSpecificationIsUsed_thenReturnApplicationsWithMatchingOfficeCodes() {
+    // Arrange
+    final String officeCode1 = UUID.randomUUID().toString();
+    final String officeCode2 = UUID.randomUUID().toString();
+    final ApplicationEntity applicationWithFirstOfficeCode =
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> builder.withDefaultClientDetails().providerOfficeCode(officeCode1));
+    final ApplicationEntity applicationWithSecondOfficeCode =
+        ApplicationEntityGenerator.createWithoutId(
+            builder -> builder.withDefaultClientDetails().providerOfficeCode(officeCode2));
+    final ApplicationEntity applicationWithUnauthorizedOfficeCode =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerOfficeCode(UUID.randomUUID().toString()));
+    applicationRepository.saveAndFlush(applicationWithFirstOfficeCode);
+    applicationRepository.saveAndFlush(applicationWithSecondOfficeCode);
+    applicationRepository.saveAndFlush(applicationWithUnauthorizedOfficeCode);
+    clearCache();
+
+    final Specification<ApplicationEntity> specification =
+        ApplicationSpecification.filterByProviderOfficesCodes(List.of(officeCode1, officeCode2));
+
+    // Act
+    final List<ApplicationEntity> applications = applicationRepository.findAll(specification);
+
+    // Assert
+    assertThat(applications).hasSize(2);
+    assertThat(applications)
+        .extracting(ApplicationEntity::getProviderOfficeCode)
+        .containsExactlyInAnyOrder(officeCode1, officeCode2);
+  }
+
+  @Test
+  void whenProviderContractInformationSpecificationIsUsed_thenReturnMatchingApplications() {
+    // Arrange
+    final String providerFirmCode = "123456";
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity matchingApplication =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(providerFirmCode)
+                    .providerOfficeCode(officeCode));
+    final ApplicationEntity differentFirmCodeApplication =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode("654321")
+                    .providerOfficeCode(officeCode));
+    final ApplicationEntity unauthorizedOfficeCodeApplication =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(providerFirmCode)
+                    .providerOfficeCode(UUID.randomUUID().toString()));
+    applicationRepository.saveAndFlush(matchingApplication);
+    applicationRepository.saveAndFlush(differentFirmCodeApplication);
+    applicationRepository.saveAndFlush(unauthorizedOfficeCodeApplication);
+    clearCache();
+
+    final Specification<ApplicationEntity> specification =
+        ApplicationSpecification.filterByProviderContractInformation(
+            providerFirmCode, List.of(officeCode));
+
+    // Act
+    final List<ApplicationEntity> applications = applicationRepository.findAll(specification);
+
+    // Assert
+    assertThat(applications).hasSize(1);
+    assertThat(applications.getFirst().getProviderFirmCode()).isEqualTo(providerFirmCode);
+    assertThat(applications.getFirst().getProviderOfficeCode()).isEqualTo(officeCode);
+  }
 }
