@@ -69,7 +69,7 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-flyway:4.1.0")
     implementation("org.flywaydb:flyway-database-postgresql")
-    implementation 'software.amazon.jdbc:aws-advanced-jdbc-wrapper:2.3.3'
+    implementation 'software.amazon.jdbc:aws-advanced-jdbc-wrapper:2.6.5'
     runtimeOnly 'org.postgresql:postgresql:42.7.13'
     runtimeOnly "org.flywaydb:flyway-database-postgresql"
     testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.5"
