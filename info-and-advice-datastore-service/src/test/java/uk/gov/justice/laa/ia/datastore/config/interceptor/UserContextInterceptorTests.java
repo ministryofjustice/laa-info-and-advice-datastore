@@ -152,7 +152,8 @@ public class UserContextInterceptorTests {
     // Assert
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
     assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-    assertThat(response.getContentAsString()).contains("Invalid or missing authentication token");
+    assertThat(response.getContentAsString())
+        .contains("Forwarded token identity does not match caller identity");
   }
 
   @Test
@@ -168,7 +169,8 @@ public class UserContextInterceptorTests {
     // Assert
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
     assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-    assertThat(response.getContentAsString()).contains("Invalid or missing authentication token");
+    assertThat(response.getContentAsString())
+        .contains("Forwarded token identity does not match caller identity");
   }
 
   @Test
@@ -184,7 +186,7 @@ public class UserContextInterceptorTests {
     // Assert
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
     assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-    assertThat(response.getContentAsString()).contains("Invalid or missing authentication token");
+    assertThat(response.getContentAsString()).contains("Missing oid or tid claim");
   }
 
   @Test
@@ -200,6 +202,6 @@ public class UserContextInterceptorTests {
     // Assert
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
     assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-    assertThat(response.getContentAsString()).contains("Invalid or missing authentication token");
+    assertThat(response.getContentAsString()).contains("Missing oid or tid claim");
   }
 }

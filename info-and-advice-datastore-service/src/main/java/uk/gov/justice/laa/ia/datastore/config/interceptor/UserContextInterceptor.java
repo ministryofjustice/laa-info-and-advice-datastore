@@ -39,9 +39,14 @@ public class UserContextInterceptor implements HandlerInterceptor {
     Jwt authenticatedJwt;
     try {
       authenticatedJwt = authenticateJwt(request);
-      verifyIdentityMatchesPrimaryToken(authenticatedJwt);
     } catch (Exception e) {
       writeUnauthorized(response, "Invalid or missing authentication token");
+      return false;
+    }
+    try {
+      verifyIdentityMatchesPrimaryToken(authenticatedJwt);
+    } catch (IllegalArgumentException e) {
+      writeUnauthorized(response, e.getMessage());
       return false;
     }
     try {
