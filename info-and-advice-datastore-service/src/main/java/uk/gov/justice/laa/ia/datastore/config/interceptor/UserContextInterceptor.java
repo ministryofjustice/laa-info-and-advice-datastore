@@ -10,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import uk.gov.justice.laa.ia.datastore.config.TrustedCallerJwtDecoder;
@@ -24,6 +26,8 @@ public class UserContextInterceptor implements HandlerInterceptor {
   private static final String AUTHORIZATION_HEADER = "X-Authorization";
   private static final String BEARER_PREFIX = "Bearer ";
   private static final String LAA_ACCOUNTS_CLAIM = "LAA_ACCOUNTS";
+  private static final String OID_CLAIM = "oid";
+  private static final String TID_CLAIM = "tid";
 
   private final UserContext userContext;
   private final TrustedCallerJwtDecoder trustedCallerJwtDecoder;
@@ -35,6 +39,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
     Jwt authenticatedJwt;
     try {
       authenticatedJwt = authenticateJwt(request);
+      verifyIdentityMatchesPrimaryToken(authenticatedJwt);
     } catch (Exception e) {
       writeUnauthorized(response, "Invalid or missing authentication token");
       return false;
@@ -65,6 +70,25 @@ public class UserContextInterceptor implements HandlerInterceptor {
   private Jwt authenticateJwt(HttpServletRequest request) {
     final String jwt = extractBearerToken(request.getHeader(AUTHORIZATION_HEADER));
     return trustedCallerJwtDecoder.decode(jwt);
+  }
+
+  private void verifyIdentityMatchesPrimaryToken(Jwt forwardedJwt) {
+    if (!(SecurityContextHolder.getContext().getAuthentication()
+        instanceof JwtAuthenticationToken primaryToken)) {
+      throw new IllegalArgumentException("Missing primary authentication token");
+    }
+    final Jwt primaryJwt = primaryToken.getToken();
+    final String primaryOid = primaryJwt.getClaimAsString(OID_CLAIM);
+    final String primaryTid = primaryJwt.getClaimAsString(TID_CLAIM);
+    final String forwardedOid = forwardedJwt.getClaimAsString(OID_CLAIM);
+    final String forwardedTid = forwardedJwt.getClaimAsString(TID_CLAIM);
+
+    if (primaryOid == null || primaryTid == null || forwardedOid == null || forwardedTid == null) {
+      throw new IllegalArgumentException("Missing oid or tid claim");
+    }
+    if (!primaryOid.equals(forwardedOid) || !primaryTid.equals(forwardedTid)) {
+      throw new IllegalArgumentException("Forwarded token identity does not match caller identity");
+    }
   }
 
   private void populateUserContext(Jwt authenticatedJwt) {
