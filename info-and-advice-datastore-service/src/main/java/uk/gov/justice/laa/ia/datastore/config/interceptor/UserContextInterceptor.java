@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 public class UserContextInterceptor implements HandlerInterceptor {
   private static final String AUTHORIZATION_HEADER = "X-Authorization";
   private static final String BEARER_PREFIX = "Bearer ";
+  private static final String LAA_ACCOUNTS_CLAIM = "LAA_ACCOUNTS";
 
   private final UserContext userContext;
   private final TrustedCallerJwtDecoder trustedCallerJwtDecoder;
@@ -41,7 +43,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
       populateUserContext(authenticatedJwt);
       return true;
     } catch (IllegalArgumentException e) {
-      writeUnauthorized(response, "Missing or invalid FIRM_CODE claim in JWT");
+      writeUnauthorized(response, e.getMessage());
       return false;
     }
   }
@@ -69,9 +71,16 @@ public class UserContextInterceptor implements HandlerInterceptor {
     final String providerFirmCodeClaim = authenticatedJwt.getClaimAsString("FIRM_CODE");
 
     if (providerFirmCodeClaim == null || providerFirmCodeClaim.isEmpty()) {
-      throw new IllegalArgumentException("Missing FIRM_CODE claim in JWT");
+      throw new IllegalArgumentException("Missing or invalid FIRM_CODE claim in JWT");
+    }
+
+    final List<String> officeCodesClaim = authenticatedJwt.getClaimAsStringList(LAA_ACCOUNTS_CLAIM);
+
+    if (officeCodesClaim == null || officeCodesClaim.isEmpty()) {
+      throw new IllegalArgumentException("Missing or invalid LAA_ACCOUNTS claim in JWT");
     }
 
     userContext.setProviderFirmCode(providerFirmCodeClaim);
+    userContext.setOfficeCodes(officeCodesClaim);
   }
 }

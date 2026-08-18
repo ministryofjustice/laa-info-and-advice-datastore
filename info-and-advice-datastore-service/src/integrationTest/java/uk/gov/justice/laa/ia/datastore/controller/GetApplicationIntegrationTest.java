@@ -33,7 +33,8 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
               builder
                   .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
                   .referenceNumber("L-ABC-123")
-                  .providerFirmCode(FIRM_CODE);
+                  .providerFirmCode(FIRM_CODE)
+                  .providerOfficeCode(PROVIDER_OFFICE_CODE);
             });
     ApplicationEntity savedEntity = applicationRepository.save(entity);
 
@@ -62,7 +63,8 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
             builder ->
                 builder
                     .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                    .providerFirmCode(FIRM_CODE));
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
     ApplicationEntity savedEntity = applicationRepository.save(entity);
     eligibilityResultRepository.saveAndFlush(
         EligibilityResultEntityGenerator.createEligibilityResult(
@@ -94,5 +96,24 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
     mockMvc
         .perform(get("/api/v0/applications/{id}", UUID.randomUUID()).withBearerReadToken())
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void shouldReturnForbidden_whenProviderOfficeCodeNotAuthorized() throws Exception {
+    // Arrange
+    ApplicationEntity entity =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(UUID.randomUUID().toString()));
+    ApplicationEntity savedEntity = applicationRepository.save(entity);
+    clearCache();
+
+    // Act & Assert
+    mockMvc
+        .perform(get("/api/v0/applications/{id}", savedEntity.getId()).withBearerReadToken())
+        .andExpect(status().isForbidden());
   }
 }

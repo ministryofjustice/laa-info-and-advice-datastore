@@ -33,7 +33,8 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -100,7 +101,8 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -155,5 +157,41 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturnForbidden_whenProviderOfficeCodeNotAuthorized() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(UUID.randomUUID().toString())))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "data": {"question": "answer"}, "result": {"status": "ELIGIBLE"}}
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}:update-means-data", applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isForbidden());
+
+    clearCache();
+    assertThat(
+            eligibilityResultRepository.findAll().stream()
+                .anyMatch(result -> result.getApplicationId().equals(applicationId)))
+        .isFalse();
   }
 }

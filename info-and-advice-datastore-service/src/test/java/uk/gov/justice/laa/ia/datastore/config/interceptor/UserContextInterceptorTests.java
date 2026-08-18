@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,6 +45,7 @@ public class UserContextInterceptorTests {
   void preHandle_shouldAuthenticate_xAuthorizatonHeader() throws Exception {
     // Arrange
     when(mockJwt.getClaimAsString("FIRM_CODE")).thenReturn("123456");
+    when(mockJwt.getClaimAsStringList("LAA_ACCOUNTS")).thenReturn(List.of("office1"));
 
     // Act & Assert
     assertTrue(interceptor.preHandle(request, response, null));
@@ -53,13 +55,16 @@ public class UserContextInterceptorTests {
   void preHandle_shouldPopulateUserContext_whenValidJwt() throws Exception {
     // Arrange
     String expectedProviderFirmCode = "123456";
+    List<String> expectedOfficeCodes = List.of("office1", "office2");
     when(mockJwt.getClaimAsString("FIRM_CODE")).thenReturn(expectedProviderFirmCode);
+    when(mockJwt.getClaimAsStringList("LAA_ACCOUNTS")).thenReturn(expectedOfficeCodes);
 
     // Act & Assert
     assertTrue(interceptor.preHandle(request, response, null));
 
     // Assert
     assertThat(userContext.getProviderFirmCode()).isEqualTo(expectedProviderFirmCode);
+    assertThat(userContext.getOfficeCodes()).isEqualTo(expectedOfficeCodes);
   }
 
   @Test
@@ -89,5 +94,20 @@ public class UserContextInterceptorTests {
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
     assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
     assertThat(response.getContentAsString()).contains("Missing or invalid FIRM_CODE claim in JWT");
+  }
+
+  @Test
+  void preHandle_whenMissingOfficeCodesClaim_shouldReturnUnauthorized() throws Exception {
+    // Arrange
+    when(mockJwt.getClaimAsString("FIRM_CODE")).thenReturn("123456");
+    when(mockJwt.getClaimAsStringList("LAA_ACCOUNTS")).thenReturn(null);
+
+    // Act & Assert
+    assertFalse(interceptor.preHandle(request, response, null));
+
+    // Assert
+    assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
+    assertThat(response.getContentAsString())
+        .contains("Missing or invalid LAA_ACCOUNTS claim in JWT");
   }
 }

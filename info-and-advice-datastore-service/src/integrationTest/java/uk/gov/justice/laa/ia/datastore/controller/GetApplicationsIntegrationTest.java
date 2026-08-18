@@ -39,19 +39,39 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   void setupApplications() {
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     clearCache();
   }
 
@@ -78,27 +98,26 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   void shouldGetApplicationsSuccessfully_withOfficeIdFilter() throws Exception {
     // Arrange
     setupApplications();
-    final UUID officeId = UUID.randomUUID();
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
             builder ->
                 builder
                     .withDefaultClientDetails()
                     .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(officeId.toString())));
+                    .providerOfficeCode(SECONDARY_PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
             builder ->
                 builder
                     .withDefaultClientDetails()
                     .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(officeId.toString())));
+                    .providerOfficeCode(SECONDARY_PROVIDER_OFFICE_CODE)));
     clearCache();
     // Act & Assert
     mockMvc
         .perform(
             get("/api/v0/applications")
-                .param("officeId", officeId.toString())
+                .param("officeId", SECONDARY_PROVIDER_OFFICE_CODE)
                 .withBearerReadToken())
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -106,6 +125,28 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.content[0].id").isNotEmpty())
         .andExpect(jsonPath("$.content[0].referenceNumber").isNotEmpty())
         .andExpect(jsonPath("$.totalElements").value(2));
+  }
+
+  @Test
+  void shouldExcludeApplications_whenProviderOfficeCodeNotAuthorized() throws Exception {
+    // Arrange
+    setupApplications();
+    applicationRepository.save(
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(UUID.randomUUID().toString())));
+    clearCache();
+
+    // Act & Assert - the unauthorized application must not appear even though the firm code matches
+    mockMvc
+        .perform(get("/api/v0/applications").withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content", hasSize(DEFAULT_NUMBER_OF_APPLICATIONS)))
+        .andExpect(jsonPath("$.totalElements").value(DEFAULT_NUMBER_OF_APPLICATIONS));
   }
 
   @Test
@@ -118,6 +159,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
                 builder
                     .withDefaultClientDetails()
                     .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
                     .applicationState(ApplicationState.COMPLETED)));
     clearCache();
     // Act & Assert

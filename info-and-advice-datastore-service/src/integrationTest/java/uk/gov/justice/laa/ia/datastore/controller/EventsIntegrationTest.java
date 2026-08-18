@@ -31,7 +31,9 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
 
   @Test
   void shouldRecordEvent_whenApplicationCreated() throws Exception {
-    StartApplicationCommand command = StartApplicationCommandGenerator.create(null);
+    StartApplicationCommand command =
+        StartApplicationCommandGenerator.create(
+            builder -> builder.providerOfficeCode(PROVIDER_OFFICE_CODE));
     String payload = toJson(command);
 
     mockMvc
@@ -150,7 +152,6 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     assertThat(event.getUrlPath()).contains(expectedUrlContains);
     assertThat(event.getChangedBy()).isEqualTo("SYSTEM");
     assertThat(event.getProviderFirmCode()).isEqualTo(FIRM_CODE);
-    assertThat(event.getProviderOfficeCode()).isEqualTo(PROVIDER_OFFICE_CODE);
     assertThat(event.getSequenceNumber()).isNotNull();
     assertThat(event.getCreatedAt()).isNotNull();
     assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(expectedPayload));

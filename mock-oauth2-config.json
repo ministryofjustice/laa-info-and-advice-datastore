@@ -11,7 +11,8 @@
           "claims": {
             "aud": "default",
             "scp": "DataStore.Access",
-            "FIRM_CODE": "123456"
+            "FIRM_CODE": "123456",
+            "LAA_ACCOUNTS": ["123456"]
           }
         }
       ]

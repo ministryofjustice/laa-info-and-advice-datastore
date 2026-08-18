@@ -34,6 +34,7 @@ import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
+import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
@@ -50,6 +51,7 @@ import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
@@ -83,6 +85,7 @@ public class ApplicationServiceTest {
     final UUID generatedId = UUID.randomUUID();
     final String user = "TEST_USER";
 
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeId.toString()));
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
     when(repo.save(any(ApplicationEntity.class)))
         .thenAnswer(
@@ -107,6 +110,22 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
+    // Arrange
+    final UUID officeId = UUID.randomUUID();
+    final StartApplicationCommand cmd =
+        StartApplicationCommand.builder().providerOfficeCode(officeId.toString()).build();
+
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+
+    // Act + Assert
+    assertThrows(ProviderOfficeNotAuthorizedException.class, () -> sut.createApplication(cmd));
+
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any(StartApplicationCommand.class));
+  }
+
+  @Test
   void shouldGetAllApplications() {
     // Arrange
     final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();
@@ -115,6 +134,7 @@ public class ApplicationServiceTest {
     final ApplicationSummary summary2 = new ApplicationSummary(entity2.getId(), "REF-002", null);
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
     when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
     when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
@@ -139,6 +159,7 @@ public class ApplicationServiceTest {
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1)));
     when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
 
     // Act
     final Page<ApplicationSummary> result =
@@ -155,12 +176,26 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void shouldThrowException_whenGettingAllApplicationsWithNoAuthorizedOfficeCodes() {
+    // Arrange
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of());
+
+    // Act + Assert
+    assertThrows(IllegalArgumentException.class, () -> sut.getAllApplications(null, null, null));
+    verify(repo, never()).findAll(any(Specification.class), any(Pageable.class));
+  }
+
+  @Test
   void shouldGetApplication() {
     // Arrange
-    final ApplicationEntity entity = ApplicationEntity.builder().id(UUID.randomUUID()).build();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity entity =
+        ApplicationEntity.builder().id(UUID.randomUUID()).providerOfficeCode(officeCode).build();
     final ApplicationResponse application =
         ApplicationResponse.builder().id(entity.getId()).build();
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
 
     when(mapper.toApplication(entity)).thenReturn(application);
@@ -188,12 +223,35 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void shouldThrowException_whenGettingApplicationForUnauthorizedOffice() {
+    // Arrange
+    final ApplicationEntity entity =
+        ApplicationEntity.builder()
+            .id(UUID.randomUUID())
+            .providerOfficeCode(UUID.randomUUID().toString())
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
+
+    // Act + Assert
+    assertThrows(
+        ProviderOfficeNotAuthorizedException.class, () -> sut.getApplication(entity.getId()));
+    verify(mapper, never()).toApplication(any());
+  }
+
+  @Test
   void shouldUpdateMeansData() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final Instant originalModifiedAt = Instant.now().minusSeconds(60);
+    final String officeCode = UUID.randomUUID().toString();
     final ApplicationEntity application =
-        ApplicationEntity.builder().id(applicationId).modifiedAt(originalModifiedAt).build();
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .modifiedAt(originalModifiedAt)
+            .build();
     final Object data = new ObjectMapper().createObjectNode().put("question", "answer");
     final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
     final UpdateMeansDataCommand command =
@@ -203,6 +261,7 @@ public class ApplicationServiceTest {
     final String user = "TEST_USER";
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn(user);
     when(objectMapper.valueToTree(data)).thenReturn(dataNode);
@@ -236,15 +295,40 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateMeansData_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(UUID.randomUUID().toString())
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
+    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void updateDeclaration_shouldCreateDeclaration_whenApplicationHasNoDeclaration() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
     final DeclarationCommand declarationCommand =
         DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
     final ApplicationEntity applicationEntity = new ApplicationEntity();
+    applicationEntity.setProviderOfficeCode(officeCode);
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
 
@@ -301,6 +385,8 @@ public class ApplicationServiceTest {
               builder.modifiedBy(originalUser);
             });
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes())
+        .thenReturn(List.of(applicationEntity.getProviderOfficeCode()));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
 
     assertThat(applicationEntity.getDeclaration().getCreatedAt()).isEqualTo(originalCreatedTime);
@@ -363,6 +449,7 @@ public class ApplicationServiceTest {
 
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(application.getProviderOfficeCode()));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(EvidenceEntity.builder().build());
     when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(savedEvidence);
@@ -393,6 +480,7 @@ public class ApplicationServiceTest {
 
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(application.getProviderOfficeCode()));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(mappedEvidence);
     when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(savedEvidence);
@@ -411,8 +499,11 @@ public class ApplicationServiceTest {
   @Test
   void shouldRecordEvent_whenApplicationCreated() {
     // Arrange
-    final StartApplicationCommand cmd = StartApplicationCommand.builder().build();
+    final String officeCode = UUID.randomUUID().toString();
+    final StartApplicationCommand cmd =
+        StartApplicationCommand.builder().providerOfficeCode(officeCode).build();
     final ApplicationEntity entity = new ApplicationEntity();
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
     when(repo.save(any(ApplicationEntity.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -427,13 +518,16 @@ public class ApplicationServiceTest {
   void shouldRecordEvent_whenMeansDataUpdated() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
     final Object data = new ObjectMapper().createObjectNode().put("question", "answer");
     final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode objectNode = new ObjectMapper().createObjectNode();
-    final ApplicationEntity application = ApplicationEntity.builder().id(applicationId).build();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).providerOfficeCode(officeCode).build();
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(objectMapper.valueToTree(data)).thenReturn(objectNode);
     when(objectMapper.valueToTree(meansResult)).thenReturn(objectNode);
@@ -459,12 +553,16 @@ public class ApplicationServiceTest {
   void shouldRecordEvent_whenDeclarationUpdated() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
     final DeclarationCommand command =
         DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
+    final ApplicationEntity applicationEntity = new ApplicationEntity();
+    applicationEntity.setProviderOfficeCode(officeCode);
     when(userContext.getProviderFirmCode()).thenReturn("123456");
-    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(new ApplicationEntity()));
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
     when(declarationMapper.toDeclarationEntity(command)).thenReturn(declarationEntity);
 
     // Act
@@ -495,6 +593,7 @@ public class ApplicationServiceTest {
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(application.getProviderOfficeCode()));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(EvidenceEntity.builder().build());
     when(evidenceRepository.save(any(EvidenceEntity.class)))
@@ -524,9 +623,14 @@ public class ApplicationServiceTest {
   void updateMeansData_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
     final ApplicationEntity application =
-        ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
@@ -541,8 +645,11 @@ public class ApplicationServiceTest {
   void updateClientDeclaration_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
     final ApplicationEntity application = new ApplicationEntity(); // eTag = 0
+    application.setProviderOfficeCode(officeCode);
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
@@ -555,11 +662,31 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateClientDeclaration_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application = new ApplicationEntity();
+    application.setProviderOfficeCode(UUID.randomUUID().toString());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateClientDeclaration(
+                applicationId, DeclarationCommand.builder().eTag(0L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void updateEvidence_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null)); // eTag = 0
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(application.getProviderOfficeCode()));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
@@ -572,17 +699,60 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateEvidence_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateEvidence(
+                application.getId(), UpdateEvidenceCommand.builder().eTag(0L).build()));
+    verify(evidenceRepository, never()).save(any(EvidenceEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateScopingData_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application = new ApplicationEntity();
+    application.setProviderOfficeCode(UUID.randomUUID().toString());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateScopingData(
+                applicationId, UpdateScopingDataCommand.builder().eTag(0L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void shouldUpdateApplication() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
     final ApplicationEntity application =
-        ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0
     final UpdateApplicationCommand command =
         UpdateApplicationCommand.builder()
             .eTag(0L)
             .applicationState(ApplicationState.COMPLETED)
             .build();
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act
@@ -617,9 +787,14 @@ public class ApplicationServiceTest {
   void updateApplication_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
     final ApplicationEntity application =
-        ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
@@ -628,6 +803,29 @@ public class ApplicationServiceTest {
         () ->
             sut.updateApplication(
                 applicationId, UpdateApplicationCommand.builder().eTag(99L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateApplication_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(UUID.randomUUID().toString())
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateApplication(
+                applicationId, UpdateApplicationCommand.builder().eTag(0L).build()));
+    verify(mapper, never()).updateApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 }

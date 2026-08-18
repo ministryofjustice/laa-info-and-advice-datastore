@@ -48,6 +48,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
+   * The handler for ProviderOfficeNotAuthorizedException.
+   *
+   * @param exception the exception
+   * @return 403 Forbidden response
+   */
+  @ExceptionHandler(ProviderOfficeNotAuthorizedException.class)
+  public ResponseEntity<ProblemDetail> handleProviderOfficeNotAuthorizedException(
+      ProviderOfficeNotAuthorizedException exception) {
+    log.warn("Provider office not authorized: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
+  }
+
+  /**
    * The handler for Exception.
    *
    * @param exception the exception
