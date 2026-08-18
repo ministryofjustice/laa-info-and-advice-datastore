@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.justice.laa.ia.datastore.config.JacksonConfig;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
@@ -25,9 +26,11 @@ import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
-import uk.gov.justice.laa.ia.datastore.model.EligibilityResultResponse;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityResult;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
@@ -41,11 +44,13 @@ import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
       ClientDetailsMapperImpl.class,
       AddressMapperImpl.class,
       DateTimeMapperImpl.class,
+      JsonNodeMapperImpl.class,
+      JacksonConfig.class,
     })
 public class ApplicationMapperTest {
   @Autowired private ApplicationMapper sut;
+  @Autowired private ObjectMapper objectMapper;
   @MockitoBean private UserContext userContext;
-  @MockitoBean private ObjectMapper objectMapper;
 
   @Test
   void toApplicationSummary_shouldMapSummaryFields() {
@@ -96,8 +101,8 @@ public class ApplicationMapperTest {
     final ApplicationResponse mappedModel = sut.toApplication(application);
 
     assertEquals(application.getId(), mappedModel.getId());
-    assertEquals(application.getProviderFirmId(), mappedModel.getProviderFirmId());
-    assertEquals(application.getProviderOfficeId(), mappedModel.getProviderOfficeId());
+    assertEquals(application.getProviderFirmCode(), mappedModel.getProviderFirmCode());
+    assertEquals(application.getProviderOfficeCode(), mappedModel.getProviderOfficeCode());
     assertEquals(application.getApplicationState(), mappedModel.getApplicationState());
     assertEquals(application.getReasonForReapplication(), mappedModel.getReasonForReapplication());
     assertEquals(
@@ -156,23 +161,92 @@ public class ApplicationMapperTest {
   }
 
   @Test
-  void startApplicationCommand_toApplication_shouldSetProviderFirmId() {
+  void startApplicationCommand_toApplication_shouldSetProviderFirmCode() {
     // Arrange
-    final UUID providerFirmId = UUID.randomUUID();
-    when(userContext.getProviderFirmId()).thenReturn(providerFirmId);
+    final String providerFirmCode = "123456";
+    when(userContext.getProviderFirmCode()).thenReturn(providerFirmCode);
     final StartApplicationCommand cmd = StartApplicationCommandGenerator.create(null);
     // Act
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
 
     // Assert
-    assertEquals(providerFirmId, mappedModel.getProviderFirmId());
+    assertEquals(providerFirmCode, mappedModel.getProviderFirmCode());
   }
 
-  private static void assertEligibiltyEquals(
-      EligibilityResultEntity expected, EligibilityResultResponse model) {
-    assertEquals(expected.getEligibilityResultId(), model.getEligibilityResultId());
-    assertEquals(expected.getApplicationId(), model.getApplicationId());
-    assertEquals(expected.getCreatedAt(), model.getCreatedAt().toInstant());
-    assertEquals(expected.getResultJson(), model.getEligibilityResult());
+  private void assertEligibiltyEquals(EligibilityResultEntity expected, EligibilityResult model) {
+    assertEquals(expected.getData(), objectMapper.valueToTree(model.getData()));
+    assertEquals(expected.getResultJson(), objectMapper.valueToTree(model.getResult()));
+  }
+
+  @Test
+  void updateApplicationEntity_shouldUpdateApplicationState_whenSet() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> builder.applicationState(ApplicationState.DRAFT));
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+
+    // Act
+    sut.updateApplicationEntity(command, application);
+
+    // Assert
+    assertEquals(ApplicationState.COMPLETED, application.getApplicationState());
+  }
+
+  @Test
+  void updateApplicationEntity_shouldLeaveApplicationStateUnchanged_whenNotSet() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> builder.applicationState(ApplicationState.DRAFT));
+    final UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+
+    // Act
+    sut.updateApplicationEntity(command, application);
+
+    // Assert
+    assertEquals(ApplicationState.DRAFT, application.getApplicationState());
+  }
+
+  @Test
+  void updateApplicationEntity_shouldSetModifiedBy() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final ApplicationEntity application = ApplicationEntityGenerator.createWithId(null);
+    final UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+
+    // Act
+    sut.updateApplicationEntity(command, application);
+
+    // Assert
+    assertEquals("USERCONTEXT:SYSTEM", application.getModifiedBy());
+  }
+
+  @Test
+  void updateApplicationEntity_shouldNotChangeProtectedFields() {
+    // Arrange
+    final ApplicationEntity application = ApplicationEntityGenerator.createWithId(null);
+    final UUID originalId = application.getId();
+    final String originalCreatedBy = application.getCreatedBy();
+    final var originalCreatedAt = application.getCreatedAt();
+    final var originalModifiedAt = application.getModifiedAt();
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+
+    // Act
+    sut.updateApplicationEntity(command, application);
+
+    // Assert
+    assertEquals(originalId, application.getId());
+    assertEquals(originalCreatedBy, application.getCreatedBy());
+    assertEquals(originalCreatedAt, application.getCreatedAt());
+    assertEquals(originalModifiedAt, application.getModifiedAt());
   }
 }

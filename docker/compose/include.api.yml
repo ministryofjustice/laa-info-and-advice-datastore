@@ -1,0 +1,31 @@
+# Reusable building block: the datastore API service on its own.
+# Other repos (e.g. laa-record-controlled-work-api) include this file directly,
+# alongside include.postgres.yml, to bring the datastore into a larger compose stack.
+services:
+  info-and-advice-api:
+    container_name: info-and-advice-api
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - mock-oauth2-server
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - DB_URL=jdbc:postgresql://postgres:5432/laa_info_advice_datastore
+      - DB_USERNAME=${DB_USERNAME:-laa_user}
+      - DB_PASSWORD=${DB_PASSWORD:-laa_password}
+      # Defaults to the mock OAuth2 server; set these in .env to switch to Entra (see .env.example).
+      - LAA_OAUTH2_ISSUER_URI=${LAA_OAUTH2_ISSUER_URI:-http://host.docker.internal:9090/default}
+      - LAA_OAUTH2_AUDIENCE=${LAA_OAUTH2_AUDIENCE:-default}
+      # Trusts a caller (e.g. RCW API) that forwards its own token unchanged as X-Authorization.
+      - TRUSTED_CALLER_AUDIENCE=${TRUSTED_CALLER_AUDIENCE:-default}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s

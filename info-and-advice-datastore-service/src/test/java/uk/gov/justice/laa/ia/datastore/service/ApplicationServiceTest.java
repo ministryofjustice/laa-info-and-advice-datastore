@@ -47,6 +47,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
@@ -75,9 +76,9 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID officeId = UUID.randomUUID();
     final StartApplicationCommand cmd =
-        StartApplicationCommand.builder().providerOfficeId(officeId).build();
+        StartApplicationCommand.builder().providerOfficeCode(officeId.toString()).build();
     final ApplicationEntity entity = new ApplicationEntity();
-    entity.setProviderOfficeId(officeId);
+    entity.setProviderOfficeCode(officeId.toString());
     entity.setClientDetails(ClientDetailsEntity.builder().build());
     final UUID generatedId = UUID.randomUUID();
     final String user = "TEST_USER";
@@ -99,7 +100,7 @@ public class ApplicationServiceTest {
 
     // Assert
     assertThat(result.getId()).isEqualTo(generatedId);
-    assertThat(entity.getProviderOfficeId()).isEqualTo(officeId);
+    assertThat(entity.getProviderOfficeCode()).isEqualTo(officeId.toString());
     assertThat(entity.getApplicationState()).isEqualTo(ApplicationState.DRAFT);
 
     verify(repo, times(1)).save(entity);
@@ -113,7 +114,7 @@ public class ApplicationServiceTest {
     final ApplicationSummary summary1 = new ApplicationSummary(entity1.getId(), "REF-001", null);
     final ApplicationSummary summary2 = new ApplicationSummary(entity2.getId(), "REF-002", null);
 
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1, entity2)));
     when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
@@ -137,7 +138,7 @@ public class ApplicationServiceTest {
     when(repo.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(entity1)));
     when(mapper.toApplicationSummary(entity1)).thenReturn(summary1);
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
 
     // Act
     final Page<ApplicationSummary> result =
@@ -159,7 +160,7 @@ public class ApplicationServiceTest {
     final ApplicationEntity entity = ApplicationEntity.builder().id(UUID.randomUUID()).build();
     final ApplicationResponse application =
         ApplicationResponse.builder().id(entity.getId()).build();
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
 
     when(mapper.toApplication(entity)).thenReturn(application);
@@ -176,7 +177,7 @@ public class ApplicationServiceTest {
   @Test
   void shouldReturnEmptyOptional_whenApplicationDoesNotExist() {
     // Arrange
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
@@ -193,14 +194,19 @@ public class ApplicationServiceTest {
     final Instant originalModifiedAt = Instant.now().minusSeconds(60);
     final ApplicationEntity application =
         ApplicationEntity.builder().id(applicationId).modifiedAt(originalModifiedAt).build();
-    final UpdateMeansDataCommand command = UpdateMeansDataCommand.builder().eTag(0L).build();
-    final ObjectNode objectNode = new ObjectMapper().createObjectNode();
+    final Object data = new ObjectMapper().createObjectNode().put("question", "answer");
+    final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final UpdateMeansDataCommand command =
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
+    final ObjectNode dataNode = new ObjectMapper().createObjectNode().put("question", "answer");
+    final ObjectNode resultNode = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
     final String user = "TEST_USER";
 
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn(user);
-    when(objectMapper.valueToTree(command)).thenReturn(objectNode);
+    when(objectMapper.valueToTree(data)).thenReturn(dataNode);
+    when(objectMapper.valueToTree(meansResult)).thenReturn(resultNode);
 
     // Act
     boolean result = sut.updateMeansData(applicationId, command);
@@ -211,14 +217,15 @@ public class ApplicationServiceTest {
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
-    assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(objectNode);
+    assertThat(resultCaptor.getValue().getData()).isEqualTo(dataNode);
+    assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(resultNode);
   }
 
   @Test
   void shouldReturnFalse_whenUpdatingMeansDataForUnknownApplication() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
@@ -237,7 +244,7 @@ public class ApplicationServiceTest {
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
     final ApplicationEntity applicationEntity = new ApplicationEntity();
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
 
@@ -293,7 +300,7 @@ public class ApplicationServiceTest {
               builder.modifiedAt(originalCreatedTime);
               builder.modifiedBy(originalUser);
             });
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
 
     assertThat(applicationEntity.getDeclaration().getCreatedAt()).isEqualTo(originalCreatedTime);
@@ -319,7 +326,7 @@ public class ApplicationServiceTest {
   @Test
   void updateDeclaration_shouldReturnFalse_whenApplicationDoesNotExist() {
     // Arrange
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
@@ -334,7 +341,7 @@ public class ApplicationServiceTest {
   @Test
   void updateEvidence_shouldReturnFalse_whenApplicationDoesNotExist() {
     // Arrange
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
@@ -355,7 +362,7 @@ public class ApplicationServiceTest {
         EvidenceEntity.builder().evidenceId(UUID.randomUUID()).build();
 
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(EvidenceEntity.builder().build());
     when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(savedEvidence);
@@ -385,7 +392,7 @@ public class ApplicationServiceTest {
         EvidenceEntity.builder().evidenceId(existingEvidenceId).build();
 
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(mappedEvidence);
     when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(savedEvidence);
@@ -420,12 +427,16 @@ public class ApplicationServiceTest {
   void shouldRecordEvent_whenMeansDataUpdated() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
-    final UpdateMeansDataCommand command = UpdateMeansDataCommand.builder().eTag(0L).build();
+    final Object data = new ObjectMapper().createObjectNode().put("question", "answer");
+    final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final UpdateMeansDataCommand command =
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode objectNode = new ObjectMapper().createObjectNode();
     final ApplicationEntity application = ApplicationEntity.builder().id(applicationId).build();
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(objectMapper.valueToTree(command)).thenReturn(objectNode);
+    when(objectMapper.valueToTree(data)).thenReturn(objectNode);
+    when(objectMapper.valueToTree(meansResult)).thenReturn(objectNode);
 
     // Act
     sut.updateMeansData(applicationId, command);
@@ -434,7 +445,7 @@ public class ApplicationServiceTest {
   @Test
   void shouldNotRecordEvent_whenMeansDataUpdatedForUnknownApplication() {
     // Arrange
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
@@ -452,7 +463,7 @@ public class ApplicationServiceTest {
         DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
         DeclarationEntityGenerator.createWithId(builder -> builder.declarationConfirmation(true));
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(new ApplicationEntity()));
     when(declarationMapper.toDeclarationEntity(command)).thenReturn(declarationEntity);
 
@@ -466,7 +477,7 @@ public class ApplicationServiceTest {
   @Test
   void shouldNotRecordEvent_whenDeclarationUpdatedForUnknownApplication() {
     // Arrange
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
@@ -483,7 +494,7 @@ public class ApplicationServiceTest {
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(EvidenceEntity.builder().build());
     when(evidenceRepository.save(any(EvidenceEntity.class)))
@@ -499,7 +510,7 @@ public class ApplicationServiceTest {
   @Test
   void shouldNotRecordEvent_whenEvidenceUpdatedForUnknownApplication() {
     // Arrange
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
@@ -515,7 +526,7 @@ public class ApplicationServiceTest {
     final UUID applicationId = UUID.randomUUID();
     final ApplicationEntity application =
         ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
@@ -531,7 +542,7 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final ApplicationEntity application = new ApplicationEntity(); // eTag = 0
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
@@ -548,7 +559,7 @@ public class ApplicationServiceTest {
     // Arrange
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null)); // eTag = 0
-    when(userContext.getProviderFirmId()).thenReturn(UUID.randomUUID());
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
 
     // Act + Assert
@@ -557,6 +568,66 @@ public class ApplicationServiceTest {
         () ->
             sut.updateEvidence(
                 application.getId(), UpdateEvidenceCommand.builder().eTag(99L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void shouldUpdateApplication() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act
+    boolean result = sut.updateApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result);
+    verify(mapper, times(1)).updateApplicationEntity(command, application);
+    verify(repo, times(1)).save(application);
+    verify(eventService, times(1)).record(command);
+  }
+
+  @Test
+  void shouldReturnFalse_whenUpdatingApplicationForUnknownApplication() {
+    // Arrange
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
+
+    // Act
+    boolean result =
+        sut.updateApplication(
+            UUID.randomUUID(), UpdateApplicationCommand.builder().eTag(0L).build());
+
+    // Assert
+    assertFalse(result);
+    verify(mapper, never()).updateApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any());
+  }
+
+  @Test
+  void updateApplication_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).build(); // eTag = 0
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        EtagMismatchException.class,
+        () ->
+            sut.updateApplication(
+                applicationId, UpdateApplicationCommand.builder().eTag(99L).build()));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 }

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -41,6 +42,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
@@ -110,9 +112,7 @@ public class ApplicationControllerTest {
             .clientLastName("Jones");
 
     Page<ApplicationSummary> page = new PageImpl<>(List.of(application1, application2));
-    when(applicationService.getAllApplications(
-            eq(Specification.<ApplicationEntity>unrestricted()), eq(0), eq(25)))
-        .thenReturn(page);
+    when(applicationService.getAllApplications(any(), eq(0), eq(25))).thenReturn(page);
 
     // Act + Assert
     mockMvc
@@ -166,7 +166,7 @@ public class ApplicationControllerTest {
   void updateMeansData_returnsOkStatus() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
-    String body = "{\"eTag\":0,\"some\":\"data\"}";
+    String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
     when(applicationService.updateMeansData(eq(id), any(UpdateMeansDataCommand.class)))
         .thenReturn(true);
 
@@ -183,7 +183,7 @@ public class ApplicationControllerTest {
   void updateMeansData_returns404_whenApplicationDoesNotExist() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
-    String body = "{\"eTag\":0,\"some\":\"data\"}";
+    String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
     when(applicationService.updateMeansData(eq(id), any(UpdateMeansDataCommand.class)))
         .thenReturn(false);
 
@@ -197,11 +197,63 @@ public class ApplicationControllerTest {
   }
 
   @Test
+  void updateMeansData_returns400_whenDataMissing() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"eTag\":0,\"result\":{\"status\":\"ELIGIBLE\"}}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never()).updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
+  }
+
+  @Test
+  void updateMeansData_returns400_whenResultMissing() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"}}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never()).updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
+  }
+
+  @Test
+  void updateMeansData_returns400_whenEtagMissing() throws Exception {
+    // Arrange
+    UUID id = UUID.randomUUID();
+    String body = "{\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/" + id + ":update-means-data")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never()).updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
+  }
+
+  @Test
   void updateDeclaration_returns204_whenApplicationExists() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(0L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     when(applicationService.updateClientDeclaration(
             eq(applicationId), any(DeclarationCommand.class)))
         .thenReturn(true);
@@ -209,7 +261,7 @@ public class ApplicationControllerTest {
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isNoContent());
@@ -220,14 +272,18 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(0L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     when(applicationService.updateClientDeclaration(any(UUID.class), any(DeclarationCommand.class)))
         .thenReturn(false);
 
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isNotFound());
@@ -272,7 +328,7 @@ public class ApplicationControllerTest {
   void updateMeansData_returns409_whenEtagMismatch() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
-    String body = "{\"eTag\":2,\"some\":\"data\"}";
+    String body = "{\"eTag\":2,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
     doThrow(new EtagMismatchException(2L, 5L))
         .when(applicationService)
         .updateMeansData(eq(id), any(UpdateMeansDataCommand.class));
@@ -291,7 +347,11 @@ public class ApplicationControllerTest {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
-        DeclarationCommand.builder().eTag(2L).declarationConfirmation(true).build();
+        DeclarationCommand.builder()
+            .eTag(2L)
+            .declarationConfirmation(true)
+            .dateSigned(java.time.LocalDate.now())
+            .build();
     doThrow(new EtagMismatchException(2L, 5L))
         .when(applicationService)
         .updateClientDeclaration(eq(applicationId), any(DeclarationCommand.class));
@@ -299,7 +359,7 @@ public class ApplicationControllerTest {
     // Act + Assert
     mockMvc
         .perform(
-            put("/api/v0/applications/{id}/declaration", applicationId)
+            patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
         .andExpect(status().isConflict());
@@ -321,5 +381,76 @@ public class ApplicationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
         .andExpect(status().isConflict());
+  }
+
+  @Test
+  void updateApplication_returns204_whenApplicationExists() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+    when(applicationService.updateApplication(
+            eq(applicationId), any(UpdateApplicationCommand.class)))
+        .thenReturn(true);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void updateApplication_returns404_whenApplicationDoesNotExist() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+    when(applicationService.updateApplication(
+            eq(applicationId), any(UpdateApplicationCommand.class)))
+        .thenReturn(false);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void updateApplication_returns409_whenEtagMismatch() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(2L).build();
+    doThrow(new EtagMismatchException(2L, 5L))
+        .when(applicationService)
+        .updateApplication(eq(applicationId), any(UpdateApplicationCommand.class));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  void updateApplication_returns400_whenEtagMissing() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    String body = "{}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never())
+        .updateApplication(eq(applicationId), any(UpdateApplicationCommand.class));
   }
 }

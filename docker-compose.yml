@@ -1,43 +1,6 @@
-services:
-  info-and-advice-api:
-    container_name: info-and-advice-api
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-      - mock-oauth2-server
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      - DB_URL=jdbc:postgresql://postgres:5432/laa_info_advice_datastore
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - LAA_OAUTH2_ISSUER_URI=http://host.docker.internal:9090/default
-      - LAA_OAUTH2_AUDIENCE=default
-      
-  postgres:
-    image: postgres:18
-    container_name: laa-info-and-advice-datastore
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: laa_info_advice_datastore
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - /var/lib/postgresql/18/docker
-
-  mock-oauth2-server:
-    image: ghcr.io/navikt/mock-oauth2-server:2.1.10
-    container_name: mock-oauth2-server
-    ports:
-      - "9090:9090"
-    environment:
-      - SERVER_PORT=9090
-      - JSON_CONFIG_PATH=/etc/mock-oauth2-config.json
-    volumes:
-      - ./mock-oauth2-config.json:/etc/mock-oauth2-config.json
+# Composed from the reusable building blocks under docker/compose/, so other repos
+# (e.g. laa-record-controlled-work-api) can include the same files individually.
+include:
+  - docker/compose/include.api.yml
+  - docker/compose/include.postgres.yml
+  - docker/compose/include.mock-oauth.yml

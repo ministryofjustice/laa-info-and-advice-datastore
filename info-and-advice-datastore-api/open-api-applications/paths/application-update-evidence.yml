@@ -20,9 +20,39 @@ put:
           $ref: '../components/request-schemas.yml#/components/schemas/UpdateEvidenceCommand'
   responses:
     '204': { description: Evidence updated successfully }
-    '400': { description: Bad request }
-    '401': { description: Unauthorized }
-    '403': { description: Forbidden }
-    '404': { description: Application not found }
-    '409': { description: Conflict - ETag mismatch }
-    '500': { description: Internal server error }
+    '400':
+      description: Bad request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
+    '401':
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
+    '403':
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
+    '404':
+      description: Application not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
+    '409':
+      description: Conflict - ETag mismatch
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
+    '500':
+      description: Internal server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApiError'

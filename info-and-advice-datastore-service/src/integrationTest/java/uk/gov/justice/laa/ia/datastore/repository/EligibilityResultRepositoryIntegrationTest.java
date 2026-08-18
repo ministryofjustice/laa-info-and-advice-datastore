@@ -44,6 +44,7 @@ public class EligibilityResultRepositoryIntegrationTest extends BaseIntegrationT
 
     assertThat(retrievedEntity.getEligibilityResultId()).isNotNull();
     assertThat(retrievedEntity.getApplicationId()).isEqualTo(savedApplication.getId());
+    assertThat(retrievedEntity.getData()).isEqualTo(entity.getData());
     assertThat(retrievedEntity.getResultJson()).isEqualTo(entity.getResultJson());
     assertThat(retrievedEntity.getCreatedAt()).isNotNull();
   }

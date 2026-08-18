@@ -51,14 +51,14 @@ public abstract class BaseIntegrationTest {
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
   @MockitoBean private UserContextInterceptor userContextInterceptor;
   @MockitoBean private UserContext userContext;
-  protected static final UUID PROVIDER_FIRM_ID = UUID.randomUUID();
-  protected static final UUID PROVIDER_OFFICE_ID = UUID.randomUUID();
+  protected static final String FIRM_CODE = "123456";
+  protected static final String PROVIDER_OFFICE_CODE = UUID.randomUUID().toString();
 
   @BeforeEach
   void setUp() throws Exception {
     when(userContextInterceptor.preHandle(any(), any(), any())).thenReturn(true);
-    when(userContext.getProviderFirmId()).thenReturn(PROVIDER_FIRM_ID);
-    when(userContext.getProviderOfficeId()).thenReturn(PROVIDER_OFFICE_ID);
+    when(userContext.getProviderFirmCode()).thenReturn(FIRM_CODE);
+    when(userContext.getProviderOfficeCode()).thenReturn(PROVIDER_OFFICE_CODE);
     when(userContext.getCurrentUser()).thenReturn("SYSTEM");
   }
 

@@ -1,7 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
@@ -27,8 +26,10 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
@@ -87,7 +88,7 @@ public class ApplicationService {
     int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
 
     Specification<ApplicationEntity> specificationToApply =
-        ApplicationSpecification.filterByProviderFirmId(userContext.getProviderFirmId());
+        ApplicationSpecification.filterByProviderFirmCode(userContext.getProviderFirmCode());
     if (additionalFilteringSpecification != null) {
       specificationToApply = specificationToApply.and(additionalFilteringSpecification);
     }
@@ -104,7 +105,7 @@ public class ApplicationService {
    */
   public Optional<ApplicationResponse> getApplication(UUID applicationId) {
     var findApplicationByIdSpecification =
-        ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId());
+        ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode());
     return repository
         .findOne(findApplicationByIdSpecification)
         .map(applicationMapper::toApplication);
@@ -122,7 +123,7 @@ public class ApplicationService {
   public boolean updateMeansData(UUID applicationId, UpdateMeansDataCommand command) {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
-            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -130,26 +131,15 @@ public class ApplicationService {
     ApplicationEntity application = applicationOpt.get();
     validateEtag(application, command.geteTag());
 
-    ObjectNode jsonNode = (ObjectNode) objectMapper.valueToTree(command);
-    jsonNode.remove("eTag");
-
-    // Save the result to the new table
     EligibilityResultEntity resultEntity =
         EligibilityResultEntity.builder()
             .applicationId(applicationId)
-            .resultJson(jsonNode)
+            .data(objectMapper.valueToTree(command.getData()))
+            .resultJson(objectMapper.valueToTree(command.getResult()))
             .createdBy(userContext.getCurrentUser())
             .build();
 
     eligibilityResultRepository.save(resultEntity);
-
-    // Update application fields if present in the JSON
-    if (jsonNode.has("determinationId")) {
-      application.setDeterminationId(UUID.fromString(jsonNode.get("determinationId").asText()));
-    }
-    if (jsonNode.has("meansAssessmentRequired")) {
-      application.setMeansAssessmentRequired(jsonNode.get("meansAssessmentRequired").asBoolean());
-    }
 
     application.setModifiedBy(userContext.getCurrentUser());
     repository.save(application);
@@ -168,7 +158,7 @@ public class ApplicationService {
   public boolean updateClientDeclaration(UUID applicationId, DeclarationCommand command) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
-            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -203,7 +193,7 @@ public class ApplicationService {
   public boolean updateEvidence(UUID applicationId, UpdateEvidenceCommand command) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
-            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmId()));
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
       return false;
     }
@@ -232,5 +222,58 @@ public class ApplicationService {
     if (application.getEtag() != providedEtag) {
       throw new EtagMismatchException(providedEtag, application.getEtag());
     }
+  }
+
+  /**
+   * Update scoping data for an application.
+   *
+   * @param applicationId the application ID
+   * @param command the scoping data command including eTag for optimistic concurrency control
+   * @return true if application updated, false if not found
+   * @throws EtagMismatchException if the eTag does not match the current entity value
+   */
+  @Transactional
+  public boolean updateScopingData(UUID applicationId, UpdateScopingDataCommand command) {
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
+    if (applicationOpt.isEmpty()) {
+      return false;
+    }
+
+    ApplicationEntity application = applicationOpt.get();
+    validateEtag(application, command.geteTag());
+
+    application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
+    application.setModifiedBy(userContext.getCurrentUser());
+    repository.save(application);
+    eventService.record(command);
+    return true;
+  }
+
+  /**
+   * Update an application.
+   *
+   * @param applicationId the application ID
+   * @param command the update command including eTag for optimistic concurrency control
+   * @return true if application updated, false if not found
+   * @throws EtagMismatchException if the eTag does not match the current entity value
+   */
+  @Transactional
+  public boolean updateApplication(UUID applicationId, UpdateApplicationCommand command) {
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
+    if (applicationOpt.isEmpty()) {
+      return false;
+    }
+
+    ApplicationEntity application = applicationOpt.get();
+    validateEtag(application, command.geteTag());
+
+    applicationMapper.updateApplicationEntity(command, application);
+    repository.save(application);
+    eventService.record(command);
+    return true;
   }
 }

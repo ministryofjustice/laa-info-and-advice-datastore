@@ -27,5 +27,6 @@ public abstract class DeclarationMapper {
   @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
+  @Mapping(target = "dateSigned", source = "dateSigned")
   public abstract DeclarationEntity toDeclarationEntity(DeclarationCommand command);
 }

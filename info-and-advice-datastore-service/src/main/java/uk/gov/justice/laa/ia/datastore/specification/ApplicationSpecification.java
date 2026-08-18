@@ -3,6 +3,7 @@ package uk.gov.justice.laa.ia.datastore.specification;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 
 /** The specification for filtering ApplicationEntity at a database level. */
 public class ApplicationSpecification {
@@ -10,35 +11,46 @@ public class ApplicationSpecification {
     // private constructor to prevent instantiation
   }
 
-  private static final UUID EMPTY_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
-
-  /** Setups a specification for filtering ApplicationEntity by applicationId and providerFirmId. */
-  public static Specification<ApplicationEntity> findById(UUID applicationId, UUID providerFirmId) {
-    return filterByProviderFirmId(providerFirmId)
+  /**
+   * Setups a specification for filtering ApplicationEntity by applicationId and providerFirmCode.
+   */
+  public static Specification<ApplicationEntity> findById(
+      UUID applicationId, String providerFirmCode) {
+    return filterByProviderFirmCode(providerFirmCode)
         .and(
             (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("id"), applicationId));
   }
 
-  /** Setups a specification for filtering ApplicationEntity by providerFirmId. */
-  public static Specification<ApplicationEntity> filterByProviderFirmId(UUID providerFirmId) {
-    if (providerFirmId == null || providerFirmId.equals(EMPTY_UUID)) {
-      throw new IllegalArgumentException("providerFirmId must not be null or empty UUID");
+  /** Setups a specification for filtering ApplicationEntity by providerFirmCode. */
+  public static Specification<ApplicationEntity> filterByProviderFirmCode(String providerFirmCode) {
+    if (providerFirmCode == null || providerFirmCode.isBlank()) {
+      throw new IllegalArgumentException("providerFirmCode must not be null or blank");
     }
     return (root, query, criteriaBuilder) ->
-        criteriaBuilder.equal(root.get("providerFirmId"), providerFirmId);
+        criteriaBuilder.equal(root.get("providerFirmCode"), providerFirmCode);
   }
 
   /** Setups a specification for filtering ApplicationEntity. */
-  public static Specification<ApplicationEntity> filterBy(UUID officeId) {
-    return hasOfficeId(officeId);
+  public static Specification<ApplicationEntity> filterBy(
+      String officeId, ApplicationState status) {
+    return hasOfficeId(officeId).and(hasStatus(status));
   }
 
-  /** Returns a specification that filters ApplicationEntity by officeId. */
-  protected static Specification<ApplicationEntity> hasOfficeId(UUID officeId) {
-    if (officeId == null) {
+  /** Returns a specification that filters ApplicationEntity by status. */
+  protected static Specification<ApplicationEntity> hasStatus(ApplicationState status) {
+    if (status == null) {
       return Specification.unrestricted();
     }
     return (root, query, criteriaBuilder) ->
-        criteriaBuilder.equal(root.get("providerOfficeId"), officeId);
+        criteriaBuilder.equal(root.get("applicationState"), status);
+  }
+
+  /** Returns a specification that filters ApplicationEntity by officeId. */
+  protected static Specification<ApplicationEntity> hasOfficeId(String officeId) {
+    if (officeId == null || officeId.isBlank()) {
+      return Specification.unrestricted();
+    }
+    return (root, query, criteriaBuilder) ->
+        criteriaBuilder.equal(root.get("providerOfficeCode"), officeId);
   }
 }

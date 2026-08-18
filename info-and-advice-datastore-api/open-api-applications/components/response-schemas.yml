@@ -12,8 +12,8 @@ components:
         - id
         - individualLegalAidNumber
         - client
-        - providerFirmId
-        - providerOfficeId
+        - providerFirmCode
+        - providerOfficeCode
         - createdAt
         - createdBy
         - modifiedAt
@@ -30,14 +30,12 @@ components:
           description:
         client:
           $ref: '#/components/schemas/ClientDetails'
-        providerFirmId:
+        providerFirmCode:
           type: string
-          format: uuid
           example:
           description:
-        providerOfficeId:
+        providerOfficeCode:
           type: string
-          format: uuid
           example:
           description:
         applicationState:
@@ -69,14 +67,11 @@ components:
         ufn:
           type: string
           maxLength: 9
-        dateDeclarationWasSigned:
-          type: string
-          format: date
         determinationId:
           type: string
           format: uuid
         eligibilityResult:
-          $ref: '#/components/schemas/EligibilityResultResponse'
+          $ref: '#/components/schemas/EligibilityResult'
         createdAt:
           type: string
           format: date-time
@@ -140,6 +135,9 @@ components:
           $ref: '#/components/schemas/ClientDeclarationStatus'
         declarationConfirmation:
           type: boolean
+        dateSigned:
+          type: string
+          format: date
         createdAt:
           type: string
           format: date-time
@@ -160,6 +158,7 @@ components:
       type: string
       enum:
         - DRAFT
+        - COMPLETED
 
     EvidenceResponse:
       type: object
@@ -173,21 +172,26 @@ components:
         expenditureCapitalEvidenceChecklist:
           type: object
 
-    EligibilityResultResponse:
+    EligibilityResult:
       type: object
       properties:
-        eligibilityResultId:
-          type: string
-          format: uuid
-        applicationId:
-          type: string
-          format: uuid
-        indication:
-          type: boolean
-        contribution:
-          type: string
-        eligibilityResult:
+        data:
           type: object
-        createdAt:
+          description: The means assessment question and answer data
+        result:
+          type: object
+          description: The means assessment calculation result
+
+    ApiError:
+      type: object
+      description: RFC 7807 problem detail returned for error responses
+      properties:
+        title:
           type: string
-          format: date-time
+          description: A short, human-readable summary of the problem type
+        status:
+          type: integer
+          description: The HTTP status code
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem

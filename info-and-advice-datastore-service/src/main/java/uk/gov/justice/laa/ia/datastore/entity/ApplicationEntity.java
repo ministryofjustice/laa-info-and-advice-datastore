@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -13,7 +15,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -43,11 +44,11 @@ public class ApplicationEntity {
   @Column(name = "etag", nullable = false)
   private long etag;
 
-  @Column(name = "provider_firm_id", nullable = false)
-  private UUID providerFirmId;
+  @Column(name = "provider_firm_code", nullable = false)
+  private String providerFirmCode;
 
-  @Column(name = "provider_office_id", nullable = false)
-  private UUID providerOfficeId;
+  @Column(name = "provider_office_code", nullable = false)
+  private String providerOfficeCode;
 
   @OneToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "evidence_id", nullable = true)
@@ -57,6 +58,7 @@ public class ApplicationEntity {
   @JoinColumn(name = "declaration_id", nullable = true)
   private DeclarationEntity declaration;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "application_state", nullable = false)
   private ApplicationState applicationState;
 
@@ -79,9 +81,6 @@ public class ApplicationEntity {
 
   @Column(name = "ufn", length = 9)
   private String ufn;
-
-  @Column(name = "date_declaration_was_signed")
-  private LocalDate dateDeclarationWasSigned;
 
   @Column(name = "data_retention_event_uuid")
   private UUID dataRetentionEventUuid;

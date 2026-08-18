@@ -8,7 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,11 +33,11 @@ public class EventEntity {
   @Column(name = "changed_by", nullable = false)
   private String changedBy;
 
-  @Column(name = "provider_firm_id")
-  private UUID providerFirmId;
+  @Column(name = "provider_firm_code")
+  private String providerFirmCode;
 
-  @Column(name = "provider_office_id")
-  private UUID providerOfficeId;
+  @Column(name = "provider_office_code")
+  private String providerOfficeCode;
 
   @Column(name = "http_method", nullable = false)
   private String httpMethod;

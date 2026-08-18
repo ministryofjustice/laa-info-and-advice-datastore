@@ -1,8 +1,8 @@
-put:
+patch:
   tags:
     - application
-  summary: Update declaration for an application
-  operationId: updateDeclaration
+  operationId: updateApplication
+  summary: Update an application
   parameters:
     - name: id
       in: path
@@ -13,16 +13,15 @@ put:
     - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
   requestBody:
     required: true
-    description: Confirmation of the declaration statement for the application.
     content:
       application/json:
         schema:
-          $ref: '../components/request-schemas.yml#/components/schemas/DeclarationCommand'
+          $ref: '../components/request-schemas.yml#/components/schemas/UpdateApplicationCommand'
   responses:
-    '204': { description: Declaration updated successfully }
+    '204': { description: Application updated successfully }
     '400': { description: Bad request }
     '401': { description: Unauthorized }
     '403': { description: Forbidden }
-    '404': { description: Application not found }
+    '404': { description: Not found }
     '409': { description: Conflict - ETag mismatch }
     '500': { description: Internal server error }

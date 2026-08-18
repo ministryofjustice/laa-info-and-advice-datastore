@@ -13,8 +13,12 @@ paths:
     $ref: './open-api-applications/paths/application-start.yml'
   /api/v0/applications/{id}:update-evidence:
     $ref: './open-api-applications/paths/application-update-evidence.yml'
-  /api/v0/applications/{id}/declaration:
-    $ref: './open-api-applications/paths/application-declaration.yml'
+  /api/v0/applications/{id}:update-scoping-data:
+    $ref: './open-api-applications/paths/application-update-scoping-data.yml'
+  /api/v0/applications/{id}:update-declaration-data:
+    $ref: './open-api-applications/paths/application-update-declaration-data.yml'
+  /api/v0/applications/{id}:update-application:
+    $ref: './open-api-applications/paths/application-update-application.yml'
 
 components:
   parameters:
@@ -48,5 +52,9 @@ components:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EvidenceResponse'
     UpdateMeansDataCommand:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateMeansDataCommand'
-    EligibilityResultResponse:
-      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResultResponse'
+    UpdateScopingDataCommand:
+      $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateScopingDataCommand'
+    EligibilityResult:
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResult'
+    ApiError:
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApiError'

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 
 class GlobalExceptionHandlerTest {
@@ -12,12 +13,14 @@ class GlobalExceptionHandlerTest {
 
   @Test
   void handleGenericException_returnsInternalServerErrorStatusAndErrorMessage() throws Exception {
-    ResponseEntity<String> result =
+    ResponseEntity<ProblemDetail> result =
         globalExceptionHandler.handleGenericException(new RuntimeException("Something went wrong"));
 
     assertThat(result).isNotNull();
     assertThat(result.getStatusCode()).isEqualTo(INTERNAL_SERVER_ERROR);
     assertThat(result.getBody()).isNotNull();
-    assertThat(result.getBody()).isEqualTo("An unexpected application error has occurred.");
+    assertThat(result.getBody().getStatus()).isEqualTo(INTERNAL_SERVER_ERROR.value());
+    assertThat(result.getBody().getDetail())
+        .isEqualTo("An unexpected application error has occurred.");
   }
 }

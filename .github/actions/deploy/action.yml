@@ -69,8 +69,6 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
 
-    - run: ./gradlew clean build
-      shell: bash
     - run: |
         docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
         docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG

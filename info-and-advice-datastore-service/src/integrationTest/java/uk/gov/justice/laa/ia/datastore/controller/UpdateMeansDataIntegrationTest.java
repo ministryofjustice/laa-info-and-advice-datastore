@@ -11,7 +11,6 @@ import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
@@ -27,7 +26,6 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldUpdateMeansDataSuccessfully() throws Exception {
     // Arrange
-    final UUID determinationId = UUID.randomUUID();
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
@@ -35,7 +33,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmId(PROVIDER_FIRM_ID)))
+                            .providerFirmCode(FIRM_CODE)))
             .getId();
     clearCache();
 
@@ -43,12 +41,10 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
         """
         {
           "eTag": 0,
-          "determinationId": "%s",
-          "meansAssessmentRequired": true,
-          "status": "ELIGIBLE"
+          "data": {"question": "answer"},
+          "result": {"status": "ELIGIBLE"}
         }
-        """
-            .formatted(determinationId);
+        """;
 
     // Act
     mockMvc
@@ -61,20 +57,16 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
     // Assert
     clearCache();
-    final ApplicationEntity updatedApplication =
-        applicationRepository.findById(applicationId).orElseThrow();
-    final JsonNode expectedJson = objectMapper.readTree(payload).deepCopy();
-    ((com.fasterxml.jackson.databind.node.ObjectNode) expectedJson).remove("eTag");
+    final JsonNode expectedData = objectMapper.readTree("{\"question\": \"answer\"}");
+    final JsonNode expectedResult = objectMapper.readTree("{\"status\": \"ELIGIBLE\"}");
     final List<EligibilityResultEntity> eligibilityResults =
         eligibilityResultRepository.findAll().stream()
             .filter(result -> result.getApplicationId().equals(applicationId))
             .toList();
 
-    assertThat(updatedApplication.getDeterminationId()).isEqualTo(determinationId);
-    assertThat(updatedApplication.getMeansAssessmentRequired()).isTrue();
-
     assertThat(eligibilityResults).hasSize(1);
-    assertThat(eligibilityResults.getFirst().getResultJson()).isEqualTo(expectedJson);
+    assertThat(eligibilityResults.getFirst().getData()).isEqualTo(expectedData);
+    assertThat(eligibilityResults.getFirst().getResultJson()).isEqualTo(expectedResult);
     assertThat(eligibilityResults.getFirst().getCreatedAt()).isNotNull();
   }
 
@@ -85,12 +77,10 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
         """
         {
           "eTag": 0,
-          "determinationId": "%s",
-          "meansAssessmentRequired": true,
-          "status": "ELIGIBLE"
+          "data": {"question": "answer"},
+          "result": {"status": "ELIGIBLE"}
         }
-        """
-            .formatted(UUID.randomUUID());
+        """;
     mockMvc
         .perform(
             put("/api/v0/applications/{id}:update-means-data", applicationId)
@@ -110,15 +100,14 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmId(PROVIDER_FIRM_ID)))
+                            .providerFirmCode(FIRM_CODE)))
             .getId();
     clearCache();
 
     final String payload =
         """
-        {"eTag": 99, "determinationId": "%s", "meansAssessmentRequired": true}
-        """
-            .formatted(UUID.randomUUID());
+        {"eTag": 99, "data": {"question": "answer"}, "result": {"status": "ELIGIBLE"}}
+        """;
 
     // Act + Assert - send with stale eTag 99 (actual is 0)
     mockMvc
@@ -128,5 +117,43 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isConflict());
+  }
+
+  @Test
+  void shouldReturn400_whenDataMissing() throws Exception {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String payload =
+        """
+        {"eTag": 0, "result": {"status": "ELIGIBLE"}}
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}:update-means-data", applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldReturn400_whenResultMissing() throws Exception {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String payload =
+        """
+        {"eTag": 0, "data": {"question": "answer"}}
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}:update-means-data", applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isBadRequest());
   }
 }

@@ -53,6 +53,8 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
             - name: SERVICE_NAME
               value: "{{ .Values.env.SERVICE_NAME }}"
             - name: SERVICE_PHASE
@@ -91,6 +93,11 @@ spec:
                 secretKeyRef:
                   name: laa-info-and-advice-datastore-entra
                   key: LAA_OAUTH2_AUDIENCE
+            - name: TRUSTED_CALLER_AUDIENCE
+              valueFrom:
+                secretKeyRef:
+                  name: laa-info-and-advice-datastore-entra
+                  key: TRUSTED_CALLER_AUDIENCE
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:

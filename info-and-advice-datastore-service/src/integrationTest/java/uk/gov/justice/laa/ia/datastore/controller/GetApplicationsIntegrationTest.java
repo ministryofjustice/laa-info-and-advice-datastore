@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
@@ -38,19 +39,19 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   void setupApplications() {
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
-            builder -> builder.withDefaultClientDetails().providerFirmId(PROVIDER_FIRM_ID)));
+            builder -> builder.withDefaultClientDetails().providerFirmCode(FIRM_CODE)));
     clearCache();
   }
 
@@ -83,15 +84,15 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
             builder ->
                 builder
                     .withDefaultClientDetails()
-                    .providerFirmId(PROVIDER_FIRM_ID)
-                    .providerOfficeId(officeId)));
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(officeId.toString())));
     applicationRepository.save(
         ApplicationEntityGenerator.createWithoutId(
             builder ->
                 builder
                     .withDefaultClientDetails()
-                    .providerFirmId(PROVIDER_FIRM_ID)
-                    .providerOfficeId(officeId)));
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(officeId.toString())));
     clearCache();
     // Act & Assert
     mockMvc
@@ -105,6 +106,31 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.content[0].id").isNotEmpty())
         .andExpect(jsonPath("$.content[0].referenceNumber").isNotEmpty())
         .andExpect(jsonPath("$.totalElements").value(2));
+  }
+
+  @Test
+  void shouldGetApplicationsSuccessfully_withStatusFilter() throws Exception {
+    // Arrange
+    setupApplications();
+    applicationRepository.save(
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .applicationState(ApplicationState.COMPLETED)));
+    clearCache();
+    // Act & Assert
+    mockMvc
+        .perform(
+            get("/api/v0/applications")
+                .param("status", ApplicationState.COMPLETED.getValue())
+                .withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].id").isNotEmpty())
+        .andExpect(jsonPath("$.totalElements").value(1));
   }
 
   @Test

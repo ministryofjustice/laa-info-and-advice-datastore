@@ -1,6 +1,5 @@
 package uk.gov.justice.laa.ia.datastore.context;
 
-import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Component;
@@ -15,11 +14,11 @@ import org.springframework.web.context.annotation.RequestScope;
 @Getter
 @Setter
 public class UserContext {
-  /** The provider firm ID. */
-  private UUID providerFirmId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+  /** The user's firm code. */
+  private String providerFirmCode = "";
 
-  /** The provider office ID. */
-  private UUID providerOfficeId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+  /** The provider office code. */
+  private String providerOfficeCode = "";
 
   /** The current user. */
   private String currentUser = "SYSTEM";

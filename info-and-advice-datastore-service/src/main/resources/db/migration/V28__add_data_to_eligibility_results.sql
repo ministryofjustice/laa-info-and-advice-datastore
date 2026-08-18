@@ -1,0 +1,2 @@
+ALTER TABLE eligibility_results
+ADD COLUMN IF NOT EXISTS data JSONB NULL;
