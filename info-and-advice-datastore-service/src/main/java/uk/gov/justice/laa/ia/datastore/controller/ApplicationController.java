@@ -40,9 +40,14 @@ public class ApplicationController implements ApplicationApi {
 
   @Override
   public ResponseEntity<ApplicationResponses> getApplications(
-      Integer page, Integer size, String officeId, ApplicationState status) {
+      Integer page,
+      Integer size,
+      String officeId,
+      ApplicationState status,
+      uk.gov.justice.laa.ia.datastore.model.EligibilityIndication eligibilityIndication) {
     final Specification<ApplicationEntity> filterBy =
-        ApplicationSpecification.filterBy(officeId, status);
+        ApplicationSpecification.filterBy(officeId, status)
+            .and(ApplicationSpecification.hasEligibilityIndication(eligibilityIndication));
     final Page<ApplicationSummary> result = service.getAllApplications(filterBy, page, size);
     final ApplicationResponses responses =
         new ApplicationResponses()

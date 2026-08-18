@@ -144,11 +144,16 @@ public class ApplicationService {
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
 
+    com.fasterxml.jackson.databind.JsonNode resultJson =
+        objectMapper.valueToTree(command.getResult());
+    Boolean indication = extractEligibilityIndication(resultJson);
+
     EligibilityResultEntity resultEntity =
         EligibilityResultEntity.builder()
             .applicationId(applicationId)
             .data(objectMapper.valueToTree(command.getData()))
-            .resultJson(objectMapper.valueToTree(command.getResult()))
+            .resultJson(resultJson)
+            .indication(indication)
             .createdBy(userContext.getCurrentUser())
             .build();
 
@@ -158,6 +163,24 @@ public class ApplicationService {
     repository.save(application);
     eventService.record(command);
     return true;
+  }
+
+  private Boolean extractEligibilityIndication(com.fasterxml.jackson.databind.JsonNode resultJson) {
+    if (resultJson == null) {
+      return null;
+    }
+    com.fasterxml.jackson.databind.JsonNode overallResult =
+        resultJson.at("/result_summary/overall_result/result");
+    if (overallResult == null || overallResult.isMissingNode()) {
+      return null;
+    }
+    String result = overallResult.asText();
+    if ("eligible".equalsIgnoreCase(result)) {
+      return true;
+    } else if ("ineligible".equalsIgnoreCase(result)) {
+      return false;
+    }
+    return null;
   }
 
   /**

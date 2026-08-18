@@ -828,4 +828,80 @@ public class ApplicationServiceTest {
     verify(mapper, never()).updateApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
+
+  @Test
+  void shouldUpdateMeansData_andPopulateIndication_asEligible() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .modifiedAt(Instant.now().minusSeconds(60))
+            .build();
+
+    final ObjectMapper om = new ObjectMapper();
+    final ObjectNode resultNode = om.createObjectNode();
+    resultNode.putObject("result_summary").putObject("overall_result").put("result", "eligible");
+
+    final Object data = om.createObjectNode().put("question", "answer");
+    final UpdateMeansDataCommand command =
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(resultNode).build();
+
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(userContext.getCurrentUser()).thenReturn("TEST_USER");
+    when(objectMapper.valueToTree(data)).thenReturn((ObjectNode) data);
+    when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+
+    // Act
+    boolean result = sut.updateMeansData(applicationId, command);
+
+    // Assert
+    assertTrue(result);
+    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityResultEntity.class);
+    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    assertThat(resultCaptor.getValue().getIndication()).isTrue();
+  }
+
+  @Test
+  void shouldUpdateMeansData_andPopulateIndication_asIneligible() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .modifiedAt(Instant.now().minusSeconds(60))
+            .build();
+
+    final ObjectMapper om = new ObjectMapper();
+    final ObjectNode resultNode = om.createObjectNode();
+    resultNode.putObject("result_summary").putObject("overall_result").put("result", "ineligible");
+
+    final Object data = om.createObjectNode().put("question", "answer");
+    final UpdateMeansDataCommand command =
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(resultNode).build();
+
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(userContext.getCurrentUser()).thenReturn("TEST_USER");
+    when(objectMapper.valueToTree(data)).thenReturn((ObjectNode) data);
+    when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+
+    // Act
+    boolean result = sut.updateMeansData(applicationId, command);
+
+    // Assert
+    assertTrue(result);
+    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityResultEntity.class);
+    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    assertThat(resultCaptor.getValue().getIndication()).isFalse();
+  }
 }

@@ -73,4 +73,21 @@ public class ApplicationSpecification {
     return (root, query, criteriaBuilder) ->
         criteriaBuilder.equal(root.get("providerOfficeCode"), officeId);
   }
+
+  /** Returns a specification that filters ApplicationEntity by eligibility indication. */
+  public static Specification<ApplicationEntity> hasEligibilityIndication(
+      uk.gov.justice.laa.ia.datastore.model.EligibilityIndication eligibilityIndication) {
+    if (eligibilityIndication == null) {
+      return Specification.unrestricted();
+    }
+    final Boolean indication =
+        eligibilityIndication
+            == uk.gov.justice.laa.ia.datastore.model.EligibilityIndication.ELIGIBLE;
+    return (root, query, criteriaBuilder) -> {
+      var eligibilityJoin =
+          root.join("eligibilityResults", jakarta.persistence.criteria.JoinType.LEFT);
+      query.distinct(true);
+      return criteriaBuilder.equal(eligibilityJoin.get("indication"), indication);
+    };
+  }
 }
