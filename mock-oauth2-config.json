@@ -11,8 +11,12 @@
           "claims": {
             "aud": "default",
             "scp": "DataStore.Access",
+            "oid": "test_user",
+            "tid": "test_tenant",
             "FIRM_CODE": "123456",
-            "LAA_ACCOUNTS": ["123456"]
+            "LAA_ACCOUNTS": [
+              "123456"
+            ]
           }
         }
       ]
