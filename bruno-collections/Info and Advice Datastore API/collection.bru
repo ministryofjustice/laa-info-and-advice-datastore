@@ -1,0 +1,13 @@
+headers {
+  Authorization: Bearer {{token}}
+  X-Authorization: Bearer {{token}}
+}
+
+docs {
+  # Info and Advice Datastore API
+
+  Run **Get Token** first — it fetches an access token from the mock OAuth2 server (see
+  README.md "Run full stack via Docker (mock OAuth2 server)") and stores it in the `token`
+  environment variable. Every other request in this collection inherits the Authorization
+  and X-Authorization headers above, both populated from that variable.
+}
