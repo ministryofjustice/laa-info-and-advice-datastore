@@ -1,10 +1,12 @@
 package uk.gov.justice.laa.ia.datastore.specification;
 
+import jakarta.persistence.criteria.JoinType;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityIndication;
 
 /** The specification for filtering ApplicationEntity at a database level. */
 public class ApplicationSpecification {
@@ -52,8 +54,10 @@ public class ApplicationSpecification {
 
   /** Setups a specification for filtering ApplicationEntity. */
   public static Specification<ApplicationEntity> filterBy(
-      String officeId, ApplicationState status) {
-    return hasOfficeId(officeId).and(hasStatus(status));
+      String officeId, ApplicationState status, EligibilityIndication eligibilityIndication) {
+    return hasOfficeId(officeId)
+        .and(hasStatus(status))
+        .and(hasEligibilityIndication(eligibilityIndication));
   }
 
   /** Returns a specification that filters ApplicationEntity by status. */
@@ -76,16 +80,13 @@ public class ApplicationSpecification {
 
   /** Returns a specification that filters ApplicationEntity by eligibility indication. */
   public static Specification<ApplicationEntity> hasEligibilityIndication(
-      uk.gov.justice.laa.ia.datastore.model.EligibilityIndication eligibilityIndication) {
+      EligibilityIndication eligibilityIndication) {
     if (eligibilityIndication == null) {
       return Specification.unrestricted();
     }
-    final Boolean indication =
-        eligibilityIndication
-            == uk.gov.justice.laa.ia.datastore.model.EligibilityIndication.ELIGIBLE;
+    final Boolean indication = eligibilityIndication == EligibilityIndication.ELIGIBLE;
     return (root, query, criteriaBuilder) -> {
-      var eligibilityJoin =
-          root.join("eligibilityResults", jakarta.persistence.criteria.JoinType.LEFT);
+      var eligibilityJoin = root.join("eligibilityResults", JoinType.LEFT);
       query.distinct(true);
       return criteriaBuilder.equal(eligibilityJoin.get("indication"), indication);
     };

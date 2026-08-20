@@ -15,6 +15,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationResponses;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityIndication;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
@@ -44,10 +45,9 @@ public class ApplicationController implements ApplicationApi {
       Integer size,
       String officeId,
       ApplicationState status,
-      uk.gov.justice.laa.ia.datastore.model.EligibilityIndication eligibilityIndication) {
+      EligibilityIndication eligibilityIndication) {
     final Specification<ApplicationEntity> filterBy =
-        ApplicationSpecification.filterBy(officeId, status)
-            .and(ApplicationSpecification.hasEligibilityIndication(eligibilityIndication));
+        ApplicationSpecification.filterBy(officeId, status, eligibilityIndication);
     final Page<ApplicationSummary> result = service.getAllApplications(filterBy, page, size);
     final ApplicationResponses responses =
         new ApplicationResponses()
