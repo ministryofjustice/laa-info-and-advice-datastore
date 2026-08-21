@@ -11,6 +11,7 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityIndication;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 
@@ -32,7 +33,28 @@ public abstract class ApplicationMapper {
   /** Maps an {@link ApplicationEntity} to an {@link ApplicationSummary} for list views. */
   @Mapping(source = "clientDetails.firstName", target = "clientFirstName")
   @Mapping(source = "clientDetails.lastName", target = "clientLastName")
+  @Mapping(target = "eligibilityIndication", expression = "java(mapEligibilityIndication(entity))")
   public abstract ApplicationSummary toApplicationSummary(ApplicationEntity entity);
+
+  /**
+   * Maps the most recent eligibility result indication to an {@link EligibilityIndication} enum.
+   *
+   * @param entity the application entity
+   * @return the eligibility indication (ELIGIBLE, INELIGIBLE) or null if no result exists
+   */
+  public uk.gov.justice.laa.ia.datastore.model.EligibilityIndication mapEligibilityIndication(
+      ApplicationEntity entity) {
+    if (entity.getMostRecentEligibilityResult() == null) {
+      return null;
+    }
+    Boolean indication = entity.getMostRecentEligibilityResult().getIndication();
+    if (indication == null) {
+      return null;
+    }
+    return indication
+        ? uk.gov.justice.laa.ia.datastore.model.EligibilityIndication.ELIGIBLE
+        : uk.gov.justice.laa.ia.datastore.model.EligibilityIndication.INELIGIBLE;
+  }
 
   /** Maps an {@link ApplicationEntity} to an {@link ApplicationResponse}. */
   @Mapping(source = "clientDetails.id", target = "individualLegalAidNumber")

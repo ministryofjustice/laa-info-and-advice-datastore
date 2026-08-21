@@ -140,7 +140,8 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
                     .providerOfficeCode(UUID.randomUUID().toString())));
     clearCache();
 
-    // Act & Assert - the unauthorized application must not appear even though the firm code matches
+    // Act & Assert - the unauthorized application must not appear even though the
+    // firm code matches
     mockMvc
         .perform(get("/api/v0/applications").withBearerReadToken())
         .andExpect(status().isOk())
@@ -255,7 +256,8 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     setupApplications();
     clearCache();
 
-    // Act & Assert — page 0 of size 5 should return all items in descending order of modifiedAt
+    // Act & Assert — page 0 of size 5 should return all items in descending order
+    // of modifiedAt
     mockMvc
         .perform(
             get("/api/v0/applications").param("page", "0").param("size", "5").withBearerReadToken())
@@ -295,5 +297,135 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         description.appendText("list of dates either not parseable or not in descending order");
       }
     };
+  }
+
+  @Test
+  void shouldFilterApplicationsByEligibilityIndication_eligible() throws Exception {
+    // Arrange
+    var eligibleApp =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+    var ineligibleApp =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+
+    var savedEligible = applicationRepository.save(eligibleApp);
+    var savedIneligible = applicationRepository.save(ineligibleApp);
+
+    // Create eligibility results with different indication values
+    var eligibleResult =
+        uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity.builder()
+            .applicationId(savedEligible.getId())
+            .resultJson(
+                com.fasterxml.jackson.databind.node.JsonNodeFactory.instance
+                    .objectNode()
+                    .putObject("result_summary")
+                    .putObject("overall_result")
+                    .put("result", "eligible"))
+            .createdBy("test")
+            .indication(true)
+            .build();
+
+    var ineligibleResult =
+        uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity.builder()
+            .applicationId(savedIneligible.getId())
+            .resultJson(
+                com.fasterxml.jackson.databind.node.JsonNodeFactory.instance
+                    .objectNode()
+                    .putObject("result_summary")
+                    .putObject("overall_result")
+                    .put("result", "ineligible"))
+            .createdBy("test")
+            .indication(false)
+            .build();
+
+    eligibilityResultRepository.save(eligibleResult);
+    eligibilityResultRepository.save(ineligibleResult);
+    clearCache();
+
+    // Act & Assert - filter by eligible
+    mockMvc
+        .perform(
+            get("/api/v0/applications")
+                .param("eligibilityIndication", "ELIGIBLE")
+                .withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].id").value(savedEligible.getId().toString()))
+        .andExpect(jsonPath("$.content[0].eligibilityIndication").value("eligible"));
+  }
+
+  @Test
+  void shouldFilterApplicationsByEligibilityIndication_ineligible() throws Exception {
+    // Arrange
+    var eligibleApp =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+    var ineligibleApp =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+
+    var savedEligible = applicationRepository.save(eligibleApp);
+    var savedIneligible = applicationRepository.save(ineligibleApp);
+
+    // Create eligibility results with different indication values
+    var eligibleResult =
+        uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity.builder()
+            .applicationId(savedEligible.getId())
+            .resultJson(
+                com.fasterxml.jackson.databind.node.JsonNodeFactory.instance
+                    .objectNode()
+                    .putObject("result_summary")
+                    .putObject("overall_result")
+                    .put("result", "eligible"))
+            .createdBy("test")
+            .indication(true)
+            .build();
+
+    var ineligibleResult =
+        uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity.builder()
+            .applicationId(savedIneligible.getId())
+            .resultJson(
+                com.fasterxml.jackson.databind.node.JsonNodeFactory.instance
+                    .objectNode()
+                    .putObject("result_summary")
+                    .putObject("overall_result")
+                    .put("result", "ineligible"))
+            .createdBy("test")
+            .indication(false)
+            .build();
+
+    eligibilityResultRepository.save(eligibleResult);
+    eligibilityResultRepository.save(ineligibleResult);
+    clearCache();
+
+    // Act & Assert - filter by ineligible
+    mockMvc
+        .perform(
+            get("/api/v0/applications")
+                .param("eligibilityIndication", "INELIGIBLE")
+                .withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.content", hasSize(1)))
+        .andExpect(jsonPath("$.content[0].id").value(savedIneligible.getId().toString()))
+        .andExpect(jsonPath("$.content[0].eligibilityIndication").value("ineligible"));
   }
 }
