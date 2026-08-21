@@ -19,7 +19,7 @@ patch:
         schema:
           $ref: '../components/request-schemas.yml#/components/schemas/DeclarationCommand'
   responses:
-    '200':
+    '204':
       description: Declaration updated successfully
       headers:
         ETag:

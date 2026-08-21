@@ -165,7 +165,7 @@ public class ApplicationControllerTest {
   }
 
   @Test
-  void updateMeansData_returnsOkStatus() throws Exception {
+  void updateMeansData_returns204Status() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
     String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
@@ -178,7 +178,7 @@ public class ApplicationControllerTest {
             put("/api/v0/applications/" + id + ":update-means-data")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-        .andExpect(status().isOk())
+        .andExpect(status().isNoContent())
         .andExpect(header().string("ETag", "\"1\""));
   }
 
@@ -248,7 +248,7 @@ public class ApplicationControllerTest {
   }
 
   @Test
-  void updateDeclaration_returns200_whenApplicationExists() throws Exception {
+  void updateDeclaration_returns204_whenApplicationExists() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     DeclarationCommand declarationCommand =
@@ -267,7 +267,7 @@ public class ApplicationControllerTest {
             patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
-        .andExpect(status().isOk())
+        .andExpect(status().isNoContent())
         .andExpect(header().string("ETag", "\"1\""));
   }
 
@@ -295,7 +295,7 @@ public class ApplicationControllerTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  void updateEvidence_returns200_whenApplicationExists() throws Exception {
+  void updateEvidence_returns204_whenApplicationExists() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     String body = "{\"eTag\":0,\"payeIncomeEvidence\":true}";
@@ -308,7 +308,7 @@ public class ApplicationControllerTest {
             put(TestConstants.UpdateEvidence, applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-        .andExpect(status().isOk())
+        .andExpect(status().isNoContent())
         .andExpect(header().string("ETag", "\"1\""));
   }
 
@@ -389,7 +389,7 @@ public class ApplicationControllerTest {
   }
 
   @Test
-  void updateApplication_returns200_whenApplicationExists() throws Exception {
+  void updateApplication_returns204_whenApplicationExists() throws Exception {
     // Arrange
     UUID applicationId = UUID.randomUUID();
     UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
@@ -403,7 +403,7 @@ public class ApplicationControllerTest {
             patch(TestConstants.UpdateApplication, applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(command)))
-        .andExpect(status().isOk())
+        .andExpect(status().isNoContent())
         .andExpect(header().string("ETag", "\"1\""));
   }
 

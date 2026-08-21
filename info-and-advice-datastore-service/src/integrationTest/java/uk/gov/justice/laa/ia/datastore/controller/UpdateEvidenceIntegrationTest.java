@@ -45,7 +45,7 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk())
+        .andExpect(status().isNoContent())
         .andExpect(header().exists("ETag"))
         .andReturn();
   }
@@ -72,7 +72,7 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk())
+        .andExpect(status().isNoContent())
         .andExpect(header().exists("ETag"));
     clearCache();
 

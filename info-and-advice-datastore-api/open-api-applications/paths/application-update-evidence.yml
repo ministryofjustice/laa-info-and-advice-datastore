@@ -19,7 +19,7 @@ put:
         schema:
           $ref: '../components/request-schemas.yml#/components/schemas/UpdateEvidenceCommand'
   responses:
-    '200':
+    '204':
       description: Evidence updated successfully
       headers:
         ETag:

@@ -61,7 +61,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
 
     assertSingleEventRecorded("PUT", applicationId.toString(), payload);
   }
@@ -83,7 +83,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
 
     assertSingleEventRecorded("PATCH", applicationId.toString(), payload);
   }
@@ -99,7 +99,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
 
     assertSingleEventRecorded("PUT", applicationId.toString(), payload);
   }
@@ -121,7 +121,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                             .declarationConfirmation(true)
                             .dateSigned(java.time.LocalDate.now())
                             .build())))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
 
     mockMvc
         .perform(
@@ -129,7 +129,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(EvidenceGenerator.createUpdateEvidenceCommand(1L))))
-        .andExpect(status().isOk());
+        .andExpect(status().isNoContent());
 
     clearCache();
     List<EventEntity> events =

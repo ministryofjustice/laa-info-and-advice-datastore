@@ -18,7 +18,7 @@ patch:
         schema:
           $ref: '../components/request-schemas.yml#/components/schemas/UpdateScopingDataCommand'
   responses:
-    '200':
+    '204':
       description: Application scoping data updated successfully
       headers:
         ETag:

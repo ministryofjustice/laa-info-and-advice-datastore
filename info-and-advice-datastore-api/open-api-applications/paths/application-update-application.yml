@@ -18,7 +18,7 @@ patch:
         schema:
           $ref: '../components/request-schemas.yml#/components/schemas/UpdateApplicationCommand'
   responses:
-    '200':
+    '204':
       description: Application updated successfully
       headers:
         ETag:

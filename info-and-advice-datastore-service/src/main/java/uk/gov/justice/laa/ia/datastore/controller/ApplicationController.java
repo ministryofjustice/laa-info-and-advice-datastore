@@ -74,7 +74,7 @@ public class ApplicationController implements ApplicationApi {
       UUID id, UpdateMeansDataCommand updateMeansDataCommand) {
     OptionalLong newEtag = service.updateMeansData(id, updateMeansDataCommand);
     return newEtag.isPresent()
-        ? ResponseEntity.ok().headers(etagHeader(newEtag.getAsLong())).build()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
         : ResponseEntity.notFound().build();
   }
 
@@ -83,7 +83,7 @@ public class ApplicationController implements ApplicationApi {
       UUID id, DeclarationCommand declarationCommand) {
     OptionalLong newEtag = service.updateClientDeclaration(id, declarationCommand);
     return newEtag.isPresent()
-        ? ResponseEntity.ok().headers(etagHeader(newEtag.getAsLong())).build()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
         : ResponseEntity.notFound().build();
   }
 
@@ -91,7 +91,7 @@ public class ApplicationController implements ApplicationApi {
   public ResponseEntity<Void> updateEvidence(UUID id, UpdateEvidenceCommand updateEvidenceCommand) {
     OptionalLong newEtag = service.updateEvidence(id, updateEvidenceCommand);
     return newEtag.isPresent()
-        ? ResponseEntity.ok().headers(etagHeader(newEtag.getAsLong())).build()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
         : ResponseEntity.notFound().build();
   }
 
@@ -100,7 +100,7 @@ public class ApplicationController implements ApplicationApi {
       UUID id, UpdateScopingDataCommand updateScopingDataCommand) {
     OptionalLong newEtag = service.updateScopingData(id, updateScopingDataCommand);
     return newEtag.isPresent()
-        ? ResponseEntity.ok().headers(etagHeader(newEtag.getAsLong())).build()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
         : ResponseEntity.notFound().build();
   }
 
@@ -109,7 +109,7 @@ public class ApplicationController implements ApplicationApi {
       UUID id, UpdateApplicationCommand updateApplicationCommand) {
     OptionalLong newEtag = service.updateApplication(id, updateApplicationCommand);
     return newEtag.isPresent()
-        ? ResponseEntity.ok().headers(etagHeader(newEtag.getAsLong())).build()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
         : ResponseEntity.notFound().build();
   }
 

@@ -49,7 +49,7 @@ public class UpdateApplicationIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk())
+        .andExpect(status().isNoContent())
         .andExpect(header().exists("ETag"));
 
     // Assert
@@ -89,7 +89,7 @@ public class UpdateApplicationIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isOk())
+        .andExpect(status().isNoContent())
         .andExpect(header().exists("ETag"));
 
     // Assert
