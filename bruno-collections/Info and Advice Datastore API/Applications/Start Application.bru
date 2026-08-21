@@ -1,0 +1,41 @@
+meta {
+  name: Start Application
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v0/applications:start-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "client": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "dateOfBirth": "1990-01-01",
+      "noFixedAbode": false,
+      "createAddressCommand": {
+        "addressLine1": "10 Downing Street",
+        "townOrCity": "London",
+        "postCode": "SW1A 2AA",
+        "country": "GB"
+      }
+    },
+    "applicationType": "CLA",
+    "providerOfficeCode": "123456"
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("applicationId", res.body.id);
+  }
+}
+
+docs {
+  Starts a new application for a client. On success, stores the created application's id in the
+  `applicationId` environment variable for use by the other requests below.
+}

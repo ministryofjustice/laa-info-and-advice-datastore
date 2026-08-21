@@ -1,0 +1,28 @@
+meta {
+  name: Get Token
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{oauthTokenUrl}}
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  grant_type: client_credentials
+  client_id: {{clientId}}
+  client_secret: {{clientSecret}}
+}
+
+script:post-response {
+  bru.setEnvVar("token", res.body.access_token);
+}
+
+docs {
+  Retrieves an access token from the mock OAuth2 server (see README.md "Run full stack via
+  Docker" section). Run this request first — its post-response script stores the token in the
+  `token` environment variable, which the collection-level Authorization and X-Authorization
+  headers reference for every other request.
+}

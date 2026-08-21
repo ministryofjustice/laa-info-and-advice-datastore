@@ -1,0 +1,25 @@
+meta {
+  name: Update Scoping Data
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-scoping-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "scopingQuestions": {
+      "priorLegalAid": "same_matter",
+      "priorLegalAidReason": "Previous matter was related"
+    }
+  }
+}
+
+docs {
+  Updates the scoping questions/answers for the application.
+}

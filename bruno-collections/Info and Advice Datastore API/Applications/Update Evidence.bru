@@ -1,0 +1,28 @@
+meta {
+  name: Update Evidence
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-evidence
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "evidenceExemptionCode": "EXEMPT_01",
+    "incomeEvidenceChecklist": {
+      "wageSlips": true
+    },
+    "expenditureCapitalEvidenceChecklist": {
+      "bankStatements": true
+    }
+  }
+}
+
+docs {
+  Updates the evidence checklist for the application.
+}
