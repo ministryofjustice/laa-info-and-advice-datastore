@@ -18,7 +18,14 @@ patch:
         schema:
           $ref: '../components/request-schemas.yml#/components/schemas/UpdateScopingDataCommand'
   responses:
-    '204': { description: Application scoping data updated successfully }
+    '204':
+      description: Application scoping data updated successfully
+      headers:
+        ETag:
+          description: The new ETag value for the updated resource
+          schema:
+            type: integer
+            format: int64
     '400':
       description: Bad request
       content:

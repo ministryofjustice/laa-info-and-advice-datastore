@@ -19,7 +19,14 @@ patch:
         schema:
           $ref: '../components/request-schemas.yml#/components/schemas/DeclarationCommand'
   responses:
-    '204': { description: Declaration updated successfully }
+    '204':
+      description: Declaration updated successfully
+      headers:
+        ETag:
+          description: The new ETag value for the updated resource
+          schema:
+            type: integer
+            format: int64
     '400':
       description: Bad request
       content:

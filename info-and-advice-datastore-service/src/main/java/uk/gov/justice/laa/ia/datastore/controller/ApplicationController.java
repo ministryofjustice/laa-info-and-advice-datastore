@@ -1,10 +1,12 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
+import java.util.OptionalLong;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,49 +72,50 @@ public class ApplicationController implements ApplicationApi {
   @Override
   public ResponseEntity<Void> updateMeansData(
       UUID id, UpdateMeansDataCommand updateMeansDataCommand) {
-    if (service.updateMeansData(id, updateMeansDataCommand)) {
-      return ResponseEntity.noContent().build();
-    } else {
-      return ResponseEntity.notFound().build();
-    }
+    OptionalLong newEtag = service.updateMeansData(id, updateMeansDataCommand);
+    return newEtag.isPresent()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
+        : ResponseEntity.notFound().build();
   }
 
   @Override
   public ResponseEntity<Void> updateDeclarationData(
       UUID id, DeclarationCommand declarationCommand) {
-    if (service.updateClientDeclaration(id, declarationCommand)) {
-      return ResponseEntity.noContent().build();
-    } else {
-      return ResponseEntity.notFound().build();
-    }
+    OptionalLong newEtag = service.updateClientDeclaration(id, declarationCommand);
+    return newEtag.isPresent()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
+        : ResponseEntity.notFound().build();
   }
 
   @Override
   public ResponseEntity<Void> updateEvidence(UUID id, UpdateEvidenceCommand updateEvidenceCommand) {
-    if (service.updateEvidence(id, updateEvidenceCommand)) {
-      return ResponseEntity.noContent().build();
-    } else {
-      return ResponseEntity.notFound().build();
-    }
+    OptionalLong newEtag = service.updateEvidence(id, updateEvidenceCommand);
+    return newEtag.isPresent()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
+        : ResponseEntity.notFound().build();
   }
 
   @Override
   public ResponseEntity<Void> updateScopingData(
       UUID id, UpdateScopingDataCommand updateScopingDataCommand) {
-    if (service.updateScopingData(id, updateScopingDataCommand)) {
-      return ResponseEntity.noContent().build();
-    } else {
-      return ResponseEntity.notFound().build();
-    }
+    OptionalLong newEtag = service.updateScopingData(id, updateScopingDataCommand);
+    return newEtag.isPresent()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
+        : ResponseEntity.notFound().build();
   }
 
   @Override
   public ResponseEntity<Void> updateApplication(
       UUID id, UpdateApplicationCommand updateApplicationCommand) {
-    if (service.updateApplication(id, updateApplicationCommand)) {
-      return ResponseEntity.noContent().build();
-    } else {
-      return ResponseEntity.notFound().build();
-    }
+    OptionalLong newEtag = service.updateApplication(id, updateApplicationCommand);
+    return newEtag.isPresent()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
+        : ResponseEntity.notFound().build();
+  }
+
+  private HttpHeaders etagHeader(long etag) {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setETag("\"" + etag + "\"");
+    return headers;
   }
 }

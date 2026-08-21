@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -163,12 +165,12 @@ public class ApplicationControllerTest {
   }
 
   @Test
-  void updateMeansData_returnsOkStatus() throws Exception {
+  void updateMeansData_returns204Status() throws Exception {
     // Arrange
     UUID id = UUID.randomUUID();
     String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
     when(applicationService.updateMeansData(eq(id), any(UpdateMeansDataCommand.class)))
-        .thenReturn(true);
+        .thenReturn(OptionalLong.of(1L));
 
     // Act + Assert
     mockMvc
@@ -176,7 +178,8 @@ public class ApplicationControllerTest {
             put("/api/v0/applications/" + id + ":update-means-data")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-        .andExpect(status().isNoContent());
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("ETag", "\"1\""));
   }
 
   @Test
@@ -185,7 +188,7 @@ public class ApplicationControllerTest {
     UUID id = UUID.randomUUID();
     String body = "{\"eTag\":0,\"data\":{\"some\":\"data\"},\"result\":{\"status\":\"ELIGIBLE\"}}";
     when(applicationService.updateMeansData(eq(id), any(UpdateMeansDataCommand.class)))
-        .thenReturn(false);
+        .thenReturn(OptionalLong.empty());
 
     // Act + Assert
     mockMvc
@@ -256,7 +259,7 @@ public class ApplicationControllerTest {
             .build();
     when(applicationService.updateClientDeclaration(
             eq(applicationId), any(DeclarationCommand.class)))
-        .thenReturn(true);
+        .thenReturn(OptionalLong.of(1L));
 
     // Act + Assert
     mockMvc
@@ -264,7 +267,8 @@ public class ApplicationControllerTest {
             patch("/api/v0/applications/{id}:update-declaration-data", applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(declarationCommand)))
-        .andExpect(status().isNoContent());
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("ETag", "\"1\""));
   }
 
   @Test
@@ -278,7 +282,7 @@ public class ApplicationControllerTest {
             .dateSigned(java.time.LocalDate.now())
             .build();
     when(applicationService.updateClientDeclaration(any(UUID.class), any(DeclarationCommand.class)))
-        .thenReturn(false);
+        .thenReturn(OptionalLong.empty());
 
     // Act + Assert
     mockMvc
@@ -296,7 +300,7 @@ public class ApplicationControllerTest {
     UUID applicationId = UUID.randomUUID();
     String body = "{\"eTag\":0,\"payeIncomeEvidence\":true}";
     when(applicationService.updateEvidence(any(UUID.class), any(UpdateEvidenceCommand.class)))
-        .thenReturn(true);
+        .thenReturn(OptionalLong.of(1L));
 
     // Act + Assert
     mockMvc
@@ -304,7 +308,8 @@ public class ApplicationControllerTest {
             put(TestConstants.UpdateEvidence, applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
-        .andExpect(status().isNoContent());
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("ETag", "\"1\""));
   }
 
   @Test
@@ -313,7 +318,7 @@ public class ApplicationControllerTest {
     UUID applicationId = UUID.randomUUID();
     String body = "{\"eTag\":0,\"payeIncomeEvidence\":true}";
     when(applicationService.updateEvidence(any(UUID.class), any(UpdateEvidenceCommand.class)))
-        .thenReturn(false);
+        .thenReturn(OptionalLong.empty());
 
     // Act + Assert
     mockMvc
@@ -390,7 +395,7 @@ public class ApplicationControllerTest {
     UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
     when(applicationService.updateApplication(
             eq(applicationId), any(UpdateApplicationCommand.class)))
-        .thenReturn(true);
+        .thenReturn(OptionalLong.of(1L));
 
     // Act + Assert
     mockMvc
@@ -398,7 +403,8 @@ public class ApplicationControllerTest {
             patch(TestConstants.UpdateApplication, applicationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(command)))
-        .andExpect(status().isNoContent());
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("ETag", "\"1\""));
   }
 
   @Test
@@ -408,7 +414,7 @@ public class ApplicationControllerTest {
     UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
     when(applicationService.updateApplication(
             eq(applicationId), any(UpdateApplicationCommand.class)))
-        .thenReturn(false);
+        .thenReturn(OptionalLong.empty());
 
     // Act + Assert
     mockMvc

@@ -1,7 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,6 +15,7 @@ import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
@@ -266,9 +266,10 @@ public class ApplicationServiceTest {
     when(userContext.getCurrentUser()).thenReturn(user);
     when(objectMapper.valueToTree(data)).thenReturn(dataNode);
     when(objectMapper.valueToTree(meansResult)).thenReturn(resultNode);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, command);
+    OptionalLong result = sut.updateMeansData(applicationId, command);
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
 
@@ -288,8 +289,9 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    boolean result =
+    OptionalLong result =
         sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build());
+    assertTrue(result.isEmpty());
     verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
@@ -331,12 +333,13 @@ public class ApplicationServiceTest {
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(applicationEntity);
 
     // Act
-    final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
+    final OptionalLong result = sut.updateClientDeclaration(applicationId, declarationCommand);
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     assertThat(applicationEntity.getDeclaration()).isNotNull();
     assertThat(applicationEntity.getDeclaration().isDeclarationConfirmation()).isTrue();
     assertThat(applicationEntity.getDeclaration().getClientDeclarationStatus())
@@ -388,16 +391,17 @@ public class ApplicationServiceTest {
     when(userContext.getOfficeCodes())
         .thenReturn(List.of(applicationEntity.getProviderOfficeCode()));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(applicationEntity);
 
     assertThat(applicationEntity.getDeclaration().getCreatedAt()).isEqualTo(originalCreatedTime);
     assertThat(applicationEntity.getDeclaration().getModifiedAt()).isEqualTo(originalCreatedTime);
 
     // Act
-    final boolean result = sut.updateClientDeclaration(applicationId, declarationCommand);
+    final OptionalLong result = sut.updateClientDeclaration(applicationId, declarationCommand);
     final DeclarationEntity declaration = applicationEntity.getDeclaration();
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     assertThat(declaration).isNotNull();
     assertThat(declaration.isDeclarationConfirmation()).isTrue();
     assertThat(declaration.getClientDeclarationStatus()).isEqualTo(ClientDeclarationStatus.DRAFT);
@@ -416,11 +420,11 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    final boolean result =
+    final OptionalLong result =
         sut.updateClientDeclaration(UUID.randomUUID(), (DeclarationCommand) null);
 
     // Assert
-    assertFalse(result);
+    assertTrue(result.isEmpty());
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -431,10 +435,10 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    final boolean result = sut.updateEvidence(UUID.randomUUID(), (UpdateEvidenceCommand) null);
+    final OptionalLong result = sut.updateEvidence(UUID.randomUUID(), (UpdateEvidenceCommand) null);
 
     // Assert
-    assertFalse(result);
+    assertTrue(result.isEmpty());
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -453,12 +457,13 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(EvidenceEntity.builder().build());
     when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(savedEvidence);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
-    final boolean result = sut.updateEvidence(application.getId(), command);
+    final OptionalLong result = sut.updateEvidence(application.getId(), command);
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     assertThat(application.getEvidence()).isSameAs(savedEvidence);
     assertThat(application.getModifiedBy()).isEqualTo("TEST_USER");
     verify(evidenceRepository, times(1)).save(any(EvidenceEntity.class));
@@ -484,12 +489,13 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(mappedEvidence);
     when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(savedEvidence);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
-    final boolean result = sut.updateEvidence(application.getId(), command);
+    final OptionalLong result = sut.updateEvidence(application.getId(), command);
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     assertThat(application.getEvidence()).isSameAs(savedEvidence);
     assertThat(mappedEvidence.getEvidenceId()).isEqualTo(existingEvidenceId);
     verify(evidenceRepository, times(1)).save(mappedEvidence);
@@ -531,6 +537,7 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(objectMapper.valueToTree(data)).thenReturn(objectNode);
     when(objectMapper.valueToTree(meansResult)).thenReturn(objectNode);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
     sut.updateMeansData(applicationId, command);
@@ -564,6 +571,7 @@ public class ApplicationServiceTest {
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(applicationEntity));
     when(declarationMapper.toDeclarationEntity(command)).thenReturn(declarationEntity);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(applicationEntity);
 
     // Act
     sut.updateClientDeclaration(applicationId, command);
@@ -598,6 +606,7 @@ public class ApplicationServiceTest {
     when(evidenceMapper.toEvidenceEntity(command)).thenReturn(EvidenceEntity.builder().build());
     when(evidenceRepository.save(any(EvidenceEntity.class)))
         .thenReturn(EvidenceEntity.builder().build());
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
     sut.updateEvidence(application.getId(), command);
@@ -754,12 +763,13 @@ public class ApplicationServiceTest {
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
-    boolean result = sut.updateApplication(applicationId, command);
+    OptionalLong result = sut.updateApplication(applicationId, command);
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     verify(mapper, times(1)).updateApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
     verify(eventService, times(1)).record(command);
@@ -772,12 +782,12 @@ public class ApplicationServiceTest {
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
 
     // Act
-    boolean result =
+    OptionalLong result =
         sut.updateApplication(
             UUID.randomUUID(), UpdateApplicationCommand.builder().eTag(0L).build());
 
     // Assert
-    assertFalse(result);
+    assertTrue(result.isEmpty());
     verify(mapper, never()).updateApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
     verify(eventService, never()).record(any());
@@ -855,12 +865,13 @@ public class ApplicationServiceTest {
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(objectMapper.valueToTree(data)).thenReturn((ObjectNode) data);
     when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, command);
+    OptionalLong result = sut.updateMeansData(applicationId, command);
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     ArgumentCaptor<EligibilityResultEntity> resultCaptor =
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
@@ -893,12 +904,13 @@ public class ApplicationServiceTest {
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(objectMapper.valueToTree(data)).thenReturn((ObjectNode) data);
     when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, command);
+    OptionalLong result = sut.updateMeansData(applicationId, command);
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     ArgumentCaptor<EligibilityResultEntity> resultCaptor =
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
