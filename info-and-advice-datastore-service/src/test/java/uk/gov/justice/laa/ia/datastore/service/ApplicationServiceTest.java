@@ -865,12 +865,13 @@ public class ApplicationServiceTest {
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(objectMapper.valueToTree(data)).thenReturn((ObjectNode) data);
     when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, command);
+    OptionalLong result = sut.updateMeansData(applicationId, command);
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     ArgumentCaptor<EligibilityResultEntity> resultCaptor =
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
@@ -903,12 +904,13 @@ public class ApplicationServiceTest {
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(objectMapper.valueToTree(data)).thenReturn((ObjectNode) data);
     when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
-    boolean result = sut.updateMeansData(applicationId, command);
+    OptionalLong result = sut.updateMeansData(applicationId, command);
 
     // Assert
-    assertTrue(result);
+    assertTrue(result.isPresent());
     ArgumentCaptor<EligibilityResultEntity> resultCaptor =
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
