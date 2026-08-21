@@ -19,7 +19,14 @@ put:
         schema:
           $ref: '../components/request-schemas.yml#/components/schemas/UpdateEvidenceCommand'
   responses:
-    '204': { description: Evidence updated successfully }
+    '200':
+      description: Evidence updated successfully
+      headers:
+        ETag:
+          description: The new ETag value for the updated resource
+          schema:
+            type: integer
+            format: int64
     '400':
       description: Bad request
       content:
