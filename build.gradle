@@ -1,3 +1,4 @@
 subprojects {
     group = 'uk.gov.justice.laa.ia.datastore'
+    version = rootProject.version
 }
