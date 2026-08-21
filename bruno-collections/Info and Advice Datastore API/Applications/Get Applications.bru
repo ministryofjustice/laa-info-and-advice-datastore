@@ -1,0 +1,16 @@
+meta {
+  name: Get Applications
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v0/applications?page=0&size=25
+  body: none
+  auth: inherit
+}
+
+docs {
+  Get a paginated list of applications. Optional query params: `officeId`, `status`
+  (DRAFT | COMPLETED).
+}

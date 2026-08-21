@@ -1,0 +1,22 @@
+meta {
+  name: Update Application
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "applicationState": "COMPLETED"
+  }
+}
+
+docs {
+  Updates the application's overall state (e.g. DRAFT -> COMPLETED).
+}
