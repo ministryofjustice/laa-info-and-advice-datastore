@@ -26,6 +26,11 @@ get:
       required: false
       schema:
         $ref: '../components/response-schemas.yml#/components/schemas/ApplicationState'
+    - name: eligibilityIndication
+      in: query
+      required: false
+      schema:
+        $ref: '../components/response-schemas.yml#/components/schemas/EligibilityIndication'
     - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
   responses:
     '200':

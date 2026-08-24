@@ -1,0 +1,27 @@
+meta {
+  name: Update Means Data
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-means-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "data": {
+      "question": "answer"
+    },
+    "result": {
+      "status": "ELIGIBLE"
+    }
+  }
+}
+
+docs {
+  Updates the means assessment data for the application created by Start Application.
+}

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -126,56 +127,79 @@ public class ApplicationService {
    *
    * @param applicationId the application ID
    * @param command the means data command including eTag for optimistic concurrency control
-   * @return true if application updated, false if not found
+   * @return an OptionalLong containing the new ETag if updated, empty if not found
    * @throws EtagMismatchException if the eTag does not match the current entity value
    * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
    *     one of the user's authorized office codes
    */
   @Transactional
-  public boolean updateMeansData(UUID applicationId, UpdateMeansDataCommand command) {
+  public OptionalLong updateMeansData(UUID applicationId, UpdateMeansDataCommand command) {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
-      return false;
+      return OptionalLong.empty();
     }
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
 
+    com.fasterxml.jackson.databind.JsonNode resultJson =
+        objectMapper.valueToTree(command.getResult());
+    Boolean indication = extractEligibilityIndication(resultJson);
+
     EligibilityResultEntity resultEntity =
         EligibilityResultEntity.builder()
             .applicationId(applicationId)
             .data(objectMapper.valueToTree(command.getData()))
-            .resultJson(objectMapper.valueToTree(command.getResult()))
+            .resultJson(resultJson)
+            .indication(indication)
             .createdBy(userContext.getCurrentUser())
             .build();
 
     eligibilityResultRepository.save(resultEntity);
 
     application.setModifiedBy(userContext.getCurrentUser());
-    repository.save(application);
+    ApplicationEntity saved = repository.save(application);
     eventService.record(command);
-    return true;
+    return OptionalLong.of(saved.getEtag());
+  }
+
+  private Boolean extractEligibilityIndication(com.fasterxml.jackson.databind.JsonNode resultJson) {
+    if (resultJson == null) {
+      return null;
+    }
+    com.fasterxml.jackson.databind.JsonNode overallResult =
+        resultJson.at("/result_summary/overall_result/result");
+    if (overallResult == null || overallResult.isMissingNode()) {
+      return null;
+    }
+    String result = overallResult.asText();
+    if ("eligible".equalsIgnoreCase(result)) {
+      return true;
+    } else if ("ineligible".equalsIgnoreCase(result)) {
+      return false;
+    }
+    return null;
   }
 
   /**
    * Update application client declaration.
    *
    * @param command the declaration command including eTag for optimistic concurrency control
-   * @return true if application updated, false if not found.
+   * @return an OptionalLong containing the new ETag if updated, empty if not found
    * @throws EtagMismatchException if the eTag does not match the current entity value
    * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
    *     one of the user's authorized office codes
    */
   @Transactional
-  public boolean updateClientDeclaration(UUID applicationId, DeclarationCommand command) {
+  public OptionalLong updateClientDeclaration(UUID applicationId, DeclarationCommand command) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
-      return false;
+      return OptionalLong.empty();
     }
 
     final ApplicationEntity application = applicationOpt.get();
@@ -193,27 +217,27 @@ public class ApplicationService {
     }
     application.setDeclaration(declarationEntity);
 
-    repository.save(application);
+    ApplicationEntity saved = repository.save(application);
     eventService.record(command);
-    return true;
+    return OptionalLong.of(saved.getEtag());
   }
 
   /**
    * Update application evidence.
    *
    * @param command the evidence command including eTag for optimistic concurrency control
-   * @return true if application updated, false if not found.
+   * @return an OptionalLong containing the new ETag if updated, empty if not found
    * @throws EtagMismatchException if the eTag does not match the current entity value
    * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
    *     one of the user's authorized office codes
    */
   @Transactional
-  public boolean updateEvidence(UUID applicationId, UpdateEvidenceCommand command) {
+  public OptionalLong updateEvidence(UUID applicationId, UpdateEvidenceCommand command) {
     final Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
-      return false;
+      return OptionalLong.empty();
     }
     final ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
@@ -232,9 +256,9 @@ public class ApplicationService {
 
     application.setEvidence(savedEvidence);
     application.setModifiedBy(userContext.getCurrentUser());
-    repository.save(application);
+    ApplicationEntity saved = repository.save(application);
     eventService.record(command);
-    return true;
+    return OptionalLong.of(saved.getEtag());
   }
 
   private void validateEtag(ApplicationEntity application, Long providedEtag) {
@@ -254,18 +278,18 @@ public class ApplicationService {
    *
    * @param applicationId the application ID
    * @param command the scoping data command including eTag for optimistic concurrency control
-   * @return true if application updated, false if not found
+   * @return an OptionalLong containing the new ETag if updated, empty if not found
    * @throws EtagMismatchException if the eTag does not match the current entity value
    * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
    *     one of the user's authorized office codes
    */
   @Transactional
-  public boolean updateScopingData(UUID applicationId, UpdateScopingDataCommand command) {
+  public OptionalLong updateScopingData(UUID applicationId, UpdateScopingDataCommand command) {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
-      return false;
+      return OptionalLong.empty();
     }
 
     ApplicationEntity application = applicationOpt.get();
@@ -274,9 +298,9 @@ public class ApplicationService {
 
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
     application.setModifiedBy(userContext.getCurrentUser());
-    repository.save(application);
+    ApplicationEntity saved = repository.save(application);
     eventService.record(command);
-    return true;
+    return OptionalLong.of(saved.getEtag());
   }
 
   /**
@@ -284,18 +308,18 @@ public class ApplicationService {
    *
    * @param applicationId the application ID
    * @param command the update command including eTag for optimistic concurrency control
-   * @return true if application updated, false if not found
+   * @return an OptionalLong containing the new ETag if updated, empty if not found
    * @throws EtagMismatchException if the eTag does not match the current entity value
    * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
    *     one of the user's authorized office codes
    */
   @Transactional
-  public boolean updateApplication(UUID applicationId, UpdateApplicationCommand command) {
+  public OptionalLong updateApplication(UUID applicationId, UpdateApplicationCommand command) {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(
             ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
     if (applicationOpt.isEmpty()) {
-      return false;
+      return OptionalLong.empty();
     }
 
     ApplicationEntity application = applicationOpt.get();
@@ -303,8 +327,8 @@ public class ApplicationService {
     validateEtag(application, command.geteTag());
 
     applicationMapper.updateApplicationEntity(command, application);
-    repository.save(application);
+    ApplicationEntity saved = repository.save(application);
     eventService.record(command);
-    return true;
+    return OptionalLong.of(saved.getEtag());
   }
 }

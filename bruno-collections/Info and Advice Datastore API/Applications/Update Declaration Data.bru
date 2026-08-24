@@ -1,0 +1,23 @@
+meta {
+  name: Update Declaration Data
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-declaration-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "declarationConfirmation": true,
+    "dateSigned": "2026-08-19"
+  }
+}
+
+docs {
+  Confirms the client's declaration for the application.
+}

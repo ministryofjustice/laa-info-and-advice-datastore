@@ -39,7 +39,7 @@ public class ApplicationStateSpecificationIntegrationTest extends BaseIntegratio
 
     // create specification
     Specification<ApplicationEntity> specification =
-        ApplicationSpecification.filterBy(null, ApplicationState.COMPLETED);
+        ApplicationSpecification.filterBy(null, ApplicationState.COMPLETED, null);
 
     // Act
     List<ApplicationEntity> applications = applicationRepository.findAll(specification);
@@ -70,7 +70,8 @@ public class ApplicationStateSpecificationIntegrationTest extends BaseIntegratio
     clearCache();
 
     // create specification
-    Specification<ApplicationEntity> specification = ApplicationSpecification.filterBy(null, null);
+    Specification<ApplicationEntity> specification =
+        ApplicationSpecification.filterBy(null, null, null);
 
     // Act
     List<ApplicationEntity> applications = applicationRepository.findAll(specification);
