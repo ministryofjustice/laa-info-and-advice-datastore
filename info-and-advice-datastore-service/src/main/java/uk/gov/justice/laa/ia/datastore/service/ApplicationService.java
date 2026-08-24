@@ -27,6 +27,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
@@ -327,6 +328,35 @@ public class ApplicationService {
     validateEtag(application, command.geteTag());
 
     applicationMapper.updateApplicationEntity(command, application);
+    ApplicationEntity saved = repository.save(application);
+    eventService.record(command);
+    return OptionalLong.of(saved.getEtag());
+  }
+
+  /**
+   * Edit application metadata fields.
+   *
+   * @param applicationId the application ID
+   * @param command the edit command including eTag for optimistic concurrency control
+   * @return an OptionalLong containing the new ETag if updated, empty if not found
+   * @throws EtagMismatchException if the eTag does not match the current entity value
+   * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
+   *     one of the user's authorized office codes
+   */
+  @Transactional
+  public OptionalLong editApplication(UUID applicationId, EditApplicationCommand command) {
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
+    if (applicationOpt.isEmpty()) {
+      return OptionalLong.empty();
+    }
+
+    ApplicationEntity application = applicationOpt.get();
+    validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateEtag(application, command.geteTag());
+
+    applicationMapper.editApplicationEntity(command, application);
     ApplicationEntity saved = repository.save(application);
     eventService.record(command);
     return OptionalLong.of(saved.getEtag());

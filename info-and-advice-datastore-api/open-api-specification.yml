@@ -19,6 +19,8 @@ paths:
     $ref: './open-api-applications/paths/application-update-declaration-data.yml'
   /api/v0/applications/{id}:update-application:
     $ref: './open-api-applications/paths/application-update-application.yml'
+  /api/v0/applications/{id}:edit-application:
+    $ref: './open-api-applications/paths/application-edit-application.yml'
 
 components:
   parameters:
@@ -54,6 +56,8 @@ components:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateMeansDataCommand'
     UpdateScopingDataCommand:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateScopingDataCommand'
+    EditApplicationCommand:
+      $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/EditApplicationCommand'
     EligibilityResult:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResult'
     ApiError:

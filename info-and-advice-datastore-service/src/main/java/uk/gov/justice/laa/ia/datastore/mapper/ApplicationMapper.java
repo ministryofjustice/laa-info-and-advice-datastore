@@ -11,6 +11,7 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
+import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityIndication;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
@@ -126,4 +127,31 @@ public abstract class ApplicationMapper {
   @Mapping(target = "eligibilityResults", ignore = true)
   public abstract void updateApplicationEntity(
       UpdateApplicationCommand cmd, @MappingTarget ApplicationEntity entity);
+
+  /**
+   * Updates an {@link ApplicationEntity} in place from an {@link EditApplicationCommand}, leaving
+   * fields that are not set on the command unchanged.
+   */
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "etag", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(target = "modifiedAt", ignore = true)
+  @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
+  @Mapping(target = "providerFirmCode", ignore = true)
+  @Mapping(target = "providerOfficeCode", ignore = true)
+  @Mapping(target = "evidence", ignore = true)
+  @Mapping(target = "declaration", ignore = true)
+  @Mapping(target = "clientDetails", ignore = true)
+  @Mapping(target = "referenceNumber", ignore = true)
+  @Mapping(target = "scopingQuestions", ignore = true)
+  @Mapping(target = "isMeansTested", ignore = true)
+  @Mapping(target = "dataRetentionEventUuid", ignore = true)
+  @Mapping(target = "dataRetentionDate", ignore = true)
+  @Mapping(target = "applicationState", ignore = true)
+  @Mapping(target = "applicationType", ignore = true)
+  @Mapping(target = "eligibilityResults", ignore = true)
+  public abstract void editApplicationEntity(
+      EditApplicationCommand cmd, @MappingTarget ApplicationEntity entity);
 }
