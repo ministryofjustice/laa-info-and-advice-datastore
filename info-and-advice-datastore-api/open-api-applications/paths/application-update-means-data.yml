@@ -18,7 +18,14 @@ put:
         schema:
           $ref: '../components/request-schemas.yml#/components/schemas/UpdateMeansDataCommand'
   responses:
-    '204': { description: Application means data updated successfully }
+    '204':
+      description: Application means data updated successfully
+      headers:
+        ETag:
+          description: The new ETag value for the updated resource
+          schema:
+            type: integer
+            format: int64
     '400':
       description: Bad request
       content:

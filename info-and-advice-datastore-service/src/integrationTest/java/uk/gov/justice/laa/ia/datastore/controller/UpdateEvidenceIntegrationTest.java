@@ -3,6 +3,7 @@ package uk.gov.justice.laa.ia.datastore.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,7 +21,6 @@ import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBu
 /** Integration test for updating evidence on an application. */
 @ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
-  // 204
   @Test
   void shouldUpdateEvidenceSuccessfully() throws Exception {
     // Arrange
@@ -46,6 +46,7 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
         .andExpect(status().isNoContent())
+        .andExpect(header().exists("ETag"))
         .andReturn();
   }
 
@@ -71,7 +72,8 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isNoContent());
+        .andExpect(status().isNoContent())
+        .andExpect(header().exists("ETag"));
     clearCache();
 
     // Act & Assert: the checklist payloads must round-trip as plain JSON, not as

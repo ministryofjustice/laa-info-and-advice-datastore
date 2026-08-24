@@ -21,7 +21,7 @@ RUN mkdir -p /opt/laa-info-and-advice-datastore/
 WORKDIR /opt/laa-info-and-advice-datastore/
 
 # Copy the JAR file from the build stage
-COPY --from=builder /build/info-and-advice-datastore-service/build/libs/info-and-advice-datastore-service-1.0.0.jar app.jar
+COPY --from=builder /build/info-and-advice-datastore-service/build/libs/info-and-advice-datastore-service-*.jar app.jar
 
 # Create a group and non-root user
 RUN addgroup -S appgroup && adduser -u 1001 -S appuser -G appgroup
@@ -33,4 +33,4 @@ USER 1001
 EXPOSE 8080
 
 # Run the JAR file
-CMD java -jar app.jar
+CMD ["java", "-jar", "app.jar"]

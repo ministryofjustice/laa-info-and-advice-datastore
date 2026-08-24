@@ -1,0 +1,15 @@
+meta {
+  name: Get Application
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}
+  body: none
+  auth: inherit
+}
+
+docs {
+  Get a single application by id (uses the `applicationId` set by Start Application).
+}

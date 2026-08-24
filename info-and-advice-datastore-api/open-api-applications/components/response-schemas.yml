@@ -107,6 +107,8 @@ components:
         modifiedAt:
           type: string
           format: date-time
+        eligibilityIndication:
+          $ref: '#/components/schemas/EligibilityIndication'
 
     ApplicationResponses:
       type: object
@@ -159,6 +161,12 @@ components:
       enum:
         - DRAFT
         - COMPLETED
+
+    EligibilityIndication:
+      type: string
+      enum:
+        - eligible
+        - ineligible
 
     EvidenceResponse:
       type: object
