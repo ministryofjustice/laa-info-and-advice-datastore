@@ -43,6 +43,7 @@ import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerato
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
@@ -458,5 +459,75 @@ public class ApplicationControllerTest {
         .andExpect(status().isBadRequest());
     verify(applicationService, never())
         .updateApplication(eq(applicationId), any(UpdateApplicationCommand.class));
+  }
+
+  @Test
+  void editApplication_returns204_whenApplicationExists() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    EditApplicationCommand command = EditApplicationCommand.builder().eTag(0L).build();
+    when(applicationService.editApplication(eq(applicationId), any(EditApplicationCommand.class)))
+        .thenReturn(OptionalLong.of(1L));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("ETag", "\"1\""));
+  }
+
+  @Test
+  void editApplication_returns404_whenApplicationDoesNotExist() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    EditApplicationCommand command = EditApplicationCommand.builder().eTag(0L).build();
+    when(applicationService.editApplication(eq(applicationId), any(EditApplicationCommand.class)))
+        .thenReturn(OptionalLong.empty());
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void editApplication_returns409_whenEtagMismatch() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    EditApplicationCommand command = EditApplicationCommand.builder().eTag(2L).build();
+    doThrow(new EtagMismatchException(2L, 5L))
+        .when(applicationService)
+        .editApplication(eq(applicationId), any(EditApplicationCommand.class));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(command)))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  void editApplication_returns400_whenEtagMissing() throws Exception {
+    // Arrange
+    UUID applicationId = UUID.randomUUID();
+    String body = "{}";
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+        .andExpect(status().isBadRequest());
+    verify(applicationService, never())
+        .editApplication(eq(applicationId), any(EditApplicationCommand.class));
   }
 }

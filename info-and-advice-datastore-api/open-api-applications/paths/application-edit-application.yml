@@ -1,0 +1,34 @@
+patch:
+  tags:
+    - application
+  operationId: editApplication
+  summary: Edit an application
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/request-schemas.yml#/components/schemas/EditApplicationCommand'
+  responses:
+    '204':
+      description: Application edited successfully
+      headers:
+        ETag:
+          description: The new ETag value for the updated resource
+          schema:
+            type: integer
+            format: int64
+    '400': { description: Bad request }
+    '401': { description: Unauthorized }
+    '403': { description: Forbidden }
+    '404': { description: Not found }
+    '409': { description: Conflict - ETag mismatch }
+    '500': { description: Internal server error }

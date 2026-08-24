@@ -47,6 +47,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
@@ -915,5 +916,97 @@ public class ApplicationServiceTest {
         ArgumentCaptor.forClass(EligibilityResultEntity.class);
     verify(eligibilityResultRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getIndication()).isFalse();
+  }
+
+  @Test
+  void shouldEditApplication() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder()
+            .eTag(0L)
+            .ufn("123456/1")
+            .laaReference("LAA-ABC123")
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    OptionalLong result = sut.editApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result.isPresent());
+    verify(mapper, times(1)).editApplicationEntity(command, application);
+    verify(repo, times(1)).save(application);
+    verify(eventService, times(1)).record(command);
+  }
+
+  @Test
+  void shouldReturnEmpty_whenEditingApplicationForUnknownApplication() {
+    // Arrange
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
+
+    // Act
+    OptionalLong result =
+        sut.editApplication(UUID.randomUUID(), EditApplicationCommand.builder().eTag(0L).build());
+
+    // Assert
+    assertTrue(result.isEmpty());
+    verify(mapper, never()).editApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any());
+  }
+
+  @Test
+  void editApplication_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        EtagMismatchException.class,
+        () ->
+            sut.editApplication(applicationId, EditApplicationCommand.builder().eTag(99L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void editApplication_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(UUID.randomUUID().toString())
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.editApplication(applicationId, EditApplicationCommand.builder().eTag(0L).build()));
+    verify(mapper, never()).editApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
   }
 }

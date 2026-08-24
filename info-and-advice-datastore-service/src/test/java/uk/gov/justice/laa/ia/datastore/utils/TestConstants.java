@@ -10,4 +10,5 @@ public class TestConstants {
   public static final String UpdateEvidence = "/api/v0/applications/{id}:update-evidence";
   public static final String UpdateScopingData = "/api/v0/applications/{id}:update-scoping-data";
   public static final String UpdateApplication = "/api/v0/applications/{id}:update-application";
+  public static final String EditApplication = "/api/v0/applications/{id}:edit-application";
 }

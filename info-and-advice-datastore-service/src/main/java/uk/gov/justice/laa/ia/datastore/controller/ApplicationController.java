@@ -17,6 +17,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationResponses;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityIndication;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
@@ -108,6 +109,15 @@ public class ApplicationController implements ApplicationApi {
   public ResponseEntity<Void> updateApplication(
       UUID id, UpdateApplicationCommand updateApplicationCommand) {
     OptionalLong newEtag = service.updateApplication(id, updateApplicationCommand);
+    return newEtag.isPresent()
+        ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
+        : ResponseEntity.notFound().build();
+  }
+
+  @Override
+  public ResponseEntity<Void> editApplication(
+      UUID id, EditApplicationCommand editApplicationCommand) {
+    OptionalLong newEtag = service.editApplication(id, editApplicationCommand);
     return newEtag.isPresent()
         ? ResponseEntity.noContent().headers(etagHeader(newEtag.getAsLong())).build()
         : ResponseEntity.notFound().build();
