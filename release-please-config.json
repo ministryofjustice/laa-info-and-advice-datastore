@@ -1,5 +1,6 @@
 {
   "release-type": "java",
+  "last-release-sha": "e81a58108736d2c6e08ceb500a25f35f844d915f",
   "packages": {
     ".": {}
   }
