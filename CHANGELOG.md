@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0](https://github.com/ministryofjustice/laa-info-and-advice-datastore/compare/v0.5.0-SNAPSHOT...v0.6.0) (2026-08-24)
+
+
+### Features
+
+* add PATCH /applications/{id}:edit-application ([696a3b3](https://github.com/ministryofjustice/laa-info-and-advice-datastore/commit/696a3b3c28926bb114e026b925fe5de9e70f8519))
+* add PATCH /applications/{id}:edit-application ([b57202f](https://github.com/ministryofjustice/laa-info-and-advice-datastore/commit/b57202fb4b7d6d476b62585f74f68b10e03bd6f2))
+
 ## 1.0.0 (2026-08-21)
 
 
