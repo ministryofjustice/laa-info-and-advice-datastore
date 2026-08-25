@@ -23,4 +23,7 @@ public class UserContext {
 
   /** The current user. */
   private String currentUser = "SYSTEM";
+
+  /** The correlation ID for the current request. */
+  private String correlationId;
 }

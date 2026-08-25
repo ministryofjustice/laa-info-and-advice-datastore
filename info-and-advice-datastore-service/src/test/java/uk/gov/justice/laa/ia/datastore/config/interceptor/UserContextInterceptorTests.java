@@ -15,6 +15,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.MDC;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -48,6 +49,7 @@ public class UserContextInterceptorTests {
   @AfterEach
   void clearSecurityContext() {
     SecurityContextHolder.clearContext();
+    MDC.clear();
   }
 
   private void givenAuthenticatedPrimaryJwt(String oid, String tid) {
@@ -203,5 +205,22 @@ public class UserContextInterceptorTests {
     assertThat(response.getStatus()).isEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
     assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
     assertThat(response.getContentAsString()).contains("Missing oid or tid claim");
+  }
+
+  @Test
+  void preHandle_shouldSetCorrelationIdOnUserContext_fromMdc() throws Exception {
+    // Arrange
+    givenAuthenticatedPrimaryJwt("user-oid", "tenant-tid");
+    when(mockJwt.getClaimAsString("FIRM_CODE")).thenReturn("123456");
+    when(mockJwt.getClaimAsStringList("LAA_ACCOUNTS")).thenReturn(List.of("office1"));
+    when(mockJwt.getClaimAsString("oid")).thenReturn("user-oid");
+    when(mockJwt.getClaimAsString("tid")).thenReturn("tenant-tid");
+    MDC.put("correlationId", "test-correlation-id");
+
+    // Act
+    assertTrue(interceptor.preHandle(request, response, null));
+
+    // Assert
+    assertThat(userContext.getCorrelationId()).isEqualTo("test-correlation-id");
   }
 }

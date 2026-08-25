@@ -36,6 +36,7 @@ class EventServiceTest {
     final JsonNode payloadNode = new ObjectMapper().createObjectNode();
     when(userContext.getCurrentUser()).thenReturn("test-user");
     when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getCorrelationId()).thenReturn("test-correlation-id");
     when(request.getMethod()).thenReturn("POST");
     when(request.getRequestURI()).thenReturn("/api/v0/applications:start-application");
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
@@ -50,6 +51,7 @@ class EventServiceTest {
     EventEntity saved = captor.getValue();
     assertThat(saved.getChangedBy()).isEqualTo("test-user");
     assertThat(saved.getProviderFirmCode()).isEqualTo("123456");
+    assertThat(saved.getCorrelationId()).isEqualTo("test-correlation-id");
     assertThat(saved.getHttpMethod()).isEqualTo("POST");
     assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-application");
     assertThat(saved.getPayload()).isEqualTo(payloadNode);
