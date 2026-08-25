@@ -39,6 +39,9 @@ public class EventEntity {
   @Column(name = "provider_office_code")
   private String providerOfficeCode;
 
+  @Column(name = "correlation_id")
+  private String correlationId;
+
   @Column(name = "http_method", nullable = false)
   private String httpMethod;
 

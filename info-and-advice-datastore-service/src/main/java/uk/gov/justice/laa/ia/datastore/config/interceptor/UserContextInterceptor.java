@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -111,5 +112,6 @@ public class UserContextInterceptor implements HandlerInterceptor {
 
     userContext.setProviderFirmCode(providerFirmCodeClaim);
     userContext.setOfficeCodes(officeCodesClaim);
+    userContext.setCorrelationId(MDC.get("correlationId"));
   }
 }
