@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: laa-info-and-advice-datastore
+
+  # example database
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/laa_info_advice_datastore}
+    username: ${DB_USERNAME:laa_user}
+    password: ${DB_PASSWORD:laa_password}
+    driver-class-name: org.postgresql.Driver
+  h2:
+    console:
+      enabled: true
+
+  #do not auto create db schema, use .sql scripts
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+        generate_statistics: false
+        jdbc:
+          lob:
+            non_contextual_creation: true
+    hibernate:
+      ddl-auto: none
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+# used by actuator info endpoint
+info:
+  app:
+    name: LAA Information and Advice Datastore
+    description: Datastore for information and advice
+    version: 1.0.0
+
+management:
+  # specify actuator endpoints to enable
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: ${ROOT_LOGGING_LEVEL:info}
+  structured:
+    format:
+      console: ecs
+    ecs:
+      service:
+        name: ${spring.application.name}
+        version: ${spring.application.version:unknown}
+        environment: ${spring.profiles.active:default}
+        node_name: ${HOSTNAME:unknown}
+
+laa:
+  datastore:
+    # Trusts the forwarded X-Authorization token (UserContextInterceptor) issued for the calling
+    # service's own audience - deliberately separate from resourceserver.jwt tenants below so this
+    # trust never extends to the primary Authorization header/endpoint authorization.
+    trusted-caller:
+      issuer-uri: ${LAA_OAUTH2_ISSUER_URI:https://placeholder.issuer.uri/v2.0}
+      audience: ${TRUSTED_CALLER_AUDIENCE:api://placeholder-caller-audience}
+  springboot.starter:
+    oauth2:
+      scopes-claim-path: scp
+      resourceserver:
+        jwt:
+          tenants:
+            - issuer-uri: ${LAA_OAUTH2_ISSUER_URI:https://placeholder.issuer.uri/v2.0}
+              audiences:
+                - ${LAA_OAUTH2_AUDIENCE:api://placeholder-audience}
+      authorized-scopes: '[
+          {
+            "name": "DataStore.Access",
+            "uris": [
+              {"method":["GET","POST","PUT","PATCH","DELETE"],"uri":"/api/v0/**"}
+            ]
+          }
+        ]'
+      unprotected-uris: [ "/actuator/**", "/swagger-ui.html",
+                          "/swagger-ui/**", "/v3/api-docs/**", "/favicon.ico",
+                          "/open-api-specification.yml", "/error" ]
+
