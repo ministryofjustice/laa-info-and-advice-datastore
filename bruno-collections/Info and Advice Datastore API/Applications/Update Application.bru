@@ -31,6 +31,12 @@ tests {
   test("ETag header is present", function() {
     expect(res.getHeader("etag")).to.exist;
   });
+
+  await test("application state is reflected on the application", async function() {
+    const getApplicationRes = await bru.runRequest("Applications/Get Application");
+    const application = getApplicationRes.data;
+    expect(application.applicationState).to.equal("COMPLETED");
+  });
 }
 
 docs {

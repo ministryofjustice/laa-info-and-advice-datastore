@@ -34,6 +34,13 @@ tests {
   test("ETag header is present", function() {
     expect(res.getHeader("etag")).to.exist;
   });
+
+  await test("scoping data is reflected on the application", async function() {
+    const getApplicationRes = await bru.runRequest("Applications/Get Application");
+    const application = getApplicationRes.data;
+    expect(application.scopingQuestions.priorLegalAid).to.equal("same_matter");
+    expect(application.scopingQuestions.priorLegalAidReason).to.equal("Previous matter was related");
+  });
 }
 
 docs {

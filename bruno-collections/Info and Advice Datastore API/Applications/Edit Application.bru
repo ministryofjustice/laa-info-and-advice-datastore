@@ -32,6 +32,13 @@ tests {
   test("ETag header is present", function() {
     expect(res.getHeader("etag")).to.exist;
   });
+
+  await test("edited fields are reflected on the application", async function() {
+    const getApplicationRes = await bru.runRequest("Applications/Get Application");
+    const application = getApplicationRes.data;
+    expect(application.ufn).to.equal("123456789");
+    expect(application.laaReference).to.equal("LAA-REF-001");
+  });
 }
 
 docs {

@@ -12,8 +12,10 @@ get {
 
 script:pre-request {
   await bru.runRequest("Get Token");
-  const startApplicationRes = await bru.runRequest("Applications/Start Application");
-  bru.setVar("applicationId", startApplicationRes.data.id);
+  if (!bru.getVar("applicationId")) {
+    const startApplicationRes = await bru.runRequest("Applications/Start Application");
+    bru.setVar("applicationId", startApplicationRes.data.id);
+  }
 }
 
 tests {

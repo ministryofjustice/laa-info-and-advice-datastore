@@ -32,6 +32,13 @@ tests {
   test("ETag header is present", function() {
     expect(res.getHeader("etag")).to.exist;
   });
+
+  await test("declaration data is reflected on the application", async function() {
+    const getApplicationRes = await bru.runRequest("Applications/Get Application");
+    const application = getApplicationRes.data;
+    expect(application.declaration.declarationConfirmation).to.equal(true);
+    expect(application.declaration.dateSigned).to.equal("2026-08-19");
+  });
 }
 
 docs {
