@@ -29,10 +29,26 @@ body:json {
   }
 }
 
+script:pre-request {
+  await bru.runRequest("Get Token");
+}
+
 script:post-response {
   if (res.status === 201) {
     bru.setEnvVar("applicationId", res.body.id);
   }
+}
+
+tests {
+  test("status is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("body has a generated id and eTag", function() {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").and.not.empty;
+    expect(body.eTag).to.be.a("number");
+  });
 }
 
 docs {

@@ -10,6 +10,23 @@ get {
   auth: inherit
 }
 
+script:pre-request {
+  await bru.runRequest("Get Token");
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
+}
+
+tests {
+  test("status is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("body id matches the requested applicationId", function() {
+    expect(res.getBody().id).to.equal(bru.getVar("applicationId"));
+  });
+}
+
 docs {
-  Get a single application by id (uses the `applicationId` set by Start Application).
+  Get a single application by id. The pre-request script creates a fresh application via
+  Start Application and stores its id in a local `applicationId` runtime variable.
 }
