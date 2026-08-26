@@ -78,6 +78,8 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldGetApplicationsSuccessfully() throws Exception {
     setupApplications();
+
+    resetQueryCount();
     // Act & Assert
     mockMvc
         .perform(get("/api/v0/applications").withBearerReadToken())
@@ -92,6 +94,9 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.totalElements").value(DEFAULT_NUMBER_OF_APPLICATIONS))
         .andExpect(jsonPath("$.totalPages").value(1))
         .andExpect(jsonPath("$.page").value(0));
+    assertThat(getQueryCount())
+        .as("Expected only 1 query to be executed for the GET request")
+        .isEqualTo(1);
   }
 
   @Test

@@ -22,7 +22,8 @@ public class PostgresContainerInitializer
     TestPropertyValues.of(
             "spring.datasource.url=" + postgreSQLContainer.getJdbcUrl(),
             "spring.datasource.username=" + postgreSQLContainer.getUsername(),
-            "spring.datasource.password=" + postgreSQLContainer.getPassword())
+            "spring.datasource.password=" + postgreSQLContainer.getPassword(),
+            "spring.jpa.properties.hibernate.generate_statistics=true")
         .applyTo(applicationContext.getEnvironment());
   }
 }

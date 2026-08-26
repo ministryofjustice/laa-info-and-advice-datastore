@@ -42,6 +42,7 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
     ApplicationEntity refreshedEntity =
         applicationRepository.findById(savedEntity.getId()).orElseThrow();
 
+    resetQueryCount();
     // Act & Assert
     mockMvc
         .perform(get("/api/v0/applications/{id}", savedEntity.getId()).withBearerReadToken())
@@ -53,6 +54,9 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.applicationType").value(savedEntity.getApplicationType()))
         .andExpect(jsonPath("$.providerOfficeCode").value(savedEntity.getProviderOfficeCode()))
         .andExpect(jsonPath("$.referenceNumber").value(refreshedEntity.getReferenceNumber()));
+    assertThat(getQueryCount())
+        .as("Expected only 1 query to be executed for the GET request")
+        .isEqualTo(1);
   }
 
   @Test

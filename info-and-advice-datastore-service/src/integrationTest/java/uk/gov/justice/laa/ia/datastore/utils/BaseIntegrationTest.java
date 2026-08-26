@@ -11,6 +11,8 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
+import org.hibernate.Session;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,5 +74,19 @@ public abstract class BaseIntegrationTest {
 
   protected String toJson(Object object) throws Exception {
     return objectMapper.writeValueAsString(object);
+  }
+
+  private Statistics statistics() {
+    return entityManager.unwrap(Session.class).getSessionFactory().getStatistics();
+  }
+
+  /** Resets the Hibernate query/statement counters; call before the action under test. */
+  protected void resetQueryCount() {
+    statistics().clear();
+  }
+
+  /** Number of SQL queries (JPQL/Criteria) executed since the counters were last reset. */
+  protected long getQueryCount() {
+    return statistics().getQueryExecutionCount();
   }
 }
