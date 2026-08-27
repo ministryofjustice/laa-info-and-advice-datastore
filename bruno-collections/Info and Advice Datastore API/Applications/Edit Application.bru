@@ -1,11 +1,11 @@
 meta {
-  name: Update Declaration Data
+  name: Edit Application
   type: http
-  seq: 7
+  seq: 9
 }
 
 patch {
-  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-declaration-data
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
   body: json
   auth: inherit
 }
@@ -13,8 +13,8 @@ patch {
 body:json {
   {
     "eTag": 0,
-    "declarationConfirmation": true,
-    "dateSigned": "2026-08-19"
+    "ufn": "123456789",
+    "laaReference": "LAA-REF-001"
   }
 }
 
@@ -33,15 +33,16 @@ tests {
     expect(res.getHeader("etag")).to.exist;
   });
 
-  await test("declaration data is reflected on the application", async function() {
+  await test("edited fields are reflected on the application", async function() {
     const getApplicationRes = await bru.runRequest("Applications/Get Application");
     const application = getApplicationRes.data;
-    expect(application.declaration.declarationConfirmation).to.equal(true);
-    expect(application.declaration.dateSigned).to.equal("2026-08-19");
+    expect(application.ufn).to.equal("123456789");
+    expect(application.laaReference).to.equal("LAA-REF-001");
   });
 }
 
 docs {
-  Confirms the client's declaration for an application created fresh by the pre-request script
-  (Start Application), whose id is stored in a local `applicationId` runtime variable.
+  Edits an application's core details (e.g. ufn, laaReference) for an application created fresh
+  by the pre-request script (Start Application), whose id is stored in a local `applicationId`
+  runtime variable.
 }
