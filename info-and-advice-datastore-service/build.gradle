@@ -60,6 +60,25 @@ dependencies {
     implementation 'org.springframework.security:spring-security-oauth2-jose'
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
 
+    implementation 'io.micrometer:micrometer-core:1.17.1'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-IOMICROMETER-19233327
+    implementation 'org.springframework.security:spring-security-core:7.1.1'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKSECURITY-19267441
+    implementation 'org.springframework.security:spring-security-crypto:7.1.1'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKSECURITY-19267391
+    implementation 'org.springframework.security:spring-security-oauth2-jose:7.1.1'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORKSECURITY-19268249
+    implementation 'org.springframework:spring-beans:7.0.9'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-19267072
+    implementation 'org.springframework:spring-expression:7.0.9'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-19267073
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-19267075
+    implementation 'org.springframework:spring-web:7.0.9'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-19267077
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-19267078
+    implementation 'org.springframework:spring-webmvc:7.0.9'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-19267098
+
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'

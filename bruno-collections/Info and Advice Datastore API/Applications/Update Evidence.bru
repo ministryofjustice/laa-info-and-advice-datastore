@@ -23,6 +23,31 @@ body:json {
   }
 }
 
+script:pre-request {
+  await bru.runRequest("Get Token");
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
+}
+
+tests {
+  test("status is 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+
+  test("ETag header is present", function() {
+    expect(res.getHeader("etag")).to.exist;
+  });
+
+  await test("evidence is reflected on the application", async function() {
+    const getApplicationRes = await bru.runRequest("Applications/Get Application");
+    const application = getApplicationRes.data;
+    expect(application.evidence.evidenceExemptionCode).to.equal("EXEMPT_01");
+    expect(application.evidence.incomeEvidenceChecklist.wageSlips).to.equal(true);
+    expect(application.evidence.expenditureCapitalEvidenceChecklist.bankStatements).to.equal(true);
+  });
+}
+
 docs {
-  Updates the evidence checklist for the application.
+  Updates the evidence checklist for an application created fresh by the pre-request script
+  (Start Application), whose id is stored in a local `applicationId` runtime variable.
 }

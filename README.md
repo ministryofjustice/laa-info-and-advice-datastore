@@ -127,6 +127,26 @@ Then export the variables and run:
 set -a && source .env.entra && set +a
 ./gradlew :info-and-advice-datastore-service:bootRun
 ```
+## Run application locally using Bruno
+
+Install bruno.
+
+Setup a file `bruno-collections/Info and Advice Datastore API\environments\local.bru` this file is gitignored since it holds ever changing variables. Set the content to.
+```
+vars {
+  baseUrl: http://localhost:8080
+  oauthTokenUrl: http://host.docker.internal:9090/default/token
+  clientId: test
+  clientSecret: test
+  token:
+  applicationId:
+}
+```
+
+When creating an application using StartApplication this will save the applicationId created to a variable, this is then reused for all PATCH/PUT/GET(singular).
+
+The Get Token, endpoint will get a token from the mock 0auth2 service and automtically set it to both the `Authorization` and `X-Authorization` header for ease.
+
 
 ## Using the API Package
 

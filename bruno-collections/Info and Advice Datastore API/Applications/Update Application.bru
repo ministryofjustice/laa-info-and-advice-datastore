@@ -17,6 +17,30 @@ body:json {
   }
 }
 
+script:pre-request {
+  await bru.runRequest("Get Token");
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
+}
+
+tests {
+  test("status is 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+
+  test("ETag header is present", function() {
+    expect(res.getHeader("etag")).to.exist;
+  });
+
+  await test("application state is reflected on the application", async function() {
+    const getApplicationRes = await bru.runRequest("Applications/Get Application");
+    const application = getApplicationRes.data;
+    expect(application.applicationState).to.equal("COMPLETED");
+  });
+}
+
 docs {
-  Updates the application's overall state (e.g. DRAFT -> COMPLETED).
+  Updates the application's overall state (e.g. DRAFT -> COMPLETED) for an application created
+  fresh by the pre-request script (Start Application), whose id is stored in a local
+  `applicationId` runtime variable.
 }
