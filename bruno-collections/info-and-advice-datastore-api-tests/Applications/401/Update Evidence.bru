@@ -1,0 +1,35 @@
+meta {
+  name: Update Evidence
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/v0/applications/00000000-0000-0000-0000-000000000000:update-evidence
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "evidenceExemptionCode": "EXEMPT_01",
+    "incomeEvidenceChecklist": {
+      "wageSlips": true
+    },
+    "expenditureCapitalEvidenceChecklist": {
+      "bankStatements": true
+    }
+  }
+}
+
+tests {
+  test("status is 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}
+
+docs {
+  Asserts that updating evidence without a valid bearer token returns 401. The id in the path is
+  an arbitrary placeholder — auth is checked before the application is looked up.
+}

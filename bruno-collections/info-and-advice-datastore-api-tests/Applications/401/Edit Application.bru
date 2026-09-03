@@ -1,0 +1,31 @@
+meta {
+  name: Edit Application
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/00000000-0000-0000-0000-000000000000:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "ufn": "123456789",
+    "laaReference": "LAA-REF-001"
+  }
+}
+
+tests {
+  test("status is 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}
+
+docs {
+  Asserts that editing an application's core details without a valid bearer token returns 401.
+  The id in the path is an arbitrary placeholder — auth is checked before the application is
+  looked up.
+}

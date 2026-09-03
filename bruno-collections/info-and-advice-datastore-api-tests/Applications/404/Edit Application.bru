@@ -1,0 +1,31 @@
+meta {
+  name: Edit Application
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/ffffffff-ffff-ffff-ffff-ffffffffffff:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "ufn": "123456789",
+    "laaReference": "LAA-REF-001"
+  }
+}
+
+tests {
+  test("status is 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}
+
+docs {
+  Asserts that editing an application's core details on a well-formed but non-existent
+  applicationId returns 404 — the not-found check happens before the eTag is validated, so its
+  value here doesn't matter.
+}

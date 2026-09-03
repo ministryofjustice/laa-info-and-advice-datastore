@@ -1,0 +1,22 @@
+meta {
+  name: Get Application
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v0/applications/ffffffff-ffff-ffff-ffff-ffffffffffff
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("status is 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}
+
+docs {
+  Asserts that getting an application by a well-formed but non-existent id returns 404, with a
+  valid token authenticated via the pre-request Get Token call.
+}

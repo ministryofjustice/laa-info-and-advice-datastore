@@ -131,7 +131,18 @@ set -a && source .env.entra && set +a
 
 Install bruno.
 
-Setup a file `bruno-collections/Info and Advice Datastore API\environments\local.bru` this file is gitignored since it holds ever changing variables. Set the content to.
+There is a single collection under `bruno-collections/info-and-advice-datastore-api-tests`.
+Requests are grouped by the response they exercise, under `Applications/`:
+
+| Folder | Purpose |
+|---|---|
+| `Applications/` | Happy-path requests, asserting 2xx responses |
+| `Applications/401` | Asserts 401 Unauthorized when the bearer token is missing/invalid |
+| `Applications/404` | Asserts 404 Not Found for a well-formed but non-existent `applicationId` |
+| `Applications/409` | Asserts 409 Conflict when a request's `eTag` doesn't match the application's current one |
+
+The collection needs an environment file. Create a shared one at `bruno-collections/Local.bru`
+(gitignored, since it holds ever changing variables), then symlink it in:
 ```
 vars {
   baseUrl: http://localhost:8080
@@ -142,10 +153,21 @@ vars {
   applicationId:
 }
 ```
+```bash
+cd bruno-collections
+mkdir -p info-and-advice-datastore-api-tests/environments
+ln -sf ../../Local.bru info-and-advice-datastore-api-tests/environments/Local.bru
+```
 
 When creating an application using StartApplication this will save the applicationId created to a variable, this is then reused for all PATCH/PUT/GET(singular).
 
 The Get Token, endpoint will get a token from the mock 0auth2 service and automtically set it to both the `Authorization` and `X-Authorization` header for ease.
+
+> The `Applications/409` requests are expected to return `500` rather than the documented `409`
+> when the service is run with the `local` Spring profile (as `make docker-up` does), since
+> `GlobalExceptionHandler` — which maps the eTag mismatch to a 409 — is disabled under that
+> profile (`@Profile("!local")`, to let exceptions propagate with full stack traces during local
+> development). See the collection's `collection.bru` docs for details.
 
 
 ## Using the API Package

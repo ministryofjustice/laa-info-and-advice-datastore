@@ -1,0 +1,35 @@
+meta {
+  name: Update Evidence
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v0/applications/ffffffff-ffff-ffff-ffff-ffffffffffff:update-evidence
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "evidenceExemptionCode": "EXEMPT_01",
+    "incomeEvidenceChecklist": {
+      "wageSlips": true
+    },
+    "expenditureCapitalEvidenceChecklist": {
+      "bankStatements": true
+    }
+  }
+}
+
+tests {
+  test("status is 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}
+
+docs {
+  Asserts that updating evidence on a well-formed but non-existent applicationId returns 404 —
+  the not-found check happens before the eTag is validated, so its value here doesn't matter.
+}

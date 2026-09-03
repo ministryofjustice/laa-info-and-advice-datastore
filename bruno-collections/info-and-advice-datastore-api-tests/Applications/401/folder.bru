@@ -1,0 +1,19 @@
+meta {
+  name: 401
+  seq: 2
+}
+
+headers {
+  Authorization: Bearer invalid-token
+  X-Authorization: Bearer invalid-token
+}
+
+docs {
+  # 401 Unauthorized
+
+  Every request in this folder deliberately sends a hardcoded, invalid bearer token (the header
+  override above, replacing the collection-level `{{token}}` headers) so it should be rejected
+  with `401 Unauthorized` before it ever reaches the controller — see `UserContextInterceptor`,
+  which validates the `X-Authorization` header and short-circuits the request on failure. The
+  request path/id used doesn't matter since auth is checked first.
+}

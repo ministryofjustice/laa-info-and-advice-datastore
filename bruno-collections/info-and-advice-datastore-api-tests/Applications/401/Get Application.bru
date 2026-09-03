@@ -1,0 +1,23 @@
+meta {
+  name: Get Application
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v0/applications/00000000-0000-0000-0000-000000000000
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("status is 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+  
+}
+
+docs {
+  Asserts that getting an application without a valid bearer token returns 401. The id in the
+  path is an arbitrary placeholder — auth is checked before the application is looked up.
+}

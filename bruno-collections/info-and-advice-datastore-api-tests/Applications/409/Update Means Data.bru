@@ -1,0 +1,40 @@
+meta {
+  name: Update Means Data
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-means-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 999,
+    "data": {
+      "question": "answer"
+    },
+    "result": {
+      "status": "ELIGIBLE"
+    }
+  }
+}
+
+tests {
+  test("status is 409", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("body is a problem detail describing the mismatch", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(409);
+    expect(body.detail).to.contain("supplied 999").and.to.contain("expected 0");
+  });
+}
+
+docs {
+  Asserts that updating means data with a mismatched eTag (999, against a freshly created
+  application whose real eTag is 0) returns 409.
+}
