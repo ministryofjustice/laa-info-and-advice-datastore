@@ -19,11 +19,4 @@ docs {
   README.md "Run full stack via Docker (mock OAuth2 server)") and stores it in the `token`
   environment variable. Every request outside `Applications/401/` inherits the Authorization
   and X-Authorization headers above, both populated from that variable.
-
-  ⚠️ `Applications/409/`: `GlobalExceptionHandler` (which maps `EtagMismatchException` to this
-  409 response) is annotated `@Profile("!local")` and is therefore disabled when running via
-  `make docker-up` / `docker-compose` (which sets `SPRING_PROFILES_ACTIVE=local`) — in that
-  environment the exception propagates unhandled and these requests will get `500` instead of
-  the documented `409`. Run the service with a non-local profile (e.g. plain `./gradlew bootRun`
-  with no profile) against these requests to see the real 409 response.
 }

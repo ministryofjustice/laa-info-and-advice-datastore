@@ -11,7 +11,7 @@ get {
 }
 
 script:pre-request {
-  await bru.runRequest("Get Token");
+  await bru.runRequest("Get Authentication Token");
 
   const createdApplicationIds = [];
   for (let i = 0; i < 3; i++) {
