@@ -17,6 +17,7 @@ import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.generator.CreateAddressCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.Address;
 import uk.gov.justice.laa.ia.datastore.model.CreateAddressCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateAddressCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
@@ -106,5 +107,55 @@ public class AddressMapperTest {
         .addressLine1("10 Downing Street")
         .createdAt(Instant.now())
         .modifiedAt(Instant.now());
+  }
+
+  @Test
+  void updateAddressCommand_toAddressEntity_shouldMapAllProperties() {
+    final UpdateAddressCommand cmd =
+        UpdateAddressCommand.builder()
+            .addressLine1("221B Baker Street")
+            .townOrCity("London")
+            .postCode("NW1 6XE")
+            .country("GB")
+            .build();
+
+    final AddressEntity address = sut.toAddressEntity(cmd);
+
+    assertEquals(cmd.getAddressLine1(), address.getAddressLine1());
+    assertEquals(cmd.getTownOrCity(), address.getTownOrCity());
+    assertEquals(cmd.getPostCode(), address.getPostCode());
+    assertEquals(cmd.getCountry(), address.getCountry());
+  }
+
+  @Test
+  void updateAddressCommand_toAddressEntity_shouldSetCreatedAndModifiedBy() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final UpdateAddressCommand cmd =
+        UpdateAddressCommand.builder().addressLine1("221B Baker Street").build();
+
+    // Act
+    final AddressEntity address = sut.toAddressEntity(cmd);
+
+    // Assert
+    assertEquals("USERCONTEXT:SYSTEM", address.getCreatedBy());
+    assertEquals("USERCONTEXT:SYSTEM", address.getModifiedBy());
+  }
+
+  @Test
+  void updateAddressEntity_shouldUpdateOnlyProvidedFieldsLeavingOthersUnchanged() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final AddressEntity entity =
+        createAddress().addressLine1("Old Address").postCode("OLD 1AA").build();
+    final UpdateAddressCommand cmd = UpdateAddressCommand.builder().postCode("NW1 6XE").build();
+
+    // Act
+    sut.updateAddressEntity(cmd, entity);
+
+    // Assert
+    assertEquals("Old Address", entity.getAddressLine1());
+    assertEquals("NW1 6XE", entity.getPostCode());
+    assertEquals("USERCONTEXT:SYSTEM", entity.getModifiedBy());
   }
 }
