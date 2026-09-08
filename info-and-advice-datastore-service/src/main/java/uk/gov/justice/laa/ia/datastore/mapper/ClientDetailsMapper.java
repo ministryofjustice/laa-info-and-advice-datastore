@@ -1,13 +1,17 @@
 package uk.gov.justice.laa.ia.datastore.mapper;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.model.ClientDetails;
 import uk.gov.justice.laa.ia.datastore.model.CreateClientCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateClientDetailsCommand;
 
 /** The mapper between ClientDetails and ClientDetailsEntity. */
 @Mapper(
@@ -36,4 +40,22 @@ public abstract class ClientDetailsMapper {
   @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
   public abstract ClientDetailsEntity toClientDetailsEntity(
       CreateClientCommand createClientCommand);
+
+  /**
+   * Updates a {@link ClientDetailsEntity} in place from an {@link UpdateClientDetailsCommand},
+   * leaving fields that are not set on the command unchanged. The address is mapped separately as
+   * it requires merging into the existing nested entity.
+   */
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "etag", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(target = "modifiedAt", ignore = true)
+  @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
+  @Mapping(target = "address", ignore = true)
+  @Mapping(target = "dataRetentionEventUuid", ignore = true)
+  @Mapping(target = "dataRetentionDate", ignore = true)
+  public abstract void updateClientDetailsEntity(
+      UpdateClientDetailsCommand cmd, @MappingTarget ClientDetailsEntity entity);
 }

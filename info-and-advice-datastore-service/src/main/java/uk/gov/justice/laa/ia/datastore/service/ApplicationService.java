@@ -14,12 +14,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
+import uk.gov.justice.laa.ia.datastore.mapper.AddressMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
+import uk.gov.justice.laa.ia.datastore.mapper.ClientDetailsMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.EvidenceMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -30,6 +33,7 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateClientDetailsCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
@@ -53,6 +57,8 @@ public class ApplicationService {
   private final ApplicationMapper applicationMapper;
   private final DeclarationMapper declarationMapper;
   private final EvidenceMapper evidenceMapper;
+  private final ClientDetailsMapper clientDetailsMapper;
+  private final AddressMapper addressMapper;
   private final UserContext userContext;
   private final ObjectMapper objectMapper;
   private final EventService eventService;
@@ -357,6 +363,46 @@ public class ApplicationService {
     validateEtag(application, command.geteTag());
 
     applicationMapper.editApplicationEntity(command, application);
+    ApplicationEntity saved = repository.save(application);
+    eventService.record(command);
+    return OptionalLong.of(saved.getEtag());
+  }
+
+  /**
+   * Update client details (and address) for an application.
+   *
+   * @param applicationId the application ID
+   * @param command the update command including eTag for optimistic concurrency control
+   * @return an OptionalLong containing the new ETag if updated, empty if not found
+   * @throws EtagMismatchException if the eTag does not match the current entity value
+   * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
+   *     one of the user's authorized office codes
+   */
+  @Transactional
+  public OptionalLong updateClientDetails(UUID applicationId, UpdateClientDetailsCommand command) {
+    Optional<ApplicationEntity> applicationOpt =
+        repository.findOne(
+            ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode()));
+    if (applicationOpt.isEmpty()) {
+      return OptionalLong.empty();
+    }
+
+    ApplicationEntity application = applicationOpt.get();
+    validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateEtag(application, command.geteTag());
+
+    ClientDetailsEntity clientDetails = application.getClientDetails();
+    clientDetailsMapper.updateClientDetailsEntity(command, clientDetails);
+
+    if (command.getAddress() != null) {
+      if (clientDetails.getAddress() == null) {
+        clientDetails.setAddress(addressMapper.toAddressEntity(command.getAddress()));
+      } else {
+        addressMapper.updateAddressEntity(command.getAddress(), clientDetails.getAddress());
+      }
+    }
+
+    application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
     eventService.record(command);
     return OptionalLong.of(saved.getEtag());

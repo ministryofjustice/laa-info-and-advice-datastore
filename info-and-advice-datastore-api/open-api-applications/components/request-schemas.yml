@@ -125,3 +125,54 @@ components:
         determinationId:
           type: string
           format: uuid
+
+    UpdateClientDetailsCommand:
+      type: object
+      required:
+        - eTag
+      properties:
+        eTag:
+          type: integer
+          format: int64
+          description: ETag value for optimistic concurrency control
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        niNumber:
+          type: string
+          example: QQ123456B
+          minLength: 9
+          maxLength: 9
+        noFixedAbode:
+          type: boolean
+        address:
+          $ref: '#/components/schemas/UpdateAddressCommand'
+
+    UpdateAddressCommand:
+      type: object
+      properties:
+        addressLine1:
+          type: string
+          example: 10 Downing Street
+        addressLine2:
+          type: string
+        addressLine3:
+          type: string
+        addressLine4:
+          type: string
+        townOrCity:
+          type: string
+          example: London
+        postCode:
+          type: string
+          example: SW1A 2AA
+        county:
+          type: string
+        country:
+          type: string
+          maxLength: 2
+          example: GB
