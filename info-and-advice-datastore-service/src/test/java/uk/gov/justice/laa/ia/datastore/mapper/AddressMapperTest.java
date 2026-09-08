@@ -17,6 +17,7 @@ import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.generator.CreateAddressCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.Address;
 import uk.gov.justice.laa.ia.datastore.model.CreateAddressCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateAddressCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
@@ -106,5 +107,77 @@ public class AddressMapperTest {
         .addressLine1("10 Downing Street")
         .createdAt(Instant.now())
         .modifiedAt(Instant.now());
+  }
+
+  @Test
+  void updateAddressEntity_shouldMapAllProvidedPropertiesOntoNewEntity() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final UpdateAddressCommand cmd =
+        UpdateAddressCommand.builder()
+            .addressLine1("221B Baker Street")
+            .townOrCity("London")
+            .postCode("NW1 6XE")
+            .country("GB")
+            .build();
+    final AddressEntity entity = new AddressEntity();
+
+    // Act
+    sut.updateAddressEntity(cmd, entity);
+
+    // Assert
+    assertEquals(cmd.getAddressLine1(), entity.getAddressLine1());
+    assertEquals(cmd.getTownOrCity(), entity.getTownOrCity());
+    assertEquals(cmd.getPostCode(), entity.getPostCode());
+    assertEquals(cmd.getCountry(), entity.getCountry());
+  }
+
+  @Test
+  void updateAddressEntity_shouldDefaultCreatedBy_whenTargetHasNoExistingCreatedBy() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final UpdateAddressCommand cmd =
+        UpdateAddressCommand.builder().addressLine1("221B Baker Street").build();
+    final AddressEntity entity = new AddressEntity();
+
+    // Act
+    sut.updateAddressEntity(cmd, entity);
+
+    // Assert
+    assertEquals("USERCONTEXT:SYSTEM", entity.getCreatedBy());
+    assertEquals("USERCONTEXT:SYSTEM", entity.getModifiedBy());
+  }
+
+  @Test
+  void updateAddressEntity_shouldPreserveExistingCreatedBy_whenTargetAlreadyHasOne() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:EDITOR");
+    final AddressEntity entity =
+        createAddress().addressLine1("Old Address").postCode("OLD 1AA").createdBy("SYSTEM").build();
+    final UpdateAddressCommand cmd = UpdateAddressCommand.builder().postCode("NW1 6XE").build();
+
+    // Act
+    sut.updateAddressEntity(cmd, entity);
+
+    // Assert
+    assertEquals("SYSTEM", entity.getCreatedBy());
+    assertEquals("USERCONTEXT:EDITOR", entity.getModifiedBy());
+  }
+
+  @Test
+  void updateAddressEntity_shouldUpdateOnlyProvidedFieldsLeavingOthersUnchanged() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final AddressEntity entity =
+        createAddress().addressLine1("Old Address").postCode("OLD 1AA").build();
+    final UpdateAddressCommand cmd = UpdateAddressCommand.builder().postCode("NW1 6XE").build();
+
+    // Act
+    sut.updateAddressEntity(cmd, entity);
+
+    // Assert
+    assertEquals("Old Address", entity.getAddressLine1());
+    assertEquals("NW1 6XE", entity.getPostCode());
+    assertEquals("USERCONTEXT:SYSTEM", entity.getModifiedBy());
   }
 }
