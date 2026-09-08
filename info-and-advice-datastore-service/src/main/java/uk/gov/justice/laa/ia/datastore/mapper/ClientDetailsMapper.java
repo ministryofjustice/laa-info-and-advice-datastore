@@ -43,8 +43,10 @@ public abstract class ClientDetailsMapper {
 
   /**
    * Updates a {@link ClientDetailsEntity} in place from an {@link UpdateClientDetailsCommand},
-   * leaving fields that are not set on the command unchanged. The address is mapped separately as
-   * it requires merging into the existing nested entity.
+   * leaving fields that are not set on the command unchanged. The nested address is merged via
+   * {@link AddressMapper#updateAddressEntity}, which MapStruct selects automatically for this
+   * property (creating a new {@link uk.gov.justice.laa.ia.datastore.entity.AddressEntity} first if
+   * none exists yet).
    */
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   @Mapping(target = "id", ignore = true)
@@ -53,7 +55,6 @@ public abstract class ClientDetailsMapper {
   @Mapping(target = "createdBy", ignore = true)
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
-  @Mapping(target = "address", ignore = true)
   @Mapping(target = "dataRetentionEventUuid", ignore = true)
   @Mapping(target = "dataRetentionDate", ignore = true)
   public abstract void updateClientDetailsEntity(

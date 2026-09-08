@@ -13,7 +13,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
-import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
@@ -21,7 +20,6 @@ import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
-import uk.gov.justice.laa.ia.datastore.mapper.AddressMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ClientDetailsMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
@@ -59,7 +57,6 @@ public class ApplicationService {
   private final DeclarationMapper declarationMapper;
   private final EvidenceMapper evidenceMapper;
   private final ClientDetailsMapper clientDetailsMapper;
-  private final AddressMapper addressMapper;
   private final UserContext userContext;
   private final ObjectMapper objectMapper;
   private final EventService eventService;
@@ -394,13 +391,6 @@ public class ApplicationService {
 
     ClientDetailsEntity clientDetails = application.getClientDetails();
     clientDetailsMapper.updateClientDetailsEntity(command, clientDetails);
-
-    if (command.getAddress() != null) {
-      if (clientDetails.getAddress() == null) {
-        clientDetails.setAddress(new AddressEntity());
-      }
-      addressMapper.updateAddressEntity(command.getAddress(), clientDetails.getAddress());
-    }
 
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);

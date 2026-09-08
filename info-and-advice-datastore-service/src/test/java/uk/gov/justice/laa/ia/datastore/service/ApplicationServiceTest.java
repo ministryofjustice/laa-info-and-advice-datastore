@@ -39,7 +39,6 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensi
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
-import uk.gov.justice.laa.ia.datastore.mapper.AddressMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ClientDetailsMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
@@ -71,7 +70,6 @@ public class ApplicationServiceTest {
   @Mock private DeclarationMapper declarationMapper;
   @Mock private EvidenceMapper evidenceMapper;
   @Mock private ClientDetailsMapper clientDetailsMapper;
-  @Mock private AddressMapper addressMapper;
   @Mock private UserContext userContext;
   @Mock private ObjectMapper objectMapper;
   @Mock private EventService eventService;
@@ -1016,7 +1014,7 @@ public class ApplicationServiceTest {
   }
 
   @Test
-  void shouldUpdateClientDetails_withoutAddress() {
+  void shouldUpdateClientDetails() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
@@ -1040,76 +1038,8 @@ public class ApplicationServiceTest {
     // Assert
     assertTrue(result.isPresent());
     verify(clientDetailsMapper, times(1)).updateClientDetailsEntity(command, clientDetails);
-    verify(addressMapper, never()).updateAddressEntity(any(), any());
     verify(repo, times(1)).save(application);
     verify(eventService, times(1)).record(command);
-  }
-
-  @Test
-  void shouldUpdateClientDetails_andCreateAddress_whenNoExistingAddress() {
-    // Arrange
-    final UUID applicationId = UUID.randomUUID();
-    final String officeCode = UUID.randomUUID().toString();
-    final ClientDetailsEntity clientDetails = ClientDetailsEntity.builder().build();
-    final ApplicationEntity application =
-        ApplicationEntity.builder()
-            .id(applicationId)
-            .providerOfficeCode(officeCode)
-            .clientDetails(clientDetails)
-            .build(); // eTag = 0
-    final var addressCommand =
-        uk.gov.justice.laa.ia.datastore.model.UpdateAddressCommand.builder()
-            .addressLine1("221B Baker Street")
-            .build();
-    final UpdateClientDetailsCommand command =
-        UpdateClientDetailsCommand.builder().eTag(0L).address(addressCommand).build();
-    when(userContext.getProviderFirmCode()).thenReturn("123456");
-    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
-    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
-
-    // Act
-    OptionalLong result = sut.updateClientDetails(applicationId, command);
-
-    // Assert
-    assertTrue(result.isPresent());
-    assertThat(clientDetails.getAddress()).isNotNull();
-    verify(addressMapper, times(1)).updateAddressEntity(addressCommand, clientDetails.getAddress());
-  }
-
-  @Test
-  void shouldUpdateClientDetails_andUpdateExistingAddress_whenAddressAlreadyPresent() {
-    // Arrange
-    final UUID applicationId = UUID.randomUUID();
-    final String officeCode = UUID.randomUUID().toString();
-    final var existingAddress =
-        uk.gov.justice.laa.ia.datastore.entity.AddressEntity.builder().build();
-    final ClientDetailsEntity clientDetails =
-        ClientDetailsEntity.builder().address(existingAddress).build();
-    final ApplicationEntity application =
-        ApplicationEntity.builder()
-            .id(applicationId)
-            .providerOfficeCode(officeCode)
-            .clientDetails(clientDetails)
-            .build(); // eTag = 0
-    final var addressCommand =
-        uk.gov.justice.laa.ia.datastore.model.UpdateAddressCommand.builder()
-            .postCode("NW1 6XE")
-            .build();
-    final UpdateClientDetailsCommand command =
-        UpdateClientDetailsCommand.builder().eTag(0L).address(addressCommand).build();
-    when(userContext.getProviderFirmCode()).thenReturn("123456");
-    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
-    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
-
-    // Act
-    OptionalLong result = sut.updateClientDetails(applicationId, command);
-
-    // Assert
-    assertTrue(result.isPresent());
-    assertThat(clientDetails.getAddress()).isSameAs(existingAddress);
-    verify(addressMapper, times(1)).updateAddressEntity(addressCommand, existingAddress);
   }
 
   @Test
