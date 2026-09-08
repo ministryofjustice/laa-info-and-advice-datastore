@@ -1040,8 +1040,6 @@ public class ApplicationServiceTest {
     // Assert
     assertTrue(result.isPresent());
     verify(clientDetailsMapper, times(1)).updateClientDetailsEntity(command, clientDetails);
-    verify(addressMapper, never())
-        .toAddressEntity(any(uk.gov.justice.laa.ia.datastore.model.UpdateAddressCommand.class));
     verify(addressMapper, never()).updateAddressEntity(any(), any());
     verify(repo, times(1)).save(application);
     verify(eventService, times(1)).record(command);
@@ -1065,11 +1063,9 @@ public class ApplicationServiceTest {
             .build();
     final UpdateClientDetailsCommand command =
         UpdateClientDetailsCommand.builder().eTag(0L).address(addressCommand).build();
-    final var newAddress = uk.gov.justice.laa.ia.datastore.entity.AddressEntity.builder().build();
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(addressMapper.toAddressEntity(addressCommand)).thenReturn(newAddress);
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
@@ -1077,9 +1073,8 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isPresent());
-    assertThat(clientDetails.getAddress()).isEqualTo(newAddress);
-    verify(addressMapper, times(1)).toAddressEntity(addressCommand);
-    verify(addressMapper, never()).updateAddressEntity(any(), any());
+    assertThat(clientDetails.getAddress()).isNotNull();
+    verify(addressMapper, times(1)).updateAddressEntity(addressCommand, clientDetails.getAddress());
   }
 
   @Test
@@ -1113,8 +1108,7 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isPresent());
-    verify(addressMapper, never())
-        .toAddressEntity(any(uk.gov.justice.laa.ia.datastore.model.UpdateAddressCommand.class));
+    assertThat(clientDetails.getAddress()).isSameAs(existingAddress);
     verify(addressMapper, times(1)).updateAddressEntity(addressCommand, existingAddress);
   }
 

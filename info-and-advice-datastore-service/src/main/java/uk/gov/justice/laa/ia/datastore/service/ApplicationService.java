@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
+import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
@@ -396,10 +397,9 @@ public class ApplicationService {
 
     if (command.getAddress() != null) {
       if (clientDetails.getAddress() == null) {
-        clientDetails.setAddress(addressMapper.toAddressEntity(command.getAddress()));
-      } else {
-        addressMapper.updateAddressEntity(command.getAddress(), clientDetails.getAddress());
+        clientDetails.setAddress(new AddressEntity());
       }
+      addressMapper.updateAddressEntity(command.getAddress(), clientDetails.getAddress());
     }
 
     application.setModifiedBy(userContext.getCurrentUser());

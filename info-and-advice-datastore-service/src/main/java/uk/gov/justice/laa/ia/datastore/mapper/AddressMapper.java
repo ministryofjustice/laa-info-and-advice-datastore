@@ -31,24 +31,21 @@ public abstract class AddressMapper {
   @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
   public abstract AddressEntity toAddressEntity(CreateAddressCommand cmd);
 
-  /** Maps an {@link UpdateAddressCommand} to a new {@link AddressEntity}. */
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "etag", ignore = true)
-  @Mapping(target = "createdAt", ignore = true)
-  @Mapping(target = "modifiedAt", ignore = true)
-  @Mapping(target = "createdBy", expression = "java(userContext.getCurrentUser())")
-  @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
-  public abstract AddressEntity toAddressEntity(UpdateAddressCommand cmd);
-
   /**
-   * Updates an {@link AddressEntity} in place from an {@link UpdateAddressCommand}, leaving fields
-   * that are not set on the command unchanged.
+   * Maps an {@link UpdateAddressCommand} onto an {@link AddressEntity} in place, leaving fields
+   * that are not set on the command unchanged. Used both to populate a brand new {@link
+   * AddressEntity} (pass in a freshly constructed instance) and to update an existing one - {@code
+   * createdBy} is preserved if already set on the target, otherwise defaulted to the current user.
    */
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "etag", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
-  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(
+      target = "createdBy",
+      expression =
+          "java(entity.getCreatedBy() != null ? entity.getCreatedBy() :"
+              + " userContext.getCurrentUser())")
   @Mapping(target = "modifiedAt", ignore = true)
   @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
   public abstract void updateAddressEntity(

@@ -110,7 +110,9 @@ public class AddressMapperTest {
   }
 
   @Test
-  void updateAddressCommand_toAddressEntity_shouldMapAllProperties() {
+  void updateAddressEntity_shouldMapAllProvidedPropertiesOntoNewEntity() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
     final UpdateAddressCommand cmd =
         UpdateAddressCommand.builder()
             .addressLine1("221B Baker Street")
@@ -118,28 +120,48 @@ public class AddressMapperTest {
             .postCode("NW1 6XE")
             .country("GB")
             .build();
+    final AddressEntity entity = new AddressEntity();
 
-    final AddressEntity address = sut.toAddressEntity(cmd);
+    // Act
+    sut.updateAddressEntity(cmd, entity);
 
-    assertEquals(cmd.getAddressLine1(), address.getAddressLine1());
-    assertEquals(cmd.getTownOrCity(), address.getTownOrCity());
-    assertEquals(cmd.getPostCode(), address.getPostCode());
-    assertEquals(cmd.getCountry(), address.getCountry());
+    // Assert
+    assertEquals(cmd.getAddressLine1(), entity.getAddressLine1());
+    assertEquals(cmd.getTownOrCity(), entity.getTownOrCity());
+    assertEquals(cmd.getPostCode(), entity.getPostCode());
+    assertEquals(cmd.getCountry(), entity.getCountry());
   }
 
   @Test
-  void updateAddressCommand_toAddressEntity_shouldSetCreatedAndModifiedBy() {
+  void updateAddressEntity_shouldDefaultCreatedBy_whenTargetHasNoExistingCreatedBy() {
     // Arrange
     when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
     final UpdateAddressCommand cmd =
         UpdateAddressCommand.builder().addressLine1("221B Baker Street").build();
+    final AddressEntity entity = new AddressEntity();
 
     // Act
-    final AddressEntity address = sut.toAddressEntity(cmd);
+    sut.updateAddressEntity(cmd, entity);
 
     // Assert
-    assertEquals("USERCONTEXT:SYSTEM", address.getCreatedBy());
-    assertEquals("USERCONTEXT:SYSTEM", address.getModifiedBy());
+    assertEquals("USERCONTEXT:SYSTEM", entity.getCreatedBy());
+    assertEquals("USERCONTEXT:SYSTEM", entity.getModifiedBy());
+  }
+
+  @Test
+  void updateAddressEntity_shouldPreserveExistingCreatedBy_whenTargetAlreadyHasOne() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:EDITOR");
+    final AddressEntity entity =
+        createAddress().addressLine1("Old Address").postCode("OLD 1AA").createdBy("SYSTEM").build();
+    final UpdateAddressCommand cmd = UpdateAddressCommand.builder().postCode("NW1 6XE").build();
+
+    // Act
+    sut.updateAddressEntity(cmd, entity);
+
+    // Assert
+    assertEquals("SYSTEM", entity.getCreatedBy());
+    assertEquals("USERCONTEXT:EDITOR", entity.getModifiedBy());
   }
 
   @Test
