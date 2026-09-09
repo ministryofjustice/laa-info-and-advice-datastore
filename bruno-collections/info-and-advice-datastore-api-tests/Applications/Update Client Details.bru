@@ -1,11 +1,11 @@
 meta {
-  name: Update Means Data
+  name: Update Client Details
   type: http
-  seq: 4
+  seq: 10
 }
 
-put {
-  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-means-data
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-client-details
   body: json
   auth: inherit
 }
@@ -13,17 +13,13 @@ put {
 body:json {
   {
     "eTag": 0,
-    "data": {
-      "question": "answer"
-    },
-    "result": {
-      "status": "ELIGIBLE"
-    }
+    "firstName": "Jane",
+    "lastName": "Smith"
   }
 }
 
 script:pre-request {
-  await bru.runRequest("Get Token");
+  await bru.runRequest("Get Authentication Token");
   const startApplicationRes = await bru.runRequest("Applications/Start Application");
   bru.setVar("applicationId", startApplicationRes.data.id);
 }
@@ -37,15 +33,15 @@ tests {
     expect(res.getHeader("etag")).to.exist;
   });
 
-  await test("means data is reflected on the application", async function() {
+  await test("client details are reflected on the application", async function() {
     const getApplicationRes = await bru.runRequest("Applications/Get Application");
     const application = getApplicationRes.data;
-    expect(application.eligibilityResult.data.question).to.equal("answer");
-    expect(application.eligibilityResult.result.status).to.equal("ELIGIBLE");
+    expect(application.client.firstName).to.equal("Jane");
+    expect(application.client.lastName).to.equal("Smith");
   });
 }
 
 docs {
-  Updates the means assessment data for an application created fresh by the pre-request script
+  Updates the client's details for an application created fresh by the pre-request script
   (Start Application), whose id is stored in a local `applicationId` runtime variable.
 }

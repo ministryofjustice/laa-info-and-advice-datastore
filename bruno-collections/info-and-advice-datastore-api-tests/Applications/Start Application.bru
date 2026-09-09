@@ -30,7 +30,7 @@ body:json {
 }
 
 script:pre-request {
-  await bru.runRequest("Get Token");
+  await bru.runRequest("Get Authentication Token");
 }
 
 script:post-response {

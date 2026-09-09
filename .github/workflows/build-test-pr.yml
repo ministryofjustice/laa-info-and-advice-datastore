@@ -65,6 +65,32 @@ jobs:
           path: info-and-advice-datastore-service/build/reports/jacoco
           retention-days: 14
 
+  bruno-tests:
+    runs-on: ubuntu-latest
+    needs:
+      - build-test
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .env file
+        run: cp .env.example .env
+
+      - name: Add host.docker.internal to /etc/hosts
+        run: echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+
+      - name: Start application stack
+        run: docker compose up -d --build --wait --wait-timeout 180
+
+      - name: Run Bruno collection
+        uses: usebruno/bruno-cli-action@v1
+        with:
+          working-directory: bruno-collections/info-and-advice-datastore-api-tests
+          command: 'run --env UAT'
+
+      - name: Stop application stack
+        if: always()
+        run: docker compose down -v
+
   vulnerability-scan-app:
     runs-on: ubuntu-latest
     needs:

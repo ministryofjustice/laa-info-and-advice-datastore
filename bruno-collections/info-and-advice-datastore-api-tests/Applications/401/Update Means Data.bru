@@ -1,0 +1,34 @@
+meta {
+  name: Update Means Data
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v0/applications/00000000-0000-0000-0000-000000000000:update-means-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "data": {
+      "question": "answer"
+    },
+    "result": {
+      "status": "ELIGIBLE"
+    }
+  }
+}
+
+tests {
+  test("status is 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}
+
+docs {
+  Asserts that updating means data without a valid bearer token returns 401. The id in the path
+  is an arbitrary placeholder — auth is checked before the application is looked up.
+}

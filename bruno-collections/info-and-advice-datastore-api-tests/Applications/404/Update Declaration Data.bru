@@ -1,0 +1,31 @@
+meta {
+  name: Update Declaration Data
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/ffffffff-ffff-ffff-ffff-ffffffffffff:update-declaration-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "declarationConfirmation": true,
+    "dateSigned": "2026-08-19"
+  }
+}
+
+tests {
+  test("status is 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}
+
+docs {
+  Asserts that updating declaration data on a well-formed but non-existent applicationId returns
+  404 — the not-found check happens before the eTag is validated, so its value here doesn't
+  matter.
+}

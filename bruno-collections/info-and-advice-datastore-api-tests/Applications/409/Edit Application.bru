@@ -1,0 +1,36 @@
+meta {
+  name: Edit Application
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 999,
+    "ufn": "123456789",
+    "laaReference": "LAA-REF-001"
+  }
+}
+
+tests {
+  test("status is 409", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("body is a problem detail describing the mismatch", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(409);
+    expect(body.detail).to.contain("supplied 999").and.to.contain("expected 0");
+  });
+}
+
+docs {
+  Asserts that editing an application's core details with a mismatched eTag (999, against a
+  freshly created application whose real eTag is 0) returns 409.
+}

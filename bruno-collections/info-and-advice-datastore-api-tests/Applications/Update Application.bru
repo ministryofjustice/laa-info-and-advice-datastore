@@ -18,7 +18,7 @@ body:json {
 }
 
 script:pre-request {
-  await bru.runRequest("Get Token");
+  await bru.runRequest("Get Authentication Token");
   const startApplicationRes = await bru.runRequest("Applications/Start Application");
   bru.setVar("applicationId", startApplicationRes.data.id);
 }

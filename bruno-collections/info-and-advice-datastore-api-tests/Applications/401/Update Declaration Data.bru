@@ -1,0 +1,30 @@
+meta {
+  name: Update Declaration Data
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/00000000-0000-0000-0000-000000000000:update-declaration-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "declarationConfirmation": true,
+    "dateSigned": "2026-08-19"
+  }
+}
+
+tests {
+  test("status is 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}
+
+docs {
+  Asserts that updating declaration data without a valid bearer token returns 401. The id in the
+  path is an arbitrary placeholder — auth is checked before the application is looked up.
+}

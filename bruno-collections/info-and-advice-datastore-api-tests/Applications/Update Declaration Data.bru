@@ -1,0 +1,47 @@
+meta {
+  name: Update Declaration Data
+  type: http
+  seq: 7
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-declaration-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "declarationConfirmation": true,
+    "dateSigned": "2026-08-19"
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Get Authentication Token");
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
+}
+
+tests {
+  test("status is 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+
+  test("ETag header is present", function() {
+    expect(res.getHeader("etag")).to.exist;
+  });
+
+  await test("declaration data is reflected on the application", async function() {
+    const getApplicationRes = await bru.runRequest("Applications/Get Application");
+    const application = getApplicationRes.data;
+    expect(application.declaration.declarationConfirmation).to.equal(true);
+    expect(application.declaration.dateSigned).to.equal("2026-08-19");
+  });
+}
+
+docs {
+  Confirms the client's declaration for an application created fresh by the pre-request script
+  (Start Application), whose id is stored in a local `applicationId` runtime variable.
+}

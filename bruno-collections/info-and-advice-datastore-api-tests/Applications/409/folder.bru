@@ -1,0 +1,23 @@
+meta {
+  name: 409
+  seq: 4
+}
+
+script:pre-request {
+  await bru.runRequest("Get Authentication Token");
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
+}
+
+docs {
+  # 409 Conflict (ETag Mismatch)
+
+  Covers every update endpoint that takes an `eTag` in its request body. The folder's
+  pre-request script (above) runs **Get Token** and then the shared **Applications/Start
+  Application** to create a fresh application (whose eTag always starts at `0`), storing its id
+  in the `applicationId` runtime variable. Each request then sends a deliberately mismatched
+  `"eTag": 999` in the body, asserting `409 Conflict`.
+
+  ⚠️ See the collection-level docs for the caveat about `GlobalExceptionHandler` being disabled
+  under the `local` Spring profile (i.e. `make docker-up`), which turns this 409 into a 500.
+}

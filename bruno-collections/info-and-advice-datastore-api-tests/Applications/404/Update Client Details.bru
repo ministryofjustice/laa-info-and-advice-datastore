@@ -1,0 +1,31 @@
+meta {
+  name: Update Client Details
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/ffffffff-ffff-ffff-ffff-ffffffffffff:update-client-details
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "firstName": "Jane",
+    "lastName": "Smith"
+  }
+}
+
+tests {
+  test("status is 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}
+
+docs {
+  Asserts that updating a client's details on a well-formed but non-existent applicationId
+  returns 404 — the not-found check happens before the eTag is validated, so its value here
+  doesn't matter.
+}

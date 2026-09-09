@@ -1,0 +1,18 @@
+meta {
+  name: 404
+  seq: 3
+}
+
+script:pre-request {
+  await bru.runRequest("Get Authentication Token");
+}
+
+docs {
+  # 404 Not Found
+
+  Covers every endpoint that takes an `applicationId` in the path. The folder's pre-request
+  script (above) runs **Get Token** first to authenticate successfully, then each request
+  targets a hardcoded, well-formed but non-existent `applicationId`
+  (`ffffffff-ffff-ffff-ffff-ffffffffffff`) so the application lookup itself fails, asserting
+  `404 Not Found`.
+}
