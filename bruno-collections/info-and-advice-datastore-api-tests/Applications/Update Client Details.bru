@@ -1,0 +1,47 @@
+meta {
+  name: Update Client Details
+  type: http
+  seq: 10
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-client-details
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "firstName": "Jane",
+    "lastName": "Smith"
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Get Authentication Token");
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
+}
+
+tests {
+  test("status is 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+
+  test("ETag header is present", function() {
+    expect(res.getHeader("etag")).to.exist;
+  });
+
+  await test("client details are reflected on the application", async function() {
+    const getApplicationRes = await bru.runRequest("Applications/Get Application");
+    const application = getApplicationRes.data;
+    expect(application.client.firstName).to.equal("Jane");
+    expect(application.client.lastName).to.equal("Smith");
+  });
+}
+
+docs {
+  Updates the client's details for an application created fresh by the pre-request script
+  (Start Application), whose id is stored in a local `applicationId` runtime variable.
+}
