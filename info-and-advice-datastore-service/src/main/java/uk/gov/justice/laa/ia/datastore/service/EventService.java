@@ -23,12 +23,15 @@ public class EventService {
    * mutation it describes are committed or rolled back together.
    *
    * @param payload the request body that caused the mutation.
+   * @param providerOfficeCode the provider office code of the application the mutation relates to,
+   *     as stored on the application record.
    */
-  public void record(Object payload) {
+  public void record(Object payload, String providerOfficeCode) {
     EventEntity event =
         EventEntity.builder()
             .changedBy(userContext.getCurrentUser())
             .providerFirmCode(userContext.getProviderFirmCode())
+            .providerOfficeCode(providerOfficeCode)
             .correlationId(userContext.getCorrelationId())
             .httpMethod(request.getMethod())
             .urlPath(request.getRequestURI())

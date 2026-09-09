@@ -126,7 +126,7 @@ public class ApplicationServiceTest {
     assertThrows(ProviderOfficeNotAuthorizedException.class, () -> sut.createApplication(cmd));
 
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(StartApplicationCommand.class));
+    verify(eventService, never()).record(any(StartApplicationCommand.class), any());
   }
 
   @Test
@@ -521,7 +521,7 @@ public class ApplicationServiceTest {
     sut.createApplication(cmd);
 
     // Assert
-    verify(eventService, times(1)).record(cmd);
+    verify(eventService, times(1)).record(cmd, officeCode);
   }
 
   @Test
@@ -557,7 +557,7 @@ public class ApplicationServiceTest {
     sut.updateMeansData(UUID.randomUUID(), UpdateMeansDataCommand.builder().eTag(0L).build());
 
     // Assert
-    verify(eventService, never()).record(any());
+    verify(eventService, never()).record(any(), any());
   }
 
   @Test
@@ -581,7 +581,7 @@ public class ApplicationServiceTest {
     sut.updateClientDeclaration(applicationId, command);
 
     // Assert
-    verify(eventService, times(1)).record(command);
+    verify(eventService, times(1)).record(command, officeCode);
   }
 
   @Test
@@ -594,7 +594,7 @@ public class ApplicationServiceTest {
     sut.updateClientDeclaration(UUID.randomUUID(), (DeclarationCommand) null);
 
     // Assert
-    verify(eventService, never()).record(any());
+    verify(eventService, never()).record(any(), any());
   }
 
   @Test
@@ -616,7 +616,7 @@ public class ApplicationServiceTest {
     sut.updateEvidence(application.getId(), command);
 
     // Assert
-    verify(eventService, times(1)).record(command);
+    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
   }
 
   @Test
@@ -629,7 +629,7 @@ public class ApplicationServiceTest {
     sut.updateEvidence(UUID.randomUUID(), (UpdateEvidenceCommand) null);
 
     // Assert
-    verify(eventService, never()).record(any());
+    verify(eventService, never()).record(any(), any());
   }
 
   @Test
@@ -776,7 +776,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(mapper, times(1)).updateApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command);
+    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
   }
 
   @Test
@@ -794,7 +794,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(mapper, never()).updateApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any());
+    verify(eventService, never()).record(any(), any());
   }
 
   @Test
@@ -949,7 +949,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(mapper, times(1)).editApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command);
+    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
   }
 
   @Test
@@ -966,7 +966,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(mapper, never()).editApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any());
+    verify(eventService, never()).record(any(), any());
   }
 
   @Test
@@ -1039,7 +1039,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(clientDetailsMapper, times(1)).updateClientDetailsEntity(command, clientDetails);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command);
+    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
   }
 
   @Test
@@ -1057,7 +1057,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any());
+    verify(eventService, never()).record(any(), any());
   }
 
   @Test

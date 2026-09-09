@@ -43,7 +43,7 @@ class EventServiceTest {
     when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
 
     // Act
-    sut.record(payload);
+    sut.record(payload, "office-code-1");
 
     // Assert
     ArgumentCaptor<EventEntity> captor = ArgumentCaptor.forClass(EventEntity.class);
@@ -51,6 +51,7 @@ class EventServiceTest {
     EventEntity saved = captor.getValue();
     assertThat(saved.getChangedBy()).isEqualTo("test-user");
     assertThat(saved.getProviderFirmCode()).isEqualTo("123456");
+    assertThat(saved.getProviderOfficeCode()).isEqualTo("office-code-1");
     assertThat(saved.getCorrelationId()).isEqualTo("test-correlation-id");
     assertThat(saved.getHttpMethod()).isEqualTo("POST");
     assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-application");
