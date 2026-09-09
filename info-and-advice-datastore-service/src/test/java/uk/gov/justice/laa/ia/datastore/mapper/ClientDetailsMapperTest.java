@@ -20,6 +20,7 @@ import uk.gov.justice.laa.ia.datastore.generator.CreateAddressCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.CreateClientCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ClientDetails;
 import uk.gov.justice.laa.ia.datastore.model.CreateClientCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateClientDetailsCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
@@ -109,5 +110,40 @@ public class ClientDetailsMapperTest {
         .dateOfBirth(LocalDate.of(1990, 01, 01))
         .createdAt(Instant.now())
         .modifiedAt(Instant.now());
+  }
+
+  @Test
+  void updateClientDetailsEntity_shouldUpdateOnlyProvidedFieldsLeavingOthersUnchanged() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final ClientDetailsEntity entity = createClientDetails().niNumber("AB123456Q").build();
+    final UpdateClientDetailsCommand cmd =
+        UpdateClientDetailsCommand.builder().eTag(0L).firstName("Jane").build();
+
+    // Act
+    sut.updateClientDetailsEntity(cmd, entity);
+
+    // Assert
+    assertEquals("Jane", entity.getFirstName());
+    assertEquals("Bloggs", entity.getLastName());
+    assertEquals("AB123456Q", entity.getNiNumber());
+    assertEquals("USERCONTEXT:SYSTEM", entity.getModifiedBy());
+  }
+
+  @Test
+  void updateClientDetailsEntity_shouldNotChangeAddress() {
+    // Arrange
+    when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
+    final var existingAddress =
+        uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator.createWithId(null);
+    final ClientDetailsEntity entity = createClientDetails().address(existingAddress).build();
+    final UpdateClientDetailsCommand cmd =
+        UpdateClientDetailsCommand.builder().eTag(0L).firstName("Jane").build();
+
+    // Act
+    sut.updateClientDetailsEntity(cmd, entity);
+
+    // Assert
+    assertEquals(existingAddress, entity.getAddress());
   }
 }

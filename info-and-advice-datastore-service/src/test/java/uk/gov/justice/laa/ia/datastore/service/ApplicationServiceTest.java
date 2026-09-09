@@ -40,6 +40,7 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
+import uk.gov.justice.laa.ia.datastore.mapper.ClientDetailsMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.DeclarationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.EvidenceMapper;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
@@ -50,6 +51,7 @@ import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateClientDetailsCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
@@ -67,6 +69,7 @@ public class ApplicationServiceTest {
   @Mock private ApplicationMapper mapper;
   @Mock private DeclarationMapper declarationMapper;
   @Mock private EvidenceMapper evidenceMapper;
+  @Mock private ClientDetailsMapper clientDetailsMapper;
   @Mock private UserContext userContext;
   @Mock private ObjectMapper objectMapper;
   @Mock private EventService eventService;
@@ -1007,6 +1010,101 @@ public class ApplicationServiceTest {
         () ->
             sut.editApplication(applicationId, EditApplicationCommand.builder().eTag(0L).build()));
     verify(mapper, never()).editApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void shouldUpdateClientDetails() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ClientDetailsEntity clientDetails = ClientDetailsEntity.builder().build();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .clientDetails(clientDetails)
+            .build(); // eTag = 0
+    final UpdateClientDetailsCommand command =
+        UpdateClientDetailsCommand.builder().eTag(0L).firstName("Jane").build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    OptionalLong result = sut.updateClientDetails(applicationId, command);
+
+    // Assert
+    assertTrue(result.isPresent());
+    verify(clientDetailsMapper, times(1)).updateClientDetailsEntity(command, clientDetails);
+    verify(repo, times(1)).save(application);
+    verify(eventService, times(1)).record(command);
+  }
+
+  @Test
+  void shouldReturnEmpty_whenUpdatingClientDetailsForUnknownApplication() {
+    // Arrange
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.empty());
+
+    // Act
+    OptionalLong result =
+        sut.updateClientDetails(
+            UUID.randomUUID(), UpdateClientDetailsCommand.builder().eTag(0L).build());
+
+    // Assert
+    assertTrue(result.isEmpty());
+    verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any());
+  }
+
+  @Test
+  void updateClientDetails_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .clientDetails(ClientDetailsEntity.builder().build())
+            .build(); // eTag = 0
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        EtagMismatchException.class,
+        () ->
+            sut.updateClientDetails(
+                applicationId, UpdateClientDetailsCommand.builder().eTag(99L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateClientDetails_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(UUID.randomUUID().toString())
+            .clientDetails(ClientDetailsEntity.builder().build())
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(UUID.randomUUID().toString()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateClientDetails(
+                applicationId, UpdateClientDetailsCommand.builder().eTag(0L).build()));
+    verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 }
