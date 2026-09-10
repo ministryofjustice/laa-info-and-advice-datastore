@@ -7,3 +7,19 @@ components:
       schema:
         type: string
       description: Bearer prefix required. JWT representing the user, FIRM_CODE claim required.
+
+    XCorrelationHeader:
+      name: X-Correlation-ID
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Correlation ID for tracking requests.
+
+    XServiceNameHeader:
+      name: X-Service-Name
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Name of the service making the request.

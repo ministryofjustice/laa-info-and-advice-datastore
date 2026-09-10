@@ -65,6 +65,7 @@ public abstract class BaseIntegrationTest {
     when(userContext.getOfficeCodes())
         .thenReturn(List.of(PROVIDER_OFFICE_CODE, SECONDARY_PROVIDER_OFFICE_CODE));
     when(userContext.getCurrentUser()).thenReturn("SYSTEM");
+    when(userContext.getServiceName()).thenReturn("IntegrationTest");
   }
 
   public void clearCache() {

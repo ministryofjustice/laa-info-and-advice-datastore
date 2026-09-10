@@ -114,5 +114,6 @@ public class UserContextInterceptor implements HandlerInterceptor {
     userContext.setProviderFirmCode(providerFirmCodeClaim);
     userContext.setOfficeCodes(officeCodesClaim);
     userContext.setCorrelationId(MDC.get("correlationId"));
+    userContext.setServiceName(MDC.get("X-Service-Name"));
   }
 }

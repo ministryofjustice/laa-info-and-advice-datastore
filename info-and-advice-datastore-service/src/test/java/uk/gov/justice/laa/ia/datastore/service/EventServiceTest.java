@@ -37,6 +37,7 @@ class EventServiceTest {
     when(userContext.getCurrentUser()).thenReturn("test-user");
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getCorrelationId()).thenReturn("test-correlation-id");
+    when(userContext.getServiceName()).thenReturn("test-service");
     when(request.getMethod()).thenReturn("POST");
     when(request.getRequestURI()).thenReturn("/api/v0/applications:start-application");
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
@@ -53,6 +54,7 @@ class EventServiceTest {
     assertThat(saved.getProviderFirmCode()).isEqualTo("123456");
     assertThat(saved.getProviderOfficeCode()).isEqualTo("office-code-1");
     assertThat(saved.getCorrelationId()).isEqualTo("test-correlation-id");
+    assertThat(saved.getServiceName()).isEqualTo("test-service");
     assertThat(saved.getHttpMethod()).isEqualTo("POST");
     assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-application");
     assertThat(saved.getPayload()).isEqualTo(payloadNode);

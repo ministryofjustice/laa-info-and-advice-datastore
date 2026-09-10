@@ -5,6 +5,8 @@ post:
   summary: Start an application for a client
   parameters:
     - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
+    - $ref: '../components/parameters.yml#/components/parameters/XCorrelationHeader'
+    - $ref: '../components/parameters.yml#/components/parameters/XServiceNameHeader'
   requestBody:
     required: true
     description: Information required to start an application
