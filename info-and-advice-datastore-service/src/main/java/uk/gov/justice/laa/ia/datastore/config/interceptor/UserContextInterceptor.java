@@ -60,6 +60,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
   }
 
   private void writeUnauthorized(HttpServletResponse response, String detail) throws IOException {
+    log.warn("Returning 401 Unauthorized: {}", detail);
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, detail);
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);

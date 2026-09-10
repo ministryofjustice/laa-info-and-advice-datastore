@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
 import org.slf4j.MDC;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -15,9 +16,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * Filter that reads the {@code X-Correlation-ID} header set by the NGINX ingress controller and
  * places it in the SLF4J MDC so it appears in every structured log entry for the request. If no
  * header is present, a UUID is generated. The header is also echoed back in the response.
+ *
+ * <p>Ordered ahead of Spring Security's filter chain (default order -100) so the correlation ID is
+ * present in logs even when a request is rejected by security before reaching a controller.
  */
 @Component
-@Order(1)
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorrelationIdFilter extends OncePerRequestFilter {
 
   static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
