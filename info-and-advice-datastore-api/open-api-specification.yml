@@ -28,6 +28,10 @@ components:
   parameters:
     XAuthorizationHeader:
       $ref: './open-api-applications/components/parameters.yml#/components/parameters/XAuthorizationHeader'
+    XCorrelationHeader:
+      $ref: './open-api-applications/components/parameters.yml#/components/parameters/XCorrelationHeader'
+    XServiceNameHeader:
+      $ref: './open-api-applications/components/parameters.yml#/components/parameters/XServiceNameHeader'
 
   schemas:
     ClientDetails:

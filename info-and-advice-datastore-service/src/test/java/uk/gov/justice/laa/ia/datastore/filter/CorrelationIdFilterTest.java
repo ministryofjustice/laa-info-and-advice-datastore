@@ -75,4 +75,57 @@ class CorrelationIdFilterTest {
 
     assertThat(MDC.get(CorrelationIdFilter.CORRELATION_ID_MDC_KEY)).isNull();
   }
+
+  @Test
+  void shouldUseServiceNameFromRequestHeader() throws ServletException, IOException {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(CorrelationIdFilter.SERVICE_NAME_HEADER, "test-service");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    String[] mdcServiceName = new String[1];
+    FilterChain filterChain =
+        (req, res) -> mdcServiceName[0] = MDC.get(CorrelationIdFilter.SERVICE_NAME_HEADER);
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    assertThat(mdcServiceName[0]).isEqualTo("test-service");
+  }
+
+  @Test
+  void shouldUseDefaultServiceNameWhenHeaderAbsent() throws ServletException, IOException {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    String[] mdcServiceName = new String[1];
+    FilterChain filterChain =
+        (req, res) -> mdcServiceName[0] = MDC.get(CorrelationIdFilter.SERVICE_NAME_HEADER);
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    assertThat(mdcServiceName[0]).isEqualTo("unknown-service");
+  }
+
+  @Test
+  void shouldUseDefaultServiceNameWhenHeaderIsBlank() throws ServletException, IOException {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(CorrelationIdFilter.SERVICE_NAME_HEADER, "   ");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    String[] mdcServiceName = new String[1];
+    FilterChain filterChain =
+        (req, res) -> mdcServiceName[0] = MDC.get(CorrelationIdFilter.SERVICE_NAME_HEADER);
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    assertThat(mdcServiceName[0]).isEqualTo("unknown-service");
+  }
+
+  @Test
+  void shouldClearServiceNameFromMdcAfterRequest() throws ServletException, IOException {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(CorrelationIdFilter.SERVICE_NAME_HEADER, "test-service");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    FilterChain filterChain = mock(FilterChain.class);
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    assertThat(MDC.get(CorrelationIdFilter.SERVICE_NAME_HEADER)).isNull();
+  }
 }
