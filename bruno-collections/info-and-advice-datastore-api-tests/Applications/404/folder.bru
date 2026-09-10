@@ -4,7 +4,9 @@ meta {
 }
 
 script:pre-request {
-  await bru.runRequest("Get Authentication Token");
+  if (!bru.getEnvVar("token")) {
+    await bru.runRequest("Get Authentication Token");
+  }
 }
 
 docs {
