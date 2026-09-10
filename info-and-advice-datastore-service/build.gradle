@@ -1,7 +1,7 @@
 plugins {
     id 'io.freefair.lombok' version '9.5.0'
     id 'uk.gov.justice.service.laa.laa-spring-boot-gradle-plugin'
-    id 'com.diffplug.spotless' version "8.10.1"
+    id 'com.diffplug.spotless' version "8.10.2"
 }
 
 configurations.configureEach {
@@ -81,7 +81,7 @@ dependencies {
 
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
 
     implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.25'
 
