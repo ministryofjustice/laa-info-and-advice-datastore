@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -16,9 +17,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * Filter to log incoming HTTP requests with structured MDC context. Successful (2xx) requests are
  * logged at DEBUG to avoid noise in production. Client errors (4xx) are logged at WARN and server
  * errors (5xx) at ERROR.
+ *
+ * <p>Ordered ahead of Spring Security's filter chain (default order -100) so requests rejected by
+ * security (e.g. missing/invalid JWT) are still logged.
  */
 @Component
-@Order(2)
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @Slf4j
 public class RequestLoggingFilter extends OncePerRequestFilter {
 

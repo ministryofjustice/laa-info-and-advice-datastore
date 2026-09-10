@@ -40,6 +40,15 @@ management:
 logging:
   level:
     root: ${ROOT_LOGGING_LEVEL:info}
+    org.springframework: ${SPRING_LOGGING_LEVEL:info}
+    org.springframework.security: ${SPRING_SECURITY_LOGGING_LEVEL:debug}
+    org.springframework.security.oauth2: ${SPRING_SECURITY_OAUTH2_LOGGING_LEVEL:debug}
+    org.springframework.security.oauth2.jwt: ${SPRING_SECURITY_OAUTH2_JWT_LOGGING_LEVEL:debug}
+    org.springframework.security.oauth2.server.resource: ${SPRING_SECURITY_OAUTH2_SERVER_RESOURCE_LOGGING_LEVEL:debug}
+    org.springframework.boot.actuate: warn
+    uk.gov.laa.springboot.oauth2: ${LAA_SPRINGBOOT_OAUTH2_LOGGING_LEVEL:debug}
+    uk.gov.justice.laa.springboot.microservice: ${APP_LOGGING_LEVEL:info}
+    uk.gov.justice.laa.rcw: ${APP_LOGGING_LEVEL:info}
   structured:
     format:
       console: ecs
