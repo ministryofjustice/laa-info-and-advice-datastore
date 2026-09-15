@@ -37,4 +37,15 @@ public interface ApplicationRepository
         "evidence"
       })
   Page<ApplicationEntity> findAll(Specification<ApplicationEntity> spec, Pageable pageable);
+
+  /**
+   * Checks whether another application (excluding the one identified by {@code id}) already has the
+   * given UFN for the given provider office code.
+   *
+   * @param providerOfficeCode the provider office code
+   * @param ufn the UFN to check for uniqueness
+   * @param id the id of the application being updated, excluded from the check
+   * @return true if a different application with the same office code and UFN exists
+   */
+  boolean existsByProviderOfficeCodeAndUfnAndIdNot(String providerOfficeCode, String ufn, UUID id);
 }

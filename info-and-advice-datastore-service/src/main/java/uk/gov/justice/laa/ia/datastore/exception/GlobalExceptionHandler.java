@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -42,6 +43,39 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT, "Conflict: resource was modified concurrently");
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+  }
+
+  /**
+   * The handler for DuplicateUfnException.
+   *
+   * @param exception the exception
+   * @return 409 Conflict response
+   */
+  @ExceptionHandler(DuplicateUfnException.class)
+  public ResponseEntity<ProblemDetail> handleDuplicateUfnException(
+      DuplicateUfnException exception) {
+    log.warn("Duplicate UFN: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+  }
+
+  /**
+   * The handler for DataIntegrityViolationException — a safety net for database-level constraint
+   * violations (e.g. a concurrent request creating a duplicate UFN) that were not caught by
+   * application-level validation.
+   *
+   * @param exception the exception
+   * @return 409 Conflict response
+   */
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ProblemDetail> handleDataIntegrityViolationException(
+      DataIntegrityViolationException exception) {
+    log.warn("Data integrity violation: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT, "Conflict: the request violates a data integrity constraint");
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 

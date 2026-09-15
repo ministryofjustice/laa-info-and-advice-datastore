@@ -18,6 +18,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
@@ -346,6 +347,8 @@ public class ApplicationService {
    * @throws EtagMismatchException if the eTag does not match the current entity value
    * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
    *     one of the user's authorized office codes
+   * @throws DuplicateUfnException if the UFN is already used by another application with the same
+   *     provider office code
    */
   @Transactional
   public OptionalLong editApplication(UUID applicationId, EditApplicationCommand command) {
@@ -359,6 +362,14 @@ public class ApplicationService {
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
+
+    String ufn = command.getUfn();
+    if (ufn != null
+        && !ufn.isBlank()
+        && repository.existsByProviderOfficeCodeAndUfnAndIdNot(
+            application.getProviderOfficeCode(), ufn, applicationId)) {
+      throw new DuplicateUfnException(ufn, application.getProviderOfficeCode());
+    }
 
     applicationMapper.editApplicationEntity(command, application);
     ApplicationEntity saved = repository.save(application);
