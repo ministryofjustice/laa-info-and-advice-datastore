@@ -42,6 +42,9 @@ public class EventEntity {
   @Column(name = "correlation_id")
   private String correlationId;
 
+  @Column(name = "service_name", nullable = false)
+  private String serviceName;
+
   @Column(name = "http_method", nullable = false)
   private String httpMethod;
 

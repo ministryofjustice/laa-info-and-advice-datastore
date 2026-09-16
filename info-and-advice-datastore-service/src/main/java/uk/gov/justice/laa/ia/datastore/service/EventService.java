@@ -33,6 +33,7 @@ public class EventService {
             .providerFirmCode(userContext.getProviderFirmCode())
             .providerOfficeCode(providerOfficeCode)
             .correlationId(userContext.getCorrelationId())
+            .serviceName(userContext.getServiceName())
             .httpMethod(request.getMethod())
             .urlPath(request.getRequestURI())
             .payload(objectMapper.valueToTree(payload))

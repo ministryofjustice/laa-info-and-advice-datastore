@@ -26,4 +26,7 @@ public class UserContext {
 
   /** The correlation ID for the current request. */
   private String correlationId;
+
+  /** The name of the service that made the current request. */
+  private String serviceName;
 }
