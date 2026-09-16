@@ -173,6 +173,19 @@ public class ApplicationMapperTest {
     assertEquals(providerFirmCode, mappedModel.getProviderFirmCode());
   }
 
+  @Test
+  void startApplicationCommand_toApplication_shouldMapUfn() {
+    // Arrange
+    final StartApplicationCommand cmd =
+        StartApplicationCommandGenerator.create(builder -> builder.ufn("123456/1"));
+
+    // Act
+    final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
+
+    // Assert
+    assertEquals("123456/1", mappedModel.getUfn());
+  }
+
   private void assertEligibiltyEquals(EligibilityResultEntity expected, EligibilityResult model) {
     assertEquals(expected.getData(), objectMapper.valueToTree(model.getData()));
     assertEquals(expected.getResultJson(), objectMapper.valueToTree(model.getResult()));

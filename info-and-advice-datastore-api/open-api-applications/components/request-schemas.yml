@@ -16,6 +16,9 @@ components:
             - CLA
         providerOfficeCode:
           type: string
+        ufn:
+          type: string
+          maxLength: 9
 
     DeclarationCommand:
       type: object

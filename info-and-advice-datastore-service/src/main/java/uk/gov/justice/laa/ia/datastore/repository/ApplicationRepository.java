@@ -48,4 +48,13 @@ public interface ApplicationRepository
    * @return true if a different application with the same office code and UFN exists
    */
   boolean existsByProviderOfficeCodeAndUfnAndIdNot(String providerOfficeCode, String ufn, UUID id);
+
+  /**
+   * Checks whether an application already has the given UFN for the given provider office code.
+   *
+   * @param providerOfficeCode the provider office code
+   * @param ufn the UFN to check for uniqueness
+   * @return true if an application with the same office code and UFN exists
+   */
+  boolean existsByProviderOfficeCodeAndUfn(String providerOfficeCode, String ufn);
 }

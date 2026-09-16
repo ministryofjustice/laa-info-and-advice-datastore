@@ -68,10 +68,20 @@ public class ApplicationService {
    * @return the full {@link ApplicationResponse} of the newly created application.
    * @throws ProviderOfficeNotAuthorizedException if the requested provider office code is not one
    *     of the user's authorized office codes
+   * @throws DuplicateUfnException if the UFN is already used by another application with the same
+   *     provider office code
    */
   @Transactional
   public ApplicationResponse createApplication(StartApplicationCommand startApplication) {
     validateProviderOfficeCode(startApplication.getProviderOfficeCode());
+
+    String ufn = startApplication.getUfn();
+    if (ufn != null
+        && !ufn.isBlank()
+        && repository.existsByProviderOfficeCodeAndUfn(
+            startApplication.getProviderOfficeCode(), ufn)) {
+      throw new DuplicateUfnException(ufn, startApplication.getProviderOfficeCode());
+    }
 
     ApplicationEntity entity = applicationMapper.toApplicationEntity(startApplication);
 

@@ -131,6 +131,27 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void createApplication_shouldThrowDuplicateUfnException_whenUfnAlreadyExistsForOfficeCode() {
+    // Arrange
+    final UUID officeId = UUID.randomUUID();
+    final StartApplicationCommand cmd =
+        StartApplicationCommand.builder()
+            .providerOfficeCode(officeId.toString())
+            .ufn("123456/1")
+            .build();
+
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeId.toString()));
+    when(repo.existsByProviderOfficeCodeAndUfn(officeId.toString(), "123456/1")).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(DuplicateUfnException.class, () -> sut.createApplication(cmd));
+
+    verify(mapper, never()).toApplicationEntity(any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any(StartApplicationCommand.class), any());
+  }
+
+  @Test
   void shouldGetAllApplications() {
     // Arrange
     final ApplicationEntity entity1 = ApplicationEntity.builder().id(UUID.randomUUID()).build();

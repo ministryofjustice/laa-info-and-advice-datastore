@@ -37,6 +37,12 @@ post:
         application/problem+json:
           schema:
             $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
+    '409':
+      description: Conflict - UFN already in use for this provider office code
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
     '500':
       description: Internal server error
       content:

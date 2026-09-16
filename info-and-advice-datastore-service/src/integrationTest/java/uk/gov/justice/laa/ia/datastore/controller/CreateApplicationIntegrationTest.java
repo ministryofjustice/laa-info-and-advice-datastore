@@ -110,4 +110,59 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
 
     assertThat(applicationRepository.findAll()).isEmpty();
   }
+
+  @Test
+  void shouldCreateApplicationSuccessfully_whenUfnProvided() throws Exception {
+    // Arrange
+    StartApplicationCommand command =
+        StartApplicationCommandGenerator.create(
+            builder -> builder.providerOfficeCode(PROVIDER_OFFICE_CODE).ufn("123456/1"));
+
+    // Act
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/v0/applications:start-application")
+                    .withBearerWriteToken()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(toJson(command)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.ufn").value("123456/1"))
+            .andReturn();
+
+    // Assert DB state
+    var responseJson = objectMapper.readTree(result.getResponse().getContentAsString());
+    UUID applicationId = UUID.fromString(responseJson.get("id").asText());
+    clearCache();
+    ApplicationEntity savedEntity = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(savedEntity.getUfn()).isEqualTo("123456/1");
+  }
+
+  @Test
+  void shouldReturnConflict_whenUfnAlreadyUsedForSameOfficeCode() throws Exception {
+    // Arrange
+    StartApplicationCommand first =
+        StartApplicationCommandGenerator.create(
+            builder -> builder.providerOfficeCode(PROVIDER_OFFICE_CODE).ufn("123456/1"));
+    StartApplicationCommand second =
+        StartApplicationCommandGenerator.create(
+            builder -> builder.providerOfficeCode(PROVIDER_OFFICE_CODE).ufn("123456/1"));
+
+    mockMvc
+        .perform(
+            post("/api/v0/applications:start-application")
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(first)))
+        .andExpect(status().isCreated());
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            post("/api/v0/applications:start-application")
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(second)))
+        .andExpect(status().isConflict());
+  }
 }
