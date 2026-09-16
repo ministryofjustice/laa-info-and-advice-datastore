@@ -33,6 +33,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
@@ -125,6 +126,27 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(ProviderOfficeNotAuthorizedException.class, () -> sut.createApplication(cmd));
 
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any(StartApplicationCommand.class), any());
+  }
+
+  @Test
+  void createApplication_shouldThrowDuplicateUfnException_whenUfnAlreadyExistsForOfficeCode() {
+    // Arrange
+    final UUID officeId = UUID.randomUUID();
+    final StartApplicationCommand cmd =
+        StartApplicationCommand.builder()
+            .providerOfficeCode(officeId.toString())
+            .ufn("123456/1")
+            .build();
+
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeId.toString()));
+    when(repo.existsByProviderOfficeCodeAndUfn(officeId.toString(), "123456/1")).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(DuplicateUfnException.class, () -> sut.createApplication(cmd));
+
+    verify(mapper, never()).toApplicationEntity(any());
     verify(repo, never()).save(any(ApplicationEntity.class));
     verify(eventService, never()).record(any(StartApplicationCommand.class), any());
   }
@@ -950,6 +972,31 @@ public class ApplicationServiceTest {
     verify(mapper, times(1)).editApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
     verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+  }
+
+  @Test
+  void editApplication_shouldThrowDuplicateUfnException_whenUfnAlreadyExistsForOfficeCode() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).ufn("123456/1").build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.existsByProviderOfficeCodeAndUfnAndIdNot(officeCode, "123456/1", applicationId))
+        .thenReturn(true);
+
+    // Act + Assert
+    assertThrows(DuplicateUfnException.class, () -> sut.editApplication(applicationId, command));
+    verify(mapper, never()).editApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any(), any());
   }
 
   @Test
