@@ -62,6 +62,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
+   * The handler for MissingLinkedEntityException.
+   *
+   * @param exception the exception
+   * @return 400 Bad Request response
+   */
+  @ExceptionHandler(MissingLinkedEntityException.class)
+  public ResponseEntity<ProblemDetail> handleMissingLinkedEntityException(
+      MissingLinkedEntityException exception) {
+    log.warn("Missing linked entity: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+  }
+
+  /**
    * The handler for DataIntegrityViolationException — a safety net for database-level constraint
    * violations (e.g. a concurrent request creating a duplicate UFN) that were not caught by
    * application-level validation.

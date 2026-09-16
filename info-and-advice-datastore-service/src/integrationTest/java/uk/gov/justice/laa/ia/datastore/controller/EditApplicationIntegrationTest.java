@@ -1,0 +1,171 @@
+package uk.gov.justice.laa.ia.datastore.controller;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.UUID;
+import lombok.experimental.ExtensionMethod;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
+import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
+import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
+
+/**
+ * Integration test for editing an application, including the linked client details, declaration and
+ * evidence entities via the same PATCH endpoint.
+ */
+@ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
+public class EditApplicationIntegrationTest extends BaseIntegrationTest {
+
+  @Test
+  void shouldPatchClientDetailsAndScopingQuestions() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(
+                                ClientDetailsEntityGenerator.createWithoutId(
+                                    clientBuilder -> clientBuilder.firstName("Original")))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "clientDetails": {"firstName": "Updated"}, "scopingQuestions": {"q1": "a1"}}
+        """;
+
+    // Act
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNoContent())
+        .andExpect(header().exists("ETag"));
+
+    // Assert
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getClientDetails().getFirstName()).isEqualTo("Updated");
+    assertThat(updated.getScopingQuestions().get("q1").asText()).isEqualTo("a1");
+  }
+
+  @Test
+  void shouldPatchExistingDeclaration() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .declaration(DeclarationEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "declaration": {"declarationConfirmation": true}}
+        """;
+
+    // Act
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNoContent())
+        .andExpect(header().exists("ETag"));
+
+    // Assert
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getDeclaration().isDeclarationConfirmation()).isTrue();
+  }
+
+  @Test
+  void shouldReturn400_whenPatchingDeclarationThatDoesNotExist() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "declaration": {"declarationConfirmation": true}}
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldCreateEvidence_whenNoneExistsYet() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "evidence": {"evidenceExemptionCode": "EXEMPT_01"}}
+        """;
+
+    // Act
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isNoContent())
+        .andExpect(header().exists("ETag"));
+
+    // Assert
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    final EvidenceEntity evidence = updated.getEvidence();
+    assertThat(evidence).isNotNull();
+    assertThat(evidence.getEvidenceExemptionCode()).isEqualTo("EXEMPT_01");
+  }
+}

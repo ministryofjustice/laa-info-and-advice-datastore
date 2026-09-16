@@ -11,6 +11,7 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.model.ClientDetails;
 import uk.gov.justice.laa.ia.datastore.model.CreateClientCommand;
+import uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData;
 import uk.gov.justice.laa.ia.datastore.model.UpdateClientDetailsCommand;
 
 /** The mapper between ClientDetails and ClientDetailsEntity. */
@@ -59,4 +60,22 @@ public abstract class ClientDetailsMapper {
   @Mapping(target = "dataRetentionDate", ignore = true)
   public abstract void updateClientDetailsEntity(
       UpdateClientDetailsCommand cmd, @MappingTarget ClientDetailsEntity entity);
+
+  /**
+   * Updates a {@link ClientDetailsEntity} in place from a {@link PatchClientDetailsData}, leaving
+   * fields that are not set on the command unchanged. Used by the generic application PATCH
+   * endpoint, where concurrency control is handled via the parent command's eTag rather than one on
+   * this nested payload.
+   */
+  @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "etag", ignore = true)
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "createdBy", ignore = true)
+  @Mapping(target = "modifiedAt", ignore = true)
+  @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
+  @Mapping(target = "dataRetentionEventUuid", ignore = true)
+  @Mapping(target = "dataRetentionDate", ignore = true)
+  public abstract void patchClientDetailsEntity(
+      PatchClientDetailsData cmd, @MappingTarget ClientDetailsEntity entity);
 }

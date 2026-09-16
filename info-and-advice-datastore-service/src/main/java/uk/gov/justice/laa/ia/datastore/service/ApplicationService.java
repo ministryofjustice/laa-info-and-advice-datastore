@@ -20,6 +20,7 @@ import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
+import uk.gov.justice.laa.ia.datastore.exception.MissingLinkedEntityException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ClientDetailsMapper;
@@ -349,7 +350,9 @@ public class ApplicationService {
   }
 
   /**
-   * Edit application metadata fields.
+   * Edit application metadata fields, and optionally the linked client details (and address),
+   * declaration, and evidence in the same request. Only fields present on the command (and its
+   * nested objects) are changed; omitted fields are left unchanged.
    *
    * @param applicationId the application ID
    * @param command the edit command including eTag for optimistic concurrency control
@@ -359,6 +362,9 @@ public class ApplicationService {
    *     one of the user's authorized office codes
    * @throws DuplicateUfnException if the UFN is already used by another application with the same
    *     provider office code
+   * @throws MissingLinkedEntityException if a declaration patch is supplied but the application has
+   *     no declaration yet - declarations must be created via updateDeclarationData first since it
+   *     requires fields a partial patch cannot guarantee are all present
    */
   @Transactional
   public OptionalLong editApplication(UUID applicationId, EditApplicationCommand command) {
@@ -382,6 +388,35 @@ public class ApplicationService {
     }
 
     applicationMapper.editApplicationEntity(command, application);
+
+    if (command.getScopingQuestions() != null) {
+      application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
+    }
+
+    if (command.getClientDetails() != null) {
+      clientDetailsMapper.patchClientDetailsEntity(
+          command.getClientDetails(), application.getClientDetails());
+    }
+
+    if (command.getDeclaration() != null) {
+      if (application.getDeclaration() == null) {
+        throw new MissingLinkedEntityException("declaration", applicationId);
+      }
+      declarationMapper.patchDeclarationEntity(
+          command.getDeclaration(), application.getDeclaration());
+    }
+
+    if (command.getEvidence() != null) {
+      EvidenceEntity evidence = application.getEvidence();
+      if (evidence == null) {
+        evidence = new EvidenceEntity();
+        evidence.setCreatedBy(userContext.getCurrentUser());
+      }
+      evidenceMapper.patchEvidenceEntity(command.getEvidence(), evidence);
+      evidence.setModifiedBy(userContext.getCurrentUser());
+      application.setEvidence(evidenceRepository.save(evidence));
+    }
+
     ApplicationEntity saved = repository.save(application);
     eventService.record(command, application.getProviderOfficeCode());
     return OptionalLong.of(saved.getEtag());
