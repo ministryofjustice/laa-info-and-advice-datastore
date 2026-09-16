@@ -82,6 +82,8 @@ public class UserContextInterceptorTests {
     when(mockJwt.getClaimAsStringList("LAA_ACCOUNTS")).thenReturn(expectedOfficeCodes);
     when(mockJwt.getClaimAsString("oid")).thenReturn("user-oid");
     when(mockJwt.getClaimAsString("tid")).thenReturn("tenant-tid");
+    MDC.put("correlationId", "test-correlation-id");
+    MDC.put("X-Service-Name", "test-service");
 
     // Act & Assert
     assertTrue(interceptor.preHandle(request, response, null));
@@ -89,6 +91,8 @@ public class UserContextInterceptorTests {
     // Assert
     assertThat(userContext.getProviderFirmCode()).isEqualTo(expectedProviderFirmCode);
     assertThat(userContext.getOfficeCodes()).isEqualTo(expectedOfficeCodes);
+    assertThat(userContext.getCorrelationId()).isEqualTo("test-correlation-id");
+    assertThat(userContext.getServiceName()).isEqualTo("test-service");
   }
 
   @Test

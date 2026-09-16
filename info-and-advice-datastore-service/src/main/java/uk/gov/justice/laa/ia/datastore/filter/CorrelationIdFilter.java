@@ -26,6 +26,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
 
   static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
   static final String CORRELATION_ID_MDC_KEY = "correlationId";
+  static final String SERVICE_NAME_HEADER = "X-Service-Name";
 
   @Override
   protected void doFilterInternal(
@@ -36,7 +37,11 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
     if (correlationId == null || correlationId.isBlank()) {
       correlationId = UUID.randomUUID().toString();
     }
-
+    String serviceName = request.getHeader(SERVICE_NAME_HEADER);
+    if (serviceName == null || serviceName.isBlank()) {
+      serviceName = "unknown-service";
+    }
+    MDC.put(SERVICE_NAME_HEADER, serviceName);
     MDC.put(CORRELATION_ID_MDC_KEY, correlationId);
     response.setHeader(CORRELATION_ID_HEADER, correlationId);
 
@@ -44,6 +49,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
       filterChain.doFilter(request, response);
     } finally {
       MDC.remove(CORRELATION_ID_MDC_KEY);
+      MDC.remove(SERVICE_NAME_HEADER);
     }
   }
 }

@@ -11,6 +11,8 @@ get:
         type: string
         format: uuid
     - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
+    - $ref: '../components/parameters.yml#/components/parameters/XCorrelationHeader'
+    - $ref: '../components/parameters.yml#/components/parameters/XServiceNameHeader'
   responses:
     '200':
       description: Success
