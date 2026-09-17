@@ -1,7 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -57,18 +56,18 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  void handleMissingLinkedEntityException_returnsBadRequestStatusAndErrorMessage() {
+  void handleDeclarationAlreadySignedException_returnsConflictStatusAndErrorMessage() {
     UUID applicationId = UUID.randomUUID();
-    MissingLinkedEntityException exception =
-        new MissingLinkedEntityException("declaration", applicationId);
+    DeclarationAlreadySignedException exception =
+        new DeclarationAlreadySignedException(applicationId);
 
     ResponseEntity<ProblemDetail> result =
-        globalExceptionHandler.handleMissingLinkedEntityException(exception);
+        globalExceptionHandler.handleDeclarationAlreadySignedException(exception);
 
     assertThat(result).isNotNull();
-    assertThat(result.getStatusCode()).isEqualTo(BAD_REQUEST);
+    assertThat(result.getStatusCode()).isEqualTo(CONFLICT);
     assertThat(result.getBody()).isNotNull();
-    assertThat(result.getBody().getStatus()).isEqualTo(BAD_REQUEST.value());
+    assertThat(result.getBody().getStatus()).isEqualTo(CONFLICT.value());
     assertThat(result.getBody().getDetail()).isEqualTo(exception.getMessage());
   }
 }

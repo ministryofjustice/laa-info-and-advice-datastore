@@ -6,7 +6,10 @@ patch:
   description: >-
     Partially updates any user-defined field on the application, and optionally its linked client
     details (and address), declaration, and evidence in the same request. Only fields present in
-    the request body are changed; omitted fields are left unchanged.
+    the request body are changed; omitted fields are left unchanged. The declaration and evidence
+    are created if they don't already exist on the application. A declaration that has already
+    been signed (has a dateSigned) is immutable and cannot be patched; attempting to do so returns
+    a 409 Conflict.
   parameters:
     - name: id
       in: path
@@ -32,15 +35,12 @@ patch:
           schema:
             type: integer
             format: int64
-    '400':
-      {
-        description: 'Bad request, or a declaration patch was supplied but the application has no declaration yet (create one via updateDeclarationData first)',
-      }
+    '400': { description: Bad request }
     '401': { description: Unauthorized }
     '403': { description: Forbidden }
     '404': { description: Not found }
     '409':
       {
-        description: 'Conflict - ETag mismatch, or UFN already in use for this provider office code',
+        description: 'Conflict - ETag mismatch, UFN already in use for this provider office code, or the declaration has already been signed',
       }
     '500': { description: Internal server error }

@@ -10,10 +10,12 @@ import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
@@ -102,7 +104,41 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  void shouldReturn400_whenPatchingDeclarationThatDoesNotExist() throws Exception {
+  void shouldReturn409_whenPatchingAlreadySignedDeclaration() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .declaration(
+                                DeclarationEntityGenerator.createWithoutId(
+                                    declarationBuilder ->
+                                        declarationBuilder.dateSigned(java.time.LocalDate.now())))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "declaration": {"declarationConfirmation": true}}
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
+  void shouldCreateDeclaration_whenNoneExistsYet() throws Exception {
     // Arrange
     final UUID applicationId =
         applicationRepository
@@ -121,14 +157,23 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
         {"eTag": 0, "declaration": {"declarationConfirmation": true}}
         """;
 
-    // Act + Assert
+    // Act
     mockMvc
         .perform(
             patch(TestConstants.EditApplication, applicationId)
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
-        .andExpect(status().isBadRequest());
+        .andExpect(status().isNoContent())
+        .andExpect(header().exists("ETag"));
+
+    // Assert
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    final DeclarationEntity declaration = updated.getDeclaration();
+    assertThat(declaration).isNotNull();
+    assertThat(declaration.isDeclarationConfirmation()).isTrue();
+    assertThat(declaration.getClientDeclarationStatus()).isEqualTo(ClientDeclarationStatus.DRAFT);
   }
 
   @Test

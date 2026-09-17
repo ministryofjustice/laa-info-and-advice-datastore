@@ -62,18 +62,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
-   * The handler for MissingLinkedEntityException.
+   * The handler for DeclarationAlreadySignedException.
    *
    * @param exception the exception
-   * @return 400 Bad Request response
+   * @return 409 Conflict response
    */
-  @ExceptionHandler(MissingLinkedEntityException.class)
-  public ResponseEntity<ProblemDetail> handleMissingLinkedEntityException(
-      MissingLinkedEntityException exception) {
-    log.warn("Missing linked entity: {}", exception.getMessage());
+  @ExceptionHandler(DeclarationAlreadySignedException.class)
+  public ResponseEntity<ProblemDetail> handleDeclarationAlreadySignedException(
+      DeclarationAlreadySignedException exception) {
+    log.warn("Declaration already signed: {}", exception.getMessage());
     ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
   /**

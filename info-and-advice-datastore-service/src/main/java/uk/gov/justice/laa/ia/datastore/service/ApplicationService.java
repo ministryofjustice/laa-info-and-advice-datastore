@@ -18,9 +18,9 @@ import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.exception.DeclarationAlreadySignedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
-import uk.gov.justice.laa.ia.datastore.exception.MissingLinkedEntityException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ClientDetailsMapper;
@@ -352,7 +352,9 @@ public class ApplicationService {
   /**
    * Edit application metadata fields, and optionally the linked client details (and address),
    * declaration, and evidence in the same request. Only fields present on the command (and its
-   * nested objects) are changed; omitted fields are left unchanged.
+   * nested objects) are changed; omitted fields are left unchanged. Declaration and evidence are
+   * created if they don't already exist on the application. A declaration that has already been
+   * signed (i.e. has a {@code dateSigned}) is immutable and cannot be patched.
    *
    * @param applicationId the application ID
    * @param command the edit command including eTag for optimistic concurrency control
@@ -362,9 +364,8 @@ public class ApplicationService {
    *     one of the user's authorized office codes
    * @throws DuplicateUfnException if the UFN is already used by another application with the same
    *     provider office code
-   * @throws MissingLinkedEntityException if a declaration patch is supplied but the application has
-   *     no declaration yet - declarations must be created via updateDeclarationData first since it
-   *     requires fields a partial patch cannot guarantee are all present
+   * @throws DeclarationAlreadySignedException if a declaration patch is supplied but the existing
+   *     declaration has already been signed
    */
   @Transactional
   public OptionalLong editApplication(UUID applicationId, EditApplicationCommand command) {
@@ -399,11 +400,16 @@ public class ApplicationService {
     }
 
     if (command.getDeclaration() != null) {
-      if (application.getDeclaration() == null) {
-        throw new MissingLinkedEntityException("declaration", applicationId);
+      DeclarationEntity declaration = application.getDeclaration();
+      if (declaration == null) {
+        declaration = new DeclarationEntity();
+        declaration.setClientDeclarationStatus(ClientDeclarationStatus.DRAFT);
+        declaration.setCreatedBy(userContext.getCurrentUser());
+      } else if (declaration.getDateSigned() != null) {
+        throw new DeclarationAlreadySignedException(applicationId);
       }
-      declarationMapper.patchDeclarationEntity(
-          command.getDeclaration(), application.getDeclaration());
+      declarationMapper.patchDeclarationEntity(command.getDeclaration(), declaration);
+      application.setDeclaration(declaration);
     }
 
     if (command.getEvidence() != null) {
