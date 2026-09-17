@@ -128,6 +128,66 @@ components:
         determinationId:
           type: string
           format: uuid
+        scopingQuestions:
+          type: object
+          nullable: true
+          additionalProperties: true
+        clientDetails:
+          $ref: '#/components/schemas/PatchClientDetailsData'
+        declaration:
+          $ref: '#/components/schemas/PatchDeclarationData'
+        evidence:
+          $ref: '#/components/schemas/PatchEvidenceData'
+
+    PatchClientDetailsData:
+      type: object
+      description: >-
+        Partial update of client details. Only fields present are changed; all fields are
+        optional since the parent EditApplicationCommand's eTag is used for concurrency control.
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        niNumber:
+          type: string
+          example: QQ123456B
+          minLength: 9
+          maxLength: 9
+        noFixedAbode:
+          type: boolean
+        address:
+          $ref: '#/components/schemas/UpdateAddressCommand'
+
+    PatchDeclarationData:
+      type: object
+      description: >-
+        Partial update of the application declaration. Only fields present are changed.
+      properties:
+        declarationConfirmation:
+          type: boolean
+        dateSigned:
+          type: string
+          format: date
+          x-extra-annotation: "@jakarta.validation.constraints.PastOrPresent"
+
+    PatchEvidenceData:
+      type: object
+      description: >-
+        Partial update of application evidence. Only fields present are changed.
+      properties:
+        evidenceExemptionCode:
+          type: string
+        evidenceExemptionReason:
+          type: string
+          maxLength: 400
+        incomeEvidenceChecklist:
+          type: object
+        expenditureCapitalEvidenceChecklist:
+          type: object
 
     UpdateClientDetailsCommand:
       type: object

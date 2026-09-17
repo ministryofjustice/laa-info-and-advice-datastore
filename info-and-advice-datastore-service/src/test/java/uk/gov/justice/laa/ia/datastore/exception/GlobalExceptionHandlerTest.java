@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ProblemDetail;
@@ -52,5 +53,21 @@ class GlobalExceptionHandlerTest {
     assertThat(result.getBody().getStatus()).isEqualTo(CONFLICT.value());
     assertThat(result.getBody().getDetail())
         .isEqualTo("Conflict: the request violates a data integrity constraint");
+  }
+
+  @Test
+  void handleDeclarationAlreadySignedException_returnsConflictStatusAndErrorMessage() {
+    UUID applicationId = UUID.randomUUID();
+    DeclarationAlreadySignedException exception =
+        new DeclarationAlreadySignedException(applicationId);
+
+    ResponseEntity<ProblemDetail> result =
+        globalExceptionHandler.handleDeclarationAlreadySignedException(exception);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getStatusCode()).isEqualTo(CONFLICT);
+    assertThat(result.getBody()).isNotNull();
+    assertThat(result.getBody().getStatus()).isEqualTo(CONFLICT.value());
+    assertThat(result.getBody().getDetail()).isEqualTo(exception.getMessage());
   }
 }

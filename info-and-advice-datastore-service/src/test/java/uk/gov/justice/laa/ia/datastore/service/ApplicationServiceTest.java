@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
@@ -972,6 +974,235 @@ public class ApplicationServiceTest {
     verify(mapper, times(1)).editApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
     verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+  }
+
+  @Test
+  void editApplication_shouldPatchClientDetails_whenClientDetailsProvided() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ClientDetailsEntity clientDetails = ClientDetailsEntity.builder().build();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .clientDetails(clientDetails)
+            .build(); // eTag = 0
+    final uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData clientDetailsPatch =
+        uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData.builder()
+            .firstName("Jane")
+            .build();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).clientDetails(clientDetailsPatch).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    OptionalLong result = sut.editApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result.isPresent());
+    verify(clientDetailsMapper, times(1))
+        .patchClientDetailsEntity(clientDetailsPatch, clientDetails);
+  }
+
+  @Test
+  void editApplication_shouldPatchScopingQuestions_whenScopingQuestionsProvided() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0
+    final Map<String, Object> scopingQuestions = Map.of("q1", "a1");
+    final ObjectNode scopingQuestionsNode = new ObjectMapper().createObjectNode();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).scopingQuestions(scopingQuestions).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(objectMapper.valueToTree(scopingQuestions)).thenReturn(scopingQuestionsNode);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    OptionalLong result = sut.editApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result.isPresent());
+    assertThat(application.getScopingQuestions()).isEqualTo(scopingQuestionsNode);
+  }
+
+  @Test
+  void editApplication_shouldPatchDeclaration_whenDeclarationExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final DeclarationEntity declaration = DeclarationEntity.builder().build();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .declaration(declaration)
+            .build(); // eTag = 0
+    final uk.gov.justice.laa.ia.datastore.model.PatchDeclarationData declarationPatch =
+        uk.gov.justice.laa.ia.datastore.model.PatchDeclarationData.builder()
+            .declarationConfirmation(true)
+            .build();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).declaration(declarationPatch).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    OptionalLong result = sut.editApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result.isPresent());
+    verify(declarationMapper, times(1)).patchDeclarationEntity(declarationPatch, declaration);
+  }
+
+  @Test
+  void editApplication_shouldThrowDeclarationAlreadySignedException_whenDeclarationSigned() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final DeclarationEntity declaration =
+        DeclarationEntity.builder().dateSigned(java.time.LocalDate.now()).build();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .declaration(declaration)
+            .build(); // eTag = 0
+    final uk.gov.justice.laa.ia.datastore.model.PatchDeclarationData declarationPatch =
+        uk.gov.justice.laa.ia.datastore.model.PatchDeclarationData.builder()
+            .declarationConfirmation(true)
+            .build();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).declaration(declarationPatch).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        uk.gov.justice.laa.ia.datastore.exception.DeclarationAlreadySignedException.class,
+        () -> sut.editApplication(applicationId, command));
+    verify(declarationMapper, never()).patchDeclarationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void editApplication_shouldCreateAndPatchDeclaration_whenNoDeclarationExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0, no declaration
+    final uk.gov.justice.laa.ia.datastore.model.PatchDeclarationData declarationPatch =
+        uk.gov.justice.laa.ia.datastore.model.PatchDeclarationData.builder()
+            .declarationConfirmation(true)
+            .build();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).declaration(declarationPatch).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(userContext.getCurrentUser()).thenReturn("TEST_USER");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    OptionalLong result = sut.editApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result.isPresent());
+    ArgumentCaptor<DeclarationEntity> declarationCaptor =
+        ArgumentCaptor.forClass(DeclarationEntity.class);
+    verify(declarationMapper, times(1))
+        .patchDeclarationEntity(eq(declarationPatch), declarationCaptor.capture());
+    assertThat(declarationCaptor.getValue().getClientDeclarationStatus())
+        .isEqualTo(ClientDeclarationStatus.DRAFT);
+    assertThat(declarationCaptor.getValue().getCreatedBy()).isEqualTo("TEST_USER");
+    assertThat(application.getDeclaration()).isNotNull();
+  }
+
+  @Test
+  void editApplication_shouldPatchEvidence_whenEvidenceExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final EvidenceEntity evidence = EvidenceEntity.builder().build();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .evidence(evidence)
+            .build(); // eTag = 0
+    final uk.gov.justice.laa.ia.datastore.model.PatchEvidenceData evidencePatch =
+        uk.gov.justice.laa.ia.datastore.model.PatchEvidenceData.builder()
+            .evidenceExemptionCode("CODE")
+            .build();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).evidence(evidencePatch).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(userContext.getCurrentUser()).thenReturn("TEST_USER");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(evidenceRepository.save(any(EvidenceEntity.class))).thenReturn(evidence);
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    OptionalLong result = sut.editApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result.isPresent());
+    verify(evidenceMapper, times(1)).patchEvidenceEntity(evidencePatch, evidence);
+    verify(evidenceRepository, times(1)).save(evidence);
+  }
+
+  @Test
+  void editApplication_shouldCreateAndPatchEvidence_whenNoEvidenceExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .build(); // eTag = 0, no evidence
+    final uk.gov.justice.laa.ia.datastore.model.PatchEvidenceData evidencePatch =
+        uk.gov.justice.laa.ia.datastore.model.PatchEvidenceData.builder()
+            .evidenceExemptionCode("CODE")
+            .build();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).evidence(evidencePatch).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(userContext.getCurrentUser()).thenReturn("TEST_USER");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(evidenceRepository.save(any(EvidenceEntity.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    OptionalLong result = sut.editApplication(applicationId, command);
+
+    // Assert
+    assertTrue(result.isPresent());
+    ArgumentCaptor<EvidenceEntity> evidenceCaptor = ArgumentCaptor.forClass(EvidenceEntity.class);
+    verify(evidenceMapper, times(1))
+        .patchEvidenceEntity(eq(evidencePatch), evidenceCaptor.capture());
+    assertThat(evidenceCaptor.getValue().getCreatedBy()).isEqualTo("TEST_USER");
+    assertThat(application.getEvidence()).isNotNull();
   }
 
   @Test
