@@ -13,7 +13,7 @@ on:
 
 jobs:
   integration-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
       - name: Set up JDK 25
@@ -61,7 +61,7 @@ jobs:
           retention-days: 14
 
   snyk-scan-app:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       SNYK_TEST_EXCLUDE: build,generated
@@ -78,7 +78,7 @@ jobs:
           args: --severity-threshold=high
 
   snyk-scan-docker-image:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     env:
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,7 +100,7 @@ jobs:
     uses: ./.github/workflows/zap-scanning.yml
 
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: uat
     permissions:
       id-token: write # This is required for requesting the JWT
