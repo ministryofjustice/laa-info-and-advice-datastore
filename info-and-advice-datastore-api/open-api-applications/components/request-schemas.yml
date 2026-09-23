@@ -117,12 +117,14 @@ components:
           type: string
         reasonForReapplication:
           type: string
+          nullable: true
         meansAssessmentRequired:
           type: boolean
         typeOfNonMeans:
           type: boolean
         ecfFlag:
           type: boolean
+          nullable: true
         contribution:
           type: string
         determinationId:
@@ -147,20 +149,63 @@ components:
       properties:
         firstName:
           type: string
+          x-jackson-json-setter-nulls: FAIL
         lastName:
           type: string
+          x-jackson-json-setter-nulls: FAIL
         dateOfBirth:
           type: string
           format: date
+          x-jackson-json-setter-nulls: FAIL
         niNumber:
           type: string
+          nullable: true
           example: QQ123456B
           minLength: 9
           maxLength: 9
         noFixedAbode:
           type: boolean
+          x-jackson-json-setter-nulls: FAIL
         address:
-          $ref: '#/components/schemas/UpdateAddressCommand'
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PatchAddressData'
+
+    PatchAddressData:
+      type: object
+      description: >-
+        Partial update of a client's address. Only fields present are changed;
+        addressLine1 and country are required when creating an address.
+      properties:
+        addressLine1:
+          type: string
+          example: 10 Downing Street
+          x-jackson-json-setter-nulls: FAIL
+        addressLine2:
+          type: string
+          nullable: true
+        addressLine3:
+          type: string
+          nullable: true
+        addressLine4:
+          type: string
+          nullable: true
+        townOrCity:
+          type: string
+          nullable: true
+          example: London
+        postCode:
+          type: string
+          nullable: true
+          example: SW1A 2AA
+        county:
+          type: string
+          nullable: true
+        country:
+          type: string
+          maxLength: 2
+          example: GB
+          x-jackson-json-setter-nulls: FAIL
 
     PatchDeclarationData:
       type: object
