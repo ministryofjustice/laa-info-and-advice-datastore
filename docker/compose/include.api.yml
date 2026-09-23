@@ -24,6 +24,10 @@ services:
       - LAA_OAUTH2_AUDIENCE=${LAA_OAUTH2_AUDIENCE:-default}
       # Trusts a caller (e.g. RCW API) that forwards its own token unchanged as X-Authorization.
       - TRUSTED_CALLER_AUDIENCE=${TRUSTED_CALLER_AUDIENCE:-default}
+      # Sentry error monitoring - set these in .env to enable (blank disables the SDK/header).
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - SENTRY_CSP_REPORT_URI=${SENTRY_CSP_REPORT_URI:-}
+      - SENTRY_SECURITY_TOKEN=${SENTRY_SECURITY_TOKEN:-}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 10s

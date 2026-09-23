@@ -37,6 +37,13 @@ info:
     description: Datastore for information and advice
     version: 1.0.0
 
+sentry:
+  # Blank disables the SDK (no events are sent) - set SENTRY_DSN to enable.
+  dsn: ${SENTRY_DSN:}
+  environment: ${SPRING_PROFILES_ACTIVE:local}
+  send-default-pii: false
+  exception-resolver-order: -2147483647
+
 management:
   # specify actuator endpoints to enable
   endpoints:
@@ -72,6 +79,10 @@ laa:
     trusted-caller:
       issuer-uri: ${LAA_OAUTH2_ISSUER_URI:https://placeholder.issuer.uri/v2.0}
       audience: ${TRUSTED_CALLER_AUDIENCE:api://placeholder-caller-audience}
+  security:
+    # Content-Security-Policy reporting endpoint - blank disables the header.
+    csp-report-uri: ${SENTRY_CSP_REPORT_URI:}
+    csp-security-token: ${SENTRY_SECURITY_TOKEN:}
   springboot.starter:
     oauth2:
       scopes-claim-path: scp
