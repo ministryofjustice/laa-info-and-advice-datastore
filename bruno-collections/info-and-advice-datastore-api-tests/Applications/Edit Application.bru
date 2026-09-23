@@ -14,7 +14,47 @@ body:json {
   {
     "eTag": 0,
     "ufn": "123456789",
-    "laaReference": "LAA-REF-001"
+    "laaReference": "LAA-REF-001",
+    "reasonForReapplication": "Change of circumstances",
+    "meansAssessmentRequired": true,
+    "typeOfNonMeans": true,
+    "ecfFlag": true,
+    "contribution": "50.00",
+    "determinationId": "11111111-1111-1111-1111-111111111111",
+    "scopingQuestions": {
+      "question1": "answer1"
+    },
+    "clientDetails": {
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "dateOfBirth": "1990-01-01",
+      "niNumber": "QQ123456B",
+      "noFixedAbode": true,
+      "address": {
+        "addressLine1": "10 Downing Street",
+        "addressLine2": "Westminster",
+        "addressLine3": "Line 3",
+        "addressLine4": "Line 4",
+        "townOrCity": "London",
+        "postCode": "SW1A 2AA",
+        "county": "Greater London",
+        "country": "GB"
+      }
+    },
+    "declaration": {
+      "declarationConfirmation": true,
+      "dateSigned": "2024-01-01"
+    },
+    "evidence": {
+      "evidenceExemptionCode": "EX1",
+      "evidenceExemptionReason": "Exemption reason",
+      "incomeEvidenceChecklist": {
+        "payslips": true
+      },
+      "expenditureCapitalEvidenceChecklist": {
+        "bankStatements": true
+      }
+    }
   }
 }
 
@@ -40,11 +80,43 @@ tests {
     const application = getApplicationRes.data;
     expect(application.ufn).to.equal("123456789");
     expect(application.laaReference).to.equal("LAA-REF-001");
+    expect(application.reasonForReapplication).to.equal("Change of circumstances");
+    expect(application.meansAssessmentRequired).to.equal(true);
+    expect(application.typeOfNonMeans).to.equal(true);
+    expect(application.ecfFlag).to.equal(true);
+    expect(application.contribution).to.equal("50.00");
+    expect(application.determinationId).to.equal("11111111-1111-1111-1111-111111111111");
+    expect(application.scopingQuestions).to.deep.equal({ question1: "answer1" });
+
+    expect(application.client.firstName).to.equal("Jane");
+    expect(application.client.lastName).to.equal("Doe");
+    expect(application.client.dateOfBirth).to.equal("1990-01-01");
+    expect(application.client.niNumber).to.equal("QQ123456B");
+    expect(application.client.noFixedAbode).to.equal(true);
+    expect(application.client.address.addressLine1).to.equal("10 Downing Street");
+    expect(application.client.address.addressLine2).to.equal("Westminster");
+    expect(application.client.address.addressLine3).to.equal("Line 3");
+    expect(application.client.address.addressLine4).to.equal("Line 4");
+    expect(application.client.address.townOrCity).to.equal("London");
+    expect(application.client.address.postCode).to.equal("SW1A 2AA");
+    expect(application.client.address.county).to.equal("Greater London");
+    expect(application.client.address.country).to.equal("GB");
+
+    expect(application.declaration.declarationConfirmation).to.equal(true);
+    expect(application.declaration.dateSigned).to.equal("2024-01-01");
+
+    expect(application.evidence.evidenceExemptionCode).to.equal("EX1");
+    expect(application.evidence.evidenceExemptionReason).to.equal("Exemption reason");
+    expect(application.evidence.incomeEvidenceChecklist).to.deep.equal({ payslips: true });
+    expect(application.evidence.expenditureCapitalEvidenceChecklist).to.deep.equal({
+      bankStatements: true
+    });
   });
 }
 
 docs {
-  Edits an application's core details (e.g. ufn, laaReference) for an application created fresh
+  Edits every updatable property of an application (core fields, scoping questions, client
+  details incl. nested address, declaration, and evidence) for an application created fresh
   by the pre-request script (Start Application), whose id is stored in a local `applicationId`
-  runtime variable.
+  runtime variable. Asserts every supplied field is reflected back via a Get Application call.
 }
