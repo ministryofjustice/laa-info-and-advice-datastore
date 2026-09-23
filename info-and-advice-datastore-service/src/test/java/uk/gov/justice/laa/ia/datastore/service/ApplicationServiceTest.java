@@ -52,6 +52,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateClientDetailsCommand;
@@ -280,7 +281,7 @@ public class ApplicationServiceTest {
             .providerOfficeCode(officeCode)
             .modifiedAt(originalModifiedAt)
             .build();
-    final Object data = new ObjectMapper().createObjectNode().put("question", "answer");
+    final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
     final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
@@ -553,7 +554,7 @@ public class ApplicationServiceTest {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
-    final Object data = new ObjectMapper().createObjectNode().put("question", "answer");
+    final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
     final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
@@ -883,7 +884,8 @@ public class ApplicationServiceTest {
     final ObjectNode resultNode = om.createObjectNode();
     resultNode.putObject("result_summary").putObject("overall_result").put("result", "eligible");
 
-    final Object data = om.createObjectNode().put("question", "answer");
+    final ObjectNode dataNode = om.createObjectNode().put("question", "answer");
+    final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(resultNode).build();
 
@@ -891,7 +893,7 @@ public class ApplicationServiceTest {
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
-    when(objectMapper.valueToTree(data)).thenReturn((ObjectNode) data);
+    when(objectMapper.valueToTree(data)).thenReturn(dataNode);
     when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
@@ -922,7 +924,8 @@ public class ApplicationServiceTest {
     final ObjectNode resultNode = om.createObjectNode();
     resultNode.putObject("result_summary").putObject("overall_result").put("result", "ineligible");
 
-    final Object data = om.createObjectNode().put("question", "answer");
+    final ObjectNode dataNode = om.createObjectNode().put("question", "answer");
+    final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(resultNode).build();
 
@@ -930,7 +933,7 @@ public class ApplicationServiceTest {
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
-    when(objectMapper.valueToTree(data)).thenReturn((ObjectNode) data);
+    when(objectMapper.valueToTree(data)).thenReturn(dataNode);
     when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 

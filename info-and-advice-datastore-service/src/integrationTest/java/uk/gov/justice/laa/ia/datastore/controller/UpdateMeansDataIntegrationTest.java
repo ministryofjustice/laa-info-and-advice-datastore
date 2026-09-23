@@ -43,7 +43,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
         """
         {
           "eTag": 0,
-          "data": {"question": "answer"},
+          "data": {"client_age": "18-24"},
           "result": {"status": "ELIGIBLE"}
         }
         """;
@@ -60,7 +60,6 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
     // Assert
     clearCache();
-    final JsonNode expectedData = objectMapper.readTree("{\"question\": \"answer\"}");
     final JsonNode expectedResult = objectMapper.readTree("{\"status\": \"ELIGIBLE\"}");
     final List<EligibilityResultEntity> eligibilityResults =
         eligibilityResultRepository.findAll().stream()
@@ -68,7 +67,8 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
             .toList();
 
     assertThat(eligibilityResults).hasSize(1);
-    assertThat(eligibilityResults.getFirst().getData()).isEqualTo(expectedData);
+    assertThat(eligibilityResults.getFirst().getData().get("client_age").asText())
+        .isEqualTo("18-24");
     assertThat(eligibilityResults.getFirst().getResultJson()).isEqualTo(expectedResult);
     assertThat(eligibilityResults.getFirst().getCreatedAt()).isNotNull();
   }
@@ -80,7 +80,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
         """
         {
           "eTag": 0,
-          "data": {"question": "answer"},
+          "data": {"client_age": "18-24"},
           "result": {"status": "ELIGIBLE"}
         }
         """;
@@ -110,7 +110,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
     final String payload =
         """
-        {"eTag": 99, "data": {"question": "answer"}, "result": {"status": "ELIGIBLE"}}
+        {"eTag": 99, "data": {"client_age": "18-24"}, "result": {"status": "ELIGIBLE"}}
         """;
 
     // Act + Assert - send with stale eTag 99 (actual is 0)
@@ -148,7 +148,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId = UUID.randomUUID();
     final String payload =
         """
-        {"eTag": 0, "data": {"question": "answer"}}
+        {"eTag": 0, "data": {"client_age": "18-24"}}
         """;
 
     // Act + Assert
@@ -178,7 +178,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
     final String payload =
         """
-        {"eTag": 0, "data": {"question": "answer"}, "result": {"status": "ELIGIBLE"}}
+        {"eTag": 0, "data": {"client_age": "18-24"}, "result": {"status": "ELIGIBLE"}}
         """;
 
     // Act + Assert

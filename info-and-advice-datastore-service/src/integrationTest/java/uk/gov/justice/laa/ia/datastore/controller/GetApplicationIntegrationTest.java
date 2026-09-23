@@ -88,8 +88,7 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
     // Assert: the raw JsonNode payloads must round-trip as plain JSON, not as
     // serialized JsonNode bean properties (e.g. "object", "nodeType", "containerNode").
     JsonNode eligibilityResult = objectMapper.readTree(responseBody).get("eligibilityResult");
-    assertThat(eligibilityResult.get("data"))
-        .isEqualTo(objectMapper.readTree("{\"question\":\"answer\"}"));
+    assertThat(eligibilityResult.get("data").get("client_age").asText()).isEqualTo("18-24");
     assertThat(eligibilityResult.get("result"))
         .isEqualTo(objectMapper.readTree("{\"status\":\"ELIGIBLE\",\"score\":100}"));
   }

@@ -69,8 +69,7 @@ components:
           format: int64
           description: ETag value for optimistic concurrency control
         data:
-          type: object
-          description: The means assessment question and answer data
+          $ref: 'eligibility-data-schema.yml#/components/schemas/EligibilityData'
         result:
           type: object
           description: The means assessment calculation result
