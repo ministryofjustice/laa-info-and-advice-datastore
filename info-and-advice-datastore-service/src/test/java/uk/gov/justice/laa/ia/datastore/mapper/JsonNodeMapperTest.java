@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 
 /** Tests for {@link JsonNodeMapper}. */
 public class JsonNodeMapperTest {
@@ -58,5 +59,20 @@ public class JsonNodeMapperTest {
     final Object result = sut.toObject(node);
 
     assertThat(objectMapper.writeValueAsString(result)).isEqualTo("{\"question\":\"answer\"}");
+  }
+
+  @Test
+  void toEligibilityData_shouldConvertKnownFieldsAndIgnoreUnknownFields() throws Exception {
+    final JsonNode node =
+        objectMapper.readTree("{\"client_age\":\"18-24\",\"legacy_answer\":\"ignored\"}");
+
+    final EligibilityData result = sut.toEligibilityData(node);
+
+    assertThat(result.getClientAge().get()).isEqualTo("18-24");
+  }
+
+  @Test
+  void toEligibilityData_whenNull_shouldReturnNull() {
+    assertNull(sut.toEligibilityData(null));
   }
 }
