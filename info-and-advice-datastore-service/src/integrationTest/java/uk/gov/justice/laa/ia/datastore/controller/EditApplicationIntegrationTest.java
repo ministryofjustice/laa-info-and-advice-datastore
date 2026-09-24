@@ -235,7 +235,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                       "clientDetails":{
                         "firstName":"",
                         "dateOfBirth":"2000-02-29",
-                        "niNumber":"QQ123456B"
+                        "niNumber":"AB123456C"
                       }
                     }
                     """))
@@ -246,7 +246,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(updated.getClientDetails().getFirstName()).isEmpty();
     assertThat(updated.getClientDetails().getDateOfBirth())
         .isEqualTo(java.time.LocalDate.of(2000, 2, 29));
-    assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("QQ123456B");
+    assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("AB123456C");
     assertThat(updated.getClientDetails().getAddress()).isNull();
   }
 
@@ -512,7 +512,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                       "eTag": 0,
                       "reasonForReapplication": "Updated root reason",
                       "ecfFlag": false,
-                      "clientDetails": {"niNumber": "QQ123456B"},
+                      "clientDetails": {"niNumber": "AB123456C"},
                       "scopingQuestions": {"priorLegalAidReason": "new reason"}
                     }
                     """))
@@ -523,7 +523,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
     assertThat(updated.getReasonForReapplication()).isEqualTo("Updated root reason");
     assertThat(updated.getEcfFlag()).isFalse();
-    assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("QQ123456B");
+    assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("AB123456C");
     assertThat(updated.getScopingQuestions().get("priorLegalAidReason").asText())
         .isEqualTo("new reason");
     assertThat(updated.getScopingQuestions().get("unrelatedAnswer").asText())

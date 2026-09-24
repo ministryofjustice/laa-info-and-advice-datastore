@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Validation;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -64,7 +65,7 @@ class JsonNullablePatchContractTest {
         objectMapper.readValue(
             """
             {
-                "niNumber":"QQ123456B",
+                "niNumber":"AB123456C",
                 "address":{
                     "addressLine1":"1 Main Street",
                     "country":"GB"
@@ -77,10 +78,31 @@ class JsonNullablePatchContractTest {
     assertUndefined(omittedClient.getAddress());
     assertNullValue(clearedClient.getNiNumber());
     assertNullValue(clearedClient.getAddress());
-    assertThat(suppliedClient.getNiNumber().get()).isEqualTo("QQ123456B");
+    assertThat(suppliedClient.getNiNumber().get()).isEqualTo("AB123456C");
     assertThat(suppliedClient.getAddress().isPresent()).isTrue();
     assertThat(suppliedClient.getAddress().get().getAddressLine1()).isEqualTo("1 Main Street");
     assertThat(suppliedClient.getAddress().get().getCountry()).isEqualTo("GB");
+  }
+
+  @Test
+  void shouldAcceptValidSparseClientDetailsDuringRequestValidation() throws Exception {
+    EditApplicationCommand command =
+        objectMapper.readValue(
+            """
+            {
+                "eTag": 0,
+                "clientDetails": {
+                    "firstName": "",
+                    "dateOfBirth": "2000-02-29",
+                    "niNumber": "AB123456C"
+                }
+            }
+            """,
+            EditApplicationCommand.class);
+
+    try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
+      assertThat(validatorFactory.getValidator().validate(command)).isEmpty();
+    }
   }
 
   @Test
