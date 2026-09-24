@@ -65,11 +65,11 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
-                                        {
-                                            "eTag": 0,
-                                            "clientDetails": {"noFixedAbode": true, "address": null}
-                                        }
-                                        """))
+                    {
+                        "eTag": 0,
+                        "clientDetails": {"noFixedAbode": true, "address": null}
+                    }
+                    """))
         .andExpect(status().isNoContent())
         .andExpect(header().exists("ETag"));
 
@@ -78,6 +78,223 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(updated.getClientDetails().isNoFixedAbode()).isTrue();
     assertThat(updated.getClientDetails().getAddress()).isNull();
     assertThat(entityManager.find(AddressEntity.class, addressId)).isNull();
+  }
+
+  @Test
+  void shouldCreateAddress_whenClientHasNoAddress() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(
+                                ClientDetailsEntityGenerator.createWithoutId(
+                                    clientBuilder -> clientBuilder.noFixedAbode(false)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag": 0, "clientDetails": {"address": {
+                        "addressLine1": "4 Example Street",
+                        "country": "GB"
+                    }}}
+                    """))
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("ETag", "\"1\""));
+
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getEtag()).isEqualTo(1L);
+    final AddressEntity address = updated.getClientDetails().getAddress();
+    assertThat(address).isNotNull();
+    assertThat(address.getId()).isNotNull();
+    assertThat(address.getAddressLine1()).isEqualTo("4 Example Street");
+    assertThat(address.getCountry()).isEqualTo("GB");
+    assertThat(entityManager.find(AddressEntity.class, address.getId())).isNotNull();
+  }
+
+  @Test
+  void shouldRejectInconsistentAddressPatchesWithoutMutatingOrRecordingEvent() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(
+                                ClientDetailsEntityGenerator.createWithoutId(
+                                    clientBuilder ->
+                                        clientBuilder
+                                            .firstName("Original")
+                                            .noFixedAbode(false)
+                                            .address(AddressEntityGenerator.createWithoutId(null))))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    List<String> invalidPatches =
+        List.of(
+            "{\"eTag\":0,\"clientDetails\":{\"firstName\":\"Changed\",\"noFixedAbode\":true}}",
+            "{\"eTag\":0,\"clientDetails\":{\"noFixedAbode\":false,\"address\":null}}",
+            """
+            {"eTag":0,"clientDetails":{"firstName":"Changed","noFixedAbode":true,
+              "address":{"addressLine1":"4 Example Street","country":"GB"}}}
+            """);
+    for (String patch : invalidPatches) {
+      mockMvc
+          .perform(
+              patch(TestConstants.EditApplication, applicationId)
+                  .withBearerWriteToken()
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(patch))
+          .andExpect(status().isBadRequest());
+    }
+
+    clearCache();
+    final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(unchanged.getEtag()).isZero();
+    assertThat(unchanged.getClientDetails().getFirstName()).isEqualTo("Original");
+    assertThat(unchanged.getClientDetails().isNoFixedAbode()).isFalse();
+    assertThat(unchanged.getClientDetails().getAddress()).isNotNull();
+    assertThat(eventRepository.findAll()).isEmpty();
+  }
+
+  @Test
+  void shouldRejectAddressCreationWithoutRequiredFields() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(
+                                ClientDetailsEntityGenerator.createWithoutId(
+                                    clientBuilder -> clientBuilder.noFixedAbode(false)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag": 0, "clientDetails": {"address": {
+                      "addressLine1": "4 Example Street"
+                    }}}
+                    """))
+        .andExpect(status().isBadRequest());
+
+    clearCache();
+    final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(unchanged.getEtag()).isZero();
+    assertThat(unchanged.getClientDetails().getAddress()).isNull();
+    assertThat(eventRepository.findAll()).isEmpty();
+  }
+
+  @Test
+  void shouldPatchNameBirthDateAndEmptyStringsOnLegacyAddressState() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(
+                                ClientDetailsEntityGenerator.createWithoutId(
+                                    clientBuilder -> clientBuilder.noFixedAbode(false)))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {
+                      "eTag":0,
+                      "clientDetails":{
+                        "firstName":"",
+                        "dateOfBirth":"2000-02-29",
+                        "niNumber":"QQ123456B"
+                      }
+                    }
+                    """))
+        .andExpect(status().isNoContent());
+
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getClientDetails().getFirstName()).isEmpty();
+    assertThat(updated.getClientDetails().getDateOfBirth())
+        .isEqualTo(java.time.LocalDate.of(2000, 2, 29));
+    assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("QQ123456B");
+    assertThat(updated.getClientDetails().getAddress()).isNull();
+  }
+
+  @Test
+  void shouldPreserveExistingAddressWhenAddressPropertyIsOmitted() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(
+                                ClientDetailsEntityGenerator.createWithoutId(
+                                    clientBuilder ->
+                                        clientBuilder
+                                            .noFixedAbode(false)
+                                            .address(
+                                                AddressEntityGenerator.createWithoutId(
+                                                    addressBuilder ->
+                                                        addressBuilder
+                                                            .addressLine1("Existing Street")
+                                                            .country("GB")
+                                                            .county("Kent")))))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+    final UUID addressId =
+        applicationRepository
+            .findById(applicationId)
+            .orElseThrow()
+            .getClientDetails()
+            .getAddress()
+            .getId();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"eTag\":0,\"clientDetails\":{\"firstName\":\"Jane\"}}"))
+        .andExpect(status().isNoContent());
+
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getClientDetails().getFirstName()).isEqualTo("Jane");
+    assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("AB123456Q");
+    assertThat(updated.getClientDetails().getAddress().getId()).isEqualTo(addressId);
+    assertThat(updated.getClientDetails().getAddress().getCounty()).isEqualTo("Kent");
+    assertThat(entityManager.find(AddressEntity.class, addressId)).isNotNull();
   }
 
   @Test
@@ -204,6 +421,63 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
+  void shouldPersistNullForEveryNullableAddressField() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(
+                                ClientDetailsEntityGenerator.createWithoutId(
+                                    clientBuilder ->
+                                        clientBuilder
+                                            .noFixedAbode(false)
+                                            .address(
+                                                AddressEntityGenerator.createWithoutId(
+                                                    addressBuilder ->
+                                                        addressBuilder
+                                                            .addressLine1("Existing Street")
+                                                            .country("GB")
+                                                            .addressLine2("Flat 2")
+                                                            .addressLine3("Line 3")
+                                                            .addressLine4("Line 4")
+                                                            .townOrCity("London")
+                                                            .postCode("SW1A 1AA")
+                                                            .county("Kent")))))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag":0,"clientDetails":{"address":{
+                      "addressLine2":null,"addressLine3":null,"addressLine4":null,
+                      "townOrCity":null,"postCode":null,"county":null
+                    }}}
+                    """))
+        .andExpect(status().isNoContent());
+
+    clearCache();
+    final AddressEntity address =
+        applicationRepository.findById(applicationId).orElseThrow().getClientDetails().getAddress();
+    assertThat(address.getAddressLine2()).isNull();
+    assertThat(address.getAddressLine3()).isNull();
+    assertThat(address.getAddressLine4()).isNull();
+    assertThat(address.getTownOrCity()).isNull();
+    assertThat(address.getPostCode()).isNull();
+    assertThat(address.getCounty()).isNull();
+    assertThat(address.getAddressLine1()).isEqualTo("Existing Street");
+    assertThat(address.getCountry()).isEqualTo("GB");
+  }
+
+  @Test
   void shouldReplaceNullableFieldsWhenValuesAreSupplied() throws Exception {
     JsonNode existingScopingQuestions =
         objectMapper.readTree(
@@ -255,6 +529,211 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
+  void shouldLeaveScopingQuestionsUnchangedForEmptyObject() throws Exception {
+    JsonNode existingScopingQuestions =
+        objectMapper.readTree(
+            "{\"unrelatedAnswer\":\"preserve me\",\"priorLegalAidReason\":\"existing\"}");
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .reasonForReapplication("Legacy root reason")
+                            .scopingQuestions(existingScopingQuestions)
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"eTag\":0,\"scopingQuestions\":{}}"))
+        .andExpect(status().isNoContent())
+        .andExpect(header().exists("ETag"));
+
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getScopingQuestions()).isEqualTo(existingScopingQuestions);
+    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(eventRepository.findAll()).hasSize(1);
+    assertThat(eventRepository.findAll().getFirst().getPayload().get("scopingQuestions").isEmpty())
+        .isTrue();
+  }
+
+  @Test
+  void shouldClearWholeScopingQuestionsValueWhenExplicitlyNull() throws Exception {
+    JsonNode existingScopingQuestions = objectMapper.readTree("{\"answer\":\"preserve\"}");
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .reasonForReapplication("Legacy root reason")
+                            .scopingQuestions(existingScopingQuestions)
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"eTag\":0,\"scopingQuestions\":null}"))
+        .andExpect(status().isNoContent());
+
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getScopingQuestions()).isNull();
+    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(eventRepository.findAll().getFirst().getPayload().get("scopingQuestions").isNull())
+        .isTrue();
+  }
+
+  @Test
+  void shouldUpdateNestedReasonWithoutChangingRootReason() throws Exception {
+    JsonNode existingScopingQuestions =
+        objectMapper.readTree(
+            "{\"unrelatedAnswer\":\"preserve me\",\"priorLegalAidReason\":\"old reason\"}");
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .reasonForReapplication("Legacy root reason")
+                            .scopingQuestions(existingScopingQuestions)
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"eTag\":0,\"scopingQuestions\":{\"priorLegalAidReason\":\"new reason\"}}"))
+        .andExpect(status().isNoContent());
+
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(updated.getScopingQuestions().get("priorLegalAidReason").asText())
+        .isEqualTo("new reason");
+    assertThat(updated.getScopingQuestions().get("unrelatedAnswer").asText())
+        .isEqualTo("preserve me");
+  }
+
+  @Test
+  void shouldNotMutateApplicationOrRecordEventOnEtagConflict() throws Exception {
+    JsonNode existingScopingQuestions = objectMapper.readTree("{\"answer\":\"original\"}");
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(
+                                ClientDetailsEntityGenerator.createWithoutId(
+                                    clientBuilder -> clientBuilder.noFixedAbode(true)))
+                            .reasonForReapplication("Legacy root reason")
+                            .ecfFlag(true)
+                            .scopingQuestions(existingScopingQuestions)
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag":99,"reasonForReapplication":"changed","ecfFlag":null,
+                     "clientDetails":{"firstName":"Changed","niNumber":null},
+                     "scopingQuestions":{"answer":"changed"}}
+                    """))
+        .andExpect(status().isConflict());
+
+    clearCache();
+    final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(unchanged.getEtag()).isZero();
+    assertThat(unchanged.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(unchanged.getEcfFlag()).isTrue();
+    assertThat(unchanged.getClientDetails().getFirstName()).isEqualTo("Joe");
+    assertThat(unchanged.getClientDetails().getNiNumber()).isEqualTo("AB123456Q");
+    assertThat(unchanged.getScopingQuestions()).isEqualTo(existingScopingQuestions);
+    assertThat(eventRepository.findAll()).isEmpty();
+  }
+
+  @Test
+  void shouldIgnoreExplicitNullForLegacyEditFields() throws Exception {
+    final UUID determinationId = UUID.randomUUID();
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .ufn("123456/1")
+                            .laaReference("LAA-123")
+                            .meansAssessmentRequired(true)
+                            .typeOfNonMeans(false)
+                            .contribution("20")
+                            .determinationId(determinationId)
+                            .declaration(DeclarationEntityGenerator.createWithoutId(null))
+                            .evidence(
+                                EvidenceEntity.builder()
+                                    .evidenceExemptionCode("EXEMPT_01")
+                                    .createdBy("SYSTEM")
+                                    .modifiedBy("SYSTEM")
+                                    .build())
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag":0,"ufn":null,"laaReference":null,
+                     "meansAssessmentRequired":null,"typeOfNonMeans":null,
+                     "contribution":null,"determinationId":null,
+                     "declaration":null,"evidence":null}
+                    """))
+        .andExpect(status().isNoContent());
+
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getUfn()).isEqualTo("123456/1");
+    assertThat(updated.getLaaReference()).isEqualTo("LAA-123");
+    assertThat(updated.getMeansAssessmentRequired()).isTrue();
+    assertThat(updated.getTypeOfNonMeans()).isFalse();
+    assertThat(updated.getContribution()).isEqualTo("20");
+    assertThat(updated.getDeterminationId()).isEqualTo(determinationId);
+    assertThat(updated.getDeclaration()).isNotNull();
+    assertThat(updated.getEvidence().getEvidenceExemptionCode()).isEqualTo("EXEMPT_01");
+  }
+
+  @Test
   void shouldPatchClientDetailsAndScopingQuestions() throws Exception {
     // Arrange
     final UUID applicationId =
@@ -273,12 +752,12 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     final String payload =
         """
-                {
-                    "eTag": 0,
-                    "clientDetails": {"firstName": "Updated"},
-                    "scopingQuestions": {"q1": "a1"}
-                }
-                """;
+        {
+            "eTag": 0,
+            "clientDetails": {"firstName": "Updated"},
+            "scopingQuestions": {"q1": "a1"}
+        }
+        """;
 
     // Act
     mockMvc
@@ -315,8 +794,8 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     final String payload =
         """
-                {"eTag": 0, "declaration": {"declarationConfirmation": true}}
-                """;
+        {"eTag": 0, "declaration": {"declarationConfirmation": true}}
+        """;
 
     // Act
     mockMvc
@@ -355,8 +834,8 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     final String payload =
         """
-                {"eTag": 0, "declaration": {"declarationConfirmation": true}}
-                """;
+        {"eTag": 0, "declaration": {"declarationConfirmation": true}}
+        """;
 
     // Act + Assert
     mockMvc
@@ -385,8 +864,8 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     final String payload =
         """
-                {"eTag": 0, "declaration": {"declarationConfirmation": true}}
-                """;
+        {"eTag": 0, "declaration": {"declarationConfirmation": true}}
+        """;
 
     // Act
     mockMvc
@@ -424,8 +903,8 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     final String payload =
         """
-                {"eTag": 0, "evidence": {"evidenceExemptionCode": "EXEMPT_01"}}
-                """;
+        {"eTag": 0, "evidence": {"evidenceExemptionCode": "EXEMPT_01"}}
+        """;
 
     // Act
     mockMvc
