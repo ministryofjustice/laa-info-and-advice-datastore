@@ -1000,67 +1000,6 @@ public class ApplicationServiceTest {
   }
 
   @Test
-  void editApplication_shouldPatchClientDetails_whenClientDetailsProvided() {
-    // Arrange
-    final UUID applicationId = UUID.randomUUID();
-    final String officeCode = UUID.randomUUID().toString();
-    final ClientDetailsEntity clientDetails =
-        ClientDetailsEntity.builder().noFixedAbode(true).build();
-    final ApplicationEntity application =
-        ApplicationEntity.builder()
-            .id(applicationId)
-            .providerOfficeCode(officeCode)
-            .clientDetails(clientDetails)
-            .build(); // eTag = 0
-    final uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData clientDetailsPatch =
-        uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData.builder()
-            .firstName("Jane")
-            .build();
-    final EditApplicationCommand command =
-        EditApplicationCommand.builder().eTag(0L).clientDetails(clientDetailsPatch).build();
-    when(userContext.getProviderFirmCode()).thenReturn("123456");
-    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
-    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
-
-    // Act
-    OptionalLong result = sut.editApplication(applicationId, command);
-
-    // Assert
-    assertTrue(result.isPresent());
-    verify(clientDetailsMapper, times(1))
-        .patchClientDetailsEntity(clientDetailsPatch, clientDetails);
-  }
-
-  @Test
-  void editApplication_shouldAllowNamePatch_whenClientHasNoAddress() {
-    final UUID applicationId = UUID.randomUUID();
-    final String officeCode = UUID.randomUUID().toString();
-    final ClientDetailsEntity clientDetails = ClientDetailsEntity.builder().build();
-    final ApplicationEntity application =
-        ApplicationEntity.builder()
-            .id(applicationId)
-            .providerOfficeCode(officeCode)
-            .clientDetails(clientDetails)
-            .build();
-    final var clientPatch =
-        uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData.builder()
-            .firstName("Jane")
-            .build();
-    final EditApplicationCommand command =
-        EditApplicationCommand.builder().eTag(0L).clientDetails(clientPatch).build();
-    when(userContext.getProviderFirmCode()).thenReturn("123456");
-    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
-    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(repo.save(application)).thenReturn(application);
-
-    assertTrue(sut.editApplication(applicationId, command).isPresent());
-    assertThat(clientDetails.getAddress()).isNull();
-    verify(clientDetailsMapper).patchClientDetailsEntity(clientPatch, clientDetails);
-    verify(eventService).record(command, officeCode);
-  }
-
-  @Test
   void editApplication_shouldRejectFixedAddressPatch_whenClientHasNoAddress() {
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();

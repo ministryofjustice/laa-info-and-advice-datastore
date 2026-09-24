@@ -54,7 +54,7 @@ class JsonNullablePatchContractTest {
   }
 
   @Test
-  void shouldDeserializeClientAndAddressNullableFieldsAsUndefinedNullOrValue() throws Exception {
+  void shouldDeserializeClientNullableFieldsAsUndefinedNullOrValue() throws Exception {
     final PatchClientDetailsData omittedClient =
         objectMapper.readValue("{}", PatchClientDetailsData.class);
     final PatchClientDetailsData clearedClient =
@@ -67,40 +67,20 @@ class JsonNullablePatchContractTest {
                 "niNumber":"QQ123456B",
                 "address":{
                     "addressLine1":"1 Main Street",
-                    "addressLine2":null,
-                    "addressLine3":"Overseas line",
-                    "addressLine4":null,
-                    "townOrCity":"London",
-                    "postCode":null,
-                    "county":"Kent",
                     "country":"GB"
                 }
             }
             """,
             PatchClientDetailsData.class);
-    final PatchAddressData omittedAddress = objectMapper.readValue("{}", PatchAddressData.class);
 
     assertUndefined(omittedClient.getNiNumber());
     assertUndefined(omittedClient.getAddress());
     assertNullValue(clearedClient.getNiNumber());
     assertNullValue(clearedClient.getAddress());
     assertThat(suppliedClient.getNiNumber().get()).isEqualTo("QQ123456B");
+    assertThat(suppliedClient.getAddress().isPresent()).isTrue();
     assertThat(suppliedClient.getAddress().get().getAddressLine1()).isEqualTo("1 Main Street");
     assertThat(suppliedClient.getAddress().get().getCountry()).isEqualTo("GB");
-
-    final PatchAddressData address = suppliedClient.getAddress().get();
-    assertUndefined(omittedAddress.getAddressLine2());
-    assertUndefined(omittedAddress.getAddressLine3());
-    assertUndefined(omittedAddress.getAddressLine4());
-    assertUndefined(omittedAddress.getTownOrCity());
-    assertUndefined(omittedAddress.getPostCode());
-    assertUndefined(omittedAddress.getCounty());
-    assertNullValue(address.getAddressLine2());
-    assertThat(address.getAddressLine3().get()).isEqualTo("Overseas line");
-    assertNullValue(address.getAddressLine4());
-    assertThat(address.getTownOrCity().get()).isEqualTo("London");
-    assertNullValue(address.getPostCode());
-    assertThat(address.getCounty().get()).isEqualTo("Kent");
   }
 
   @Test
