@@ -4,7 +4,7 @@ FROM amazoncorretto:25-alpine AS builder
 RUN mkdir -p /build
 WORKDIR /build
 
-COPY gradlew settings.gradle build.gradle gradle.properties ./
+COPY gradlew settings.gradle build.gradle gradle.properties dependency-overrides.gradle ./
 COPY gradle/ gradle/
 COPY info-and-advice-datastore-api/ info-and-advice-datastore-api/
 COPY info-and-advice-datastore-client/ info-and-advice-datastore-client/
