@@ -81,37 +81,30 @@ SELECT
     etag
 FROM public.declaration;
 
--- Evidence: the checklist columns just record which evidence document types
--- the provider has collected from the client (not the evidence itself), so
--- they carry no PII and are safe to expose as-is.
+-- Evidence: the checklist columns are excluded, as they hold free-form JSON
+-- keyed by evidence document type and are treated as sensitive.
 CREATE OR REPLACE VIEW mi_reporting.evidence AS
 SELECT
     evidence_id,
     evidence_exemption_code,
     evidence_exemption_reason,
-    income_evidence_checklist,
-    expenditure_capital_evidence_checklist,
     created_at,
     created_by,
     modified_at,
     modified_by
 FROM public.evidence;
 
--- Eligibility results: pre-launch, MI/BI have not yet scoped exact reporting
--- requirements, so everything except the "pending" and "api_response" keys
--- within "data" (interim/raw journey state, not final answers - see
--- EligibilityData in the API spec) is exposed for now. None of these fields
--- are direct client identifiers (no name, DOB, NI number, address); revisit
--- and tighten (e.g. an allowlist) once real requirements/live-traffic risk
--- are established.
+-- Eligibility results: "data" (raw means-assessment answers, see
+-- EligibilityData in the API spec) and "result_json" (raw CFE calculation
+-- payload) are excluded, as they hold detailed client financial/circumstance
+-- data (income, benefits, bank accounts, dependants, etc.) that is treated as
+-- sensitive. Only the summarised outcome fields are exposed.
 CREATE OR REPLACE VIEW mi_reporting.eligibility_results AS
 SELECT
     eligibility_result_id,
     application_id,
     indication,
     contribution,
-    (data - 'pending' - 'api_response') AS data,
-    result_json,
     created_at,
     created_by
 FROM public.eligibility_results;
