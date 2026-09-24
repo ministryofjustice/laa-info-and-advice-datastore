@@ -32,6 +32,28 @@ test {
     useJUnitPlatform()
 }
 
+def generatedClientClasses = [
+        '**/uk/gov/justice/laa/ia/datastore/client/api/**',
+        '**/uk/gov/justice/laa/ia/datastore/client/model/**',
+        '**/uk/gov/justice/laa/ia/datastore/client/invoker/**'
+]
+
+jacocoTestReport {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: generatedClientClasses)
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: generatedClientClasses)
+        }))
+    }
+}
+
 openApiGenerate {
     generatorName = "java"
     library = "resttemplate"
