@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
@@ -82,7 +83,8 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
 
   @Test
   void shouldUpdateScopingDataWithNullScopingQuestions() throws Exception {
-    // Arrange
+    JsonNode existingScopingQuestions =
+        objectMapper.readTree("{\"priorLegalAid\":\"same_matter\"}");
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
@@ -90,6 +92,7 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .scopingQuestions(existingScopingQuestions)
                             .providerFirmCode(FIRM_CODE)
                             .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
@@ -109,6 +112,51 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
                 .content(payload))
         .andExpect(status().isNoContent())
         .andExpect(header().exists("ETag"));
+
+    clearCache();
+    assertThat(
+            applicationRepository
+                .findById(applicationId)
+                .orElseThrow()
+                .getScopingQuestions()
+                .isNull())
+        .isTrue();
+  }
+
+  @Test
+  void shouldTreatOmittedScopingQuestionsAsNullAfterNullableModelGeneration() throws Exception {
+    JsonNode existingScopingQuestions =
+        objectMapper.readTree("{\"priorLegalAid\":\"same_matter\"}");
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .scopingQuestions(existingScopingQuestions)
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateScopingData, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"eTag\":0}"))
+        .andExpect(status().isNoContent())
+        .andExpect(header().exists("ETag"));
+
+    clearCache();
+    assertThat(
+            applicationRepository
+                .findById(applicationId)
+                .orElseThrow()
+                .getScopingQuestions()
+                .isNull())
+        .isTrue();
   }
 
   @Test

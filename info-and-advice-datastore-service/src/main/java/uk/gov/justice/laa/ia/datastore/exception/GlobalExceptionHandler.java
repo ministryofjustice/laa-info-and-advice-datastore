@@ -110,6 +110,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
+   * Handles invalid client details patches.
+   *
+   * @param exception the invalid patch exception
+   * @return 400 Bad Request response
+   */
+  @ExceptionHandler(InvalidClientDetailsPatchException.class)
+  public ResponseEntity<ProblemDetail> handleInvalidClientDetailsPatch(
+      InvalidClientDetailsPatchException exception) {
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    return ResponseEntity.badRequest().body(problemDetail);
+  }
+
+  /**
    * The handler for Exception.
    *
    * @param exception the exception

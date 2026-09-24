@@ -1,18 +1,21 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
+import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
@@ -21,6 +24,7 @@ import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.DeclarationAlreadySignedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
+import uk.gov.justice.laa.ia.datastore.exception.InvalidClientDetailsPatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ClientDetailsMapper;
@@ -32,6 +36,8 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.PatchAddressData;
+import uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateClientDetailsCommand;
@@ -388,15 +394,12 @@ public class ApplicationService {
       throw new DuplicateUfnException(ufn, application.getProviderOfficeCode());
     }
 
+    validateClientPatch(application.getClientDetails(), command.getClientDetails());
     applicationMapper.editApplicationEntity(command, application);
-
-    if (command.getScopingQuestions() != null) {
-      application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
-    }
+    applyApplicationPatch(command, application);
 
     if (command.getClientDetails() != null) {
-      clientDetailsMapper.patchClientDetailsEntity(
-          command.getClientDetails(), application.getClientDetails());
+      applyClientPatch(command.getClientDetails(), application.getClientDetails());
     }
 
     if (command.getDeclaration() != null) {
@@ -426,6 +429,137 @@ public class ApplicationService {
     ApplicationEntity saved = repository.save(application);
     eventService.record(command, application.getProviderOfficeCode());
     return OptionalLong.of(saved.getEtag());
+  }
+
+  private void applyApplicationPatch(
+      EditApplicationCommand command, ApplicationEntity application) {
+    JsonNullable<String> reasonForReapplication = command.getReasonForReapplication();
+    if (isPresent(reasonForReapplication) && reasonForReapplication.get() != null) {
+      application.setReasonForReapplication(reasonForReapplication.get());
+    }
+    applyNullable(command.getEcfFlag(), application::setEcfFlag);
+    applyScopingQuestions(command.getScopingQuestions(), application);
+  }
+
+  private void applyClientPatch(PatchClientDetailsData command, ClientDetailsEntity clientDetails) {
+    clientDetailsMapper.patchClientDetailsEntity(command, clientDetails);
+    applyNullable(command.getNiNumber(), clientDetails::setNiNumber);
+    applyAddressPatch(command.getAddress(), clientDetails);
+  }
+
+  private void validateClientPatch(
+      ClientDetailsEntity clientDetails, PatchClientDetailsData command) {
+    if (clientDetails == null
+        || command == null
+        || (command.getNoFixedAbode() == null && !isPresent(command.getAddress()))) {
+      return;
+    }
+
+    boolean noFixedAbode =
+        command != null && command.getNoFixedAbode() != null
+            ? command.getNoFixedAbode()
+            : clientDetails.isNoFixedAbode();
+    AddressEntity address = proposedAddress(clientDetails.getAddress(), command);
+
+    if (noFixedAbode && address != null) {
+      throw new InvalidClientDetailsPatchException(
+          "A client with no fixed abode cannot have an address");
+    }
+    if (!noFixedAbode && address == null) {
+      throw new InvalidClientDetailsPatchException(
+          "A client with a fixed address must have an address");
+    }
+  }
+
+  private AddressEntity proposedAddress(
+      AddressEntity existingAddress, PatchClientDetailsData command) {
+    if (command == null || !isPresent(command.getAddress())) {
+      return existingAddress;
+    }
+    PatchAddressData addressCommand = command.getAddress().get();
+    if (addressCommand == null) {
+      return null;
+    }
+
+    if (existingAddress == null
+        && (addressCommand.getAddressLine1() == null || addressCommand.getCountry() == null)) {
+      throw new InvalidClientDetailsPatchException(
+          "An address must have an addressLine1 and country when created");
+    }
+    return existingAddress == null ? new AddressEntity() : existingAddress;
+  }
+
+  private void applyAddressPatch(
+      JsonNullable<PatchAddressData> command, ClientDetailsEntity clientDetails) {
+    if (!isPresent(command)) {
+      return;
+    }
+    PatchAddressData addressCommand = command.get();
+    if (addressCommand == null) {
+      clientDetails.setAddress(null);
+      return;
+    }
+
+    AddressEntity address = clientDetails.getAddress();
+    if (address == null) {
+      address = new AddressEntity();
+      address.setCreatedBy(userContext.getCurrentUser());
+      clientDetails.setAddress(address);
+    }
+    address.setModifiedBy(userContext.getCurrentUser());
+    if (addressCommand.getAddressLine1() != null) {
+      address.setAddressLine1(addressCommand.getAddressLine1());
+    }
+    if (addressCommand.getCountry() != null) {
+      address.setCountry(addressCommand.getCountry());
+    }
+    applyAddressFields(addressCommand, address);
+  }
+
+  private void applyAddressFields(PatchAddressData command, AddressEntity address) {
+    applyNullable(command.getAddressLine2(), address::setAddressLine2);
+    applyNullable(command.getAddressLine3(), address::setAddressLine3);
+    applyNullable(command.getAddressLine4(), address::setAddressLine4);
+    applyNullable(command.getTownOrCity(), address::setTownOrCity);
+    applyNullable(command.getPostCode(), address::setPostCode);
+    applyNullable(command.getCounty(), address::setCounty);
+  }
+
+  private void applyScopingQuestions(
+      JsonNullable<java.util.Map<String, Object>> command, ApplicationEntity application) {
+    if (!isPresent(command)) {
+      return;
+    }
+    if (command.get() == null) {
+      application.setScopingQuestions(null);
+      return;
+    }
+
+    ObjectNode merged =
+        application.getScopingQuestions() != null && application.getScopingQuestions().isObject()
+            ? application.getScopingQuestions().deepCopy()
+            : objectMapper.createObjectNode();
+    command
+        .get()
+        .forEach(
+            (key, value) -> {
+              if (value == null) {
+                merged.remove(key);
+              } else {
+                merged.set(key, objectMapper.valueToTree(value));
+              }
+            });
+    application.setScopingQuestions(merged);
+  }
+
+  private <T> void applyNullable(JsonNullable<T> value, java.util.function.Consumer<T> setter) {
+    if (isPresent(value)) {
+      setter.accept(value.get());
+    }
+  }
+
+  private boolean isPresent(JsonNullable<?> value) {
+    return value != null && value.isPresent();
   }
 
   /**

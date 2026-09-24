@@ -26,6 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,6 +38,7 @@ import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
+import uk.gov.justice.laa.ia.datastore.exception.InvalidClientDetailsPatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
@@ -977,11 +979,33 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void editApplication_shouldPreserveRootReason_whenExplicitlyNull() {
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).providerOfficeCode(officeCode).build();
+    application.setReasonForReapplication("Existing root reason");
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder()
+            .eTag(0L)
+            .reasonForReapplication(JsonNullable.of(null))
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    assertTrue(sut.editApplication(applicationId, command).isPresent());
+    assertThat(application.getReasonForReapplication()).isEqualTo("Existing root reason");
+  }
+
+  @Test
   void editApplication_shouldPatchClientDetails_whenClientDetailsProvided() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
-    final ClientDetailsEntity clientDetails = ClientDetailsEntity.builder().build();
+    final ClientDetailsEntity clientDetails =
+        ClientDetailsEntity.builder().noFixedAbode(true).build();
     final ApplicationEntity application =
         ApplicationEntity.builder()
             .id(applicationId)
@@ -1009,6 +1033,64 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void editApplication_shouldAllowNamePatch_whenClientHasNoAddress() {
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ClientDetailsEntity clientDetails = ClientDetailsEntity.builder().build();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .clientDetails(clientDetails)
+            .build();
+    final var clientPatch =
+        uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData.builder()
+            .firstName("Jane")
+            .build();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).clientDetails(clientPatch).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(application)).thenReturn(application);
+
+    assertTrue(sut.editApplication(applicationId, command).isPresent());
+    assertThat(clientDetails.getAddress()).isNull();
+    verify(clientDetailsMapper).patchClientDetailsEntity(clientPatch, clientDetails);
+    verify(eventService).record(command, officeCode);
+  }
+
+  @Test
+  void editApplication_shouldRejectFixedAddressPatch_whenClientHasNoAddress() {
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ClientDetailsEntity clientDetails = ClientDetailsEntity.builder().build();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .clientDetails(clientDetails)
+            .build();
+    final var clientPatch =
+        uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData.builder()
+            .noFixedAbode(false)
+            .build();
+    final EditApplicationCommand command =
+        EditApplicationCommand.builder().eTag(0L).clientDetails(clientPatch).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    assertThrows(
+        InvalidClientDetailsPatchException.class,
+        () -> sut.editApplication(applicationId, command));
+    assertThat(clientDetails.getAddress()).isNull();
+    verify(clientDetailsMapper, never()).patchClientDetailsEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any(), any());
+  }
+
+  @Test
   void editApplication_shouldPatchScopingQuestions_whenScopingQuestionsProvided() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -1019,13 +1101,15 @@ public class ApplicationServiceTest {
             .providerOfficeCode(officeCode)
             .build(); // eTag = 0
     final Map<String, Object> scopingQuestions = Map.of("q1", "a1");
-    final ObjectNode scopingQuestionsNode = new ObjectMapper().createObjectNode();
+    final ObjectNode mergedScopingQuestions = new ObjectMapper().createObjectNode();
     final EditApplicationCommand command =
         EditApplicationCommand.builder().eTag(0L).scopingQuestions(scopingQuestions).build();
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-    when(objectMapper.valueToTree(scopingQuestions)).thenReturn(scopingQuestionsNode);
+    when(objectMapper.createObjectNode()).thenReturn(mergedScopingQuestions);
+    when(objectMapper.valueToTree("a1"))
+        .thenReturn(new ObjectMapper().getNodeFactory().textNode("a1"));
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
@@ -1033,7 +1117,8 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isPresent());
-    assertThat(application.getScopingQuestions()).isEqualTo(scopingQuestionsNode);
+    mergedScopingQuestions.set("q1", new ObjectMapper().getNodeFactory().textNode("a1"));
+    assertThat(application.getScopingQuestions()).isEqualTo(mergedScopingQuestions);
   }
 
   @Test

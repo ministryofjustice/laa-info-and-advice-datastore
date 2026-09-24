@@ -145,6 +145,8 @@ public abstract class ApplicationMapper {
   @Mapping(target = "clientDetails", ignore = true)
   @Mapping(target = "referenceNumber", ignore = true)
   @Mapping(target = "scopingQuestions", ignore = true)
+  @Mapping(target = "reasonForReapplication", ignore = true)
+  @Mapping(target = "ecfFlag", ignore = true)
   @Mapping(target = "isMeansTested", ignore = true)
   @Mapping(target = "dataRetentionEventUuid", ignore = true)
   @Mapping(target = "dataRetentionDate", ignore = true)
