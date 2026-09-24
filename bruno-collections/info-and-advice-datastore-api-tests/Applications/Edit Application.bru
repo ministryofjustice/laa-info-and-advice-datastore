@@ -29,7 +29,7 @@ body:json {
       "lastName": "Doe",
       "dateOfBirth": "1990-01-01",
       "niNumber": "AB123456A",
-      "noFixedAbode": true,
+      "noFixedAbode": false,
       "address": {
         "addressLine1": "10 Downing Street",
         "addressLine2": "Westminster",
@@ -92,7 +92,7 @@ tests {
     expect(application.client.lastName).to.equal("Doe");
     expect(application.client.dateOfBirth).to.equal("1990-01-01");
     expect(application.client.niNumber).to.equal("AB123456A");
-    expect(application.client.noFixedAbode).to.equal(true);
+    expect(application.client.noFixedAbode).to.equal(false);
     expect(application.client.address.addressLine1).to.equal("10 Downing Street");
     expect(application.client.address.addressLine2).to.equal("Westminster");
     expect(application.client.address.addressLine3).to.equal("Line 3");
