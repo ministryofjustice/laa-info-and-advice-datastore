@@ -427,6 +427,7 @@ public class ApplicationService {
     }
 
     ApplicationEntity saved = repository.save(application);
+    repository.flush();
     eventService.record(command, application.getProviderOfficeCode());
     return OptionalLong.of(saved.getEtag());
   }
