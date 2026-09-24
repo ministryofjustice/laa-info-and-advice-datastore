@@ -14,7 +14,7 @@ body:json {
   {
     "eTag": 0,
     "data": {
-      "question": "answer"
+      "client_age": "18-24"
     },
     "result": {
       "status": "ELIGIBLE"
@@ -42,7 +42,7 @@ tests {
   await test("means data is reflected on the application", async function() {
     const getApplicationRes = await bru.runRequest("Applications/Get Application");
     const application = getApplicationRes.data;
-    expect(application.eligibilityResult.data.question).to.equal("answer");
+    expect(application.eligibilityResult.data.client_age).to.equal("18-24");
     expect(application.eligibilityResult.result.status).to.equal("ELIGIBLE");
   });
 }
