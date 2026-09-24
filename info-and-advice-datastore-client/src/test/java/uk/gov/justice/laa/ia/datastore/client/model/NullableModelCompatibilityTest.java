@@ -8,8 +8,8 @@ import org.openapitools.jackson.nullable.JsonNullableModule;
 
 class NullableModelCompatibilityTest {
 
-    private final ObjectMapper objectMapper =
-            new ObjectMapper().registerModule(new JsonNullableModule());
+  private final ObjectMapper objectMapper =
+      new ObjectMapper().registerModule(new JsonNullableModule());
 
   @Test
   void shouldRetainCreateClientModelTypesAndRepresentScopingNullability() throws Exception {
@@ -39,5 +39,10 @@ class NullableModelCompatibilityTest {
     String clearedJson = objectMapper.writeValueAsString(cleared);
     assertThat(objectMapper.readTree(clearedJson).get("scopingQuestions").isNull()).isTrue();
     assertThat(objectMapper.writeValueAsString(omitted)).doesNotContain("scopingQuestions");
+
+    String suppliedJson = objectMapper.writeValueAsString(supplied);
+    assertThat(objectMapper.readTree(suppliedJson).get("scopingQuestions").get("priorLegalAid"))
+        .isEqualTo(objectMapper.getNodeFactory().textNode("same_matter"));
+    assertThat(suppliedJson).doesNotContain("present", "value");
   }
 }
