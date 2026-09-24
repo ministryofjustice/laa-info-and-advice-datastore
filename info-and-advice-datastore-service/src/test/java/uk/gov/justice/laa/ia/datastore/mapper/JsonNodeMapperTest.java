@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 
 /** Tests for {@link JsonNodeMapper}. */
 public class JsonNodeMapperTest {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper =
+      new ObjectMapper().registerModule(new JsonNullableModule());
   private JsonNodeMapper sut;
 
   @BeforeEach
