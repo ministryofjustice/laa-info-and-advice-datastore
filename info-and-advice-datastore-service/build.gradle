@@ -4,26 +4,6 @@ plugins {
     id 'com.diffplug.spotless' version "8.10.2"
 }
 
-configurations.configureEach {
-    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        if (details.requested.group == 'ch.qos.logback' && details.requested.name == 'logback-core') {
-            details.useVersion '1.5.36'
-            details.because 'CVE fix: Expression Injection in logback-core < 1.5.36'
-        }
-        if (details.requested.group == 'com.fasterxml.jackson.core' && details.requested.name == 'jackson-databind') {
-            details.useVersion '2.21.6'
-            details.because 'CVE fix: Allocation of Resources Without Limits or Throttling in jackson-databind < 2.21.6'
-        }
-        if (details.requested.group == 'tools.jackson.core' && details.requested.name == 'jackson-databind') {
-            details.useVersion '3.1.6'
-            details.because 'CVE fix: Allocation of Resources Without Limits or Throttling in jackson-databind < 3.1.6'
-        }
-        if (details.requested.group == 'io.micrometer' && details.requested.name == 'micrometer-core') {
-            details.useVersion '1.17.1'
-            details.because 'CVE fix: CRLF Injection in micrometer-core < 1.17.1'
-        }
-    }
-}
 
 test {
     useJUnitPlatform()
