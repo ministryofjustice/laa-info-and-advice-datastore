@@ -63,20 +63,20 @@ class JsonNullablePatchContractTest {
     final PatchClientDetailsData suppliedClient =
         objectMapper.readValue(
             """
-                        {
-                            "niNumber":"QQ123456B",
-                            "address":{
-                                "addressLine1":"1 Main Street",
-                                "addressLine2":null,
-                                "addressLine3":"Overseas line",
-                                "addressLine4":null,
-                                "townOrCity":"London",
-                                "postCode":null,
-                                "county":"Kent",
-                                "country":"GB"
-                            }
-                        }
-                        """,
+            {
+                "niNumber":"QQ123456B",
+                "address":{
+                    "addressLine1":"1 Main Street",
+                    "addressLine2":null,
+                    "addressLine3":"Overseas line",
+                    "addressLine4":null,
+                    "townOrCity":"London",
+                    "postCode":null,
+                    "county":"Kent",
+                    "country":"GB"
+                }
+            }
+            """,
             PatchClientDetailsData.class);
     final PatchAddressData omittedAddress = objectMapper.readValue("{}", PatchAddressData.class);
 
@@ -101,6 +101,73 @@ class JsonNullablePatchContractTest {
     assertThat(address.getTownOrCity().get()).isEqualTo("London");
     assertNullValue(address.getPostCode());
     assertThat(address.getCounty().get()).isEqualTo("Kent");
+  }
+
+  @Test
+  void shouldDeserializeEveryPatchAddressFieldAsUndefinedNullOrValue() throws Exception {
+    final PatchAddressData omitted = objectMapper.readValue("{}", PatchAddressData.class);
+    final PatchAddressData cleared =
+        objectMapper.readValue(
+            """
+            {
+                "addressLine2": null,
+                "addressLine3": null,
+                "addressLine4": null,
+                "townOrCity": null,
+                "postCode": null,
+                "county": null
+            }
+            """,
+            PatchAddressData.class);
+    final PatchAddressData supplied =
+        objectMapper.readValue(
+            """
+            {
+                "addressLine2": "Flat 2",
+                "addressLine3": "Overseas line 3",
+                "addressLine4": "Overseas line 4",
+                "townOrCity": "London",
+                "postCode": "SW1A 1AA",
+                "county": "Kent"
+            }
+            """,
+            PatchAddressData.class);
+
+    assertUndefined(omitted.getAddressLine2());
+    assertUndefined(omitted.getAddressLine3());
+    assertUndefined(omitted.getAddressLine4());
+    assertUndefined(omitted.getTownOrCity());
+    assertUndefined(omitted.getPostCode());
+    assertUndefined(omitted.getCounty());
+    assertNullValue(cleared.getAddressLine2());
+    assertNullValue(cleared.getAddressLine3());
+    assertNullValue(cleared.getAddressLine4());
+    assertNullValue(cleared.getTownOrCity());
+    assertNullValue(cleared.getPostCode());
+    assertNullValue(cleared.getCounty());
+    assertThat(supplied.getAddressLine2().get()).isEqualTo("Flat 2");
+    assertThat(supplied.getAddressLine3().get()).isEqualTo("Overseas line 3");
+    assertThat(supplied.getAddressLine4().get()).isEqualTo("Overseas line 4");
+    assertThat(supplied.getTownOrCity().get()).isEqualTo("London");
+    assertThat(supplied.getPostCode().get()).isEqualTo("SW1A 1AA");
+    assertThat(supplied.getCounty().get()).isEqualTo("Kent");
+  }
+
+  @Test
+  void shouldDeserializeScopingCommandAsUndefinedNullOrValue() throws Exception {
+    final UpdateScopingDataCommand omitted =
+        objectMapper.readValue("{\"eTag\":0}", UpdateScopingDataCommand.class);
+    final UpdateScopingDataCommand cleared =
+        objectMapper.readValue(
+            "{\"eTag\":0,\"scopingQuestions\":null}", UpdateScopingDataCommand.class);
+    final UpdateScopingDataCommand supplied =
+        objectMapper.readValue(
+            "{\"eTag\":0,\"scopingQuestions\":{\"priorLegalAid\":\"yes\"}}",
+            UpdateScopingDataCommand.class);
+
+    assertUndefined(omitted.getScopingQuestions());
+    assertNullValue(cleared.getScopingQuestions());
+    assertThat(supplied.getScopingQuestions().get()).containsEntry("priorLegalAid", "yes");
   }
 
   @Test
