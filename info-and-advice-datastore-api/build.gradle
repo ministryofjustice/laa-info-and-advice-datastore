@@ -4,27 +4,6 @@ plugins {
     id 'maven-publish'
 }
 
-configurations.configureEach {
-    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        if (details.requested.group == 'com.fasterxml.jackson.core' && details.requested.name == 'jackson-core') {
-            details.useVersion '2.21.7'
-            details.because 'CVE fix: Allocation of Resources Without Limits or Throttling in jackson-core < 2.21.7'
-        }
-        if (details.requested.group == 'com.fasterxml.jackson.core' && details.requested.name == 'jackson-databind') {
-            details.useVersion '2.21.7'
-            details.because 'CVE fix: Allocation of Resources Without Limits or Throttling in jackson-databind < 2.21.7'
-        }
-        if (details.requested.group == 'tools.jackson.core' && details.requested.name == 'jackson-core') {
-            details.useVersion '3.1.7'
-            details.because 'CVE fix: Allocation of Resources Without Limits or Throttling in jackson-core < 3.1.7'
-        }
-        if (details.requested.group == 'tools.jackson.core' && details.requested.name == 'jackson-databind') {
-            details.useVersion '3.1.7'
-            details.because 'CVE fix: Allocation of Resources Without Limits or Throttling in jackson-databind < 3.1.7'
-        }
-    }
-}
-
 repositories {
     mavenCentral()
 }

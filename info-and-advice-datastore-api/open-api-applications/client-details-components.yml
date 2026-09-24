@@ -17,6 +17,7 @@ components:
           example: QQ123456B
           minLength: 9
           maxLength: 9
+          pattern: '^(?!BG|GB|KN|NK|NT|TN|ZZ)[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z][0-9]{6}[ABCD]$'
         noFixedAbode:
           type: boolean
         address:
@@ -69,7 +70,7 @@ components:
            format: date
         nationalInsuranceNumber:
           type: string
-          pattern: '[A-CEGHJ-NOPR-TW-Z]{2}[0-9]{6}[ABCDs]{1}'
+          pattern: '^(?!BG|GB|KN|NK|NT|TN|ZZ)[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z][0-9]{6}[ABCD]$'
           example: AC123456D
         noFixedAbode:
           type: boolean
