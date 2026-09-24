@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.mapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,8 @@ public class EligibilityMapperTest {
 
     final var mappedModel = eligibilityMapper.toEligibilityResult(entity);
 
-    assertEquals(entity.getData(), objectMapper.valueToTree(mappedModel.getData()));
+    assertNotNull(mappedModel.getData());
+    assertEquals(entity.getData().get("client_age").asText(), mappedModel.getData().getClientAge());
     assertEquals(entity.getResultJson(), objectMapper.valueToTree(mappedModel.getResult()));
   }
 }

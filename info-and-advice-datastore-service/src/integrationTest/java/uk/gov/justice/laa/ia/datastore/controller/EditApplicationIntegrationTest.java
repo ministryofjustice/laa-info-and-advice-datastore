@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -922,5 +924,37 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final EvidenceEntity evidence = updated.getEvidence();
     assertThat(evidence).isNotNull();
     assertThat(evidence.getEvidenceExemptionCode()).isEqualTo("EXEMPT_01");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"BG123456C", "AO123456C", "js101010D", "AB123456s"})
+  void shouldReturnBadRequest_whenNiNumberInvalid(String invalidNiNumber) throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "clientDetails": {"niNumber": "%s"}}
+        """
+            .formatted(invalidNiNumber);
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isBadRequest());
   }
 }

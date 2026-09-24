@@ -69,8 +69,7 @@ components:
           format: int64
           description: ETag value for optimistic concurrency control
         data:
-          type: object
-          description: The means assessment question and answer data
+          $ref: 'eligibility-data-schema.yml#/components/schemas/EligibilityData'
         result:
           type: object
           description: The means assessment calculation result
@@ -178,6 +177,7 @@ components:
           example: QQ123456B
           minLength: 9
           maxLength: 9
+          pattern: '^(?!BG|GB|KN|NK|NT|TN|ZZ)[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z][0-9]{6}[ABCD]$'
         noFixedAbode:
           type: boolean
           x-jackson-json-setter-nulls: FAIL
@@ -279,6 +279,7 @@ components:
           example: QQ123456B
           minLength: 9
           maxLength: 9
+          pattern: '^(?!BG|GB|KN|NK|NT|TN|ZZ)[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z][0-9]{6}[ABCD]$'
         noFixedAbode:
           type: boolean
         address:

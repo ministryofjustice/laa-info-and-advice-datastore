@@ -18,7 +18,9 @@ import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
@@ -50,10 +52,13 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldRecordEvent_whenMeansDataUpdated() throws Exception {
     final UUID applicationId = savedApplicationId();
-    final String payload =
-        """
-        {"eTag": 0, "data": {"question": "answer"}, "result": {"status": "ELIGIBLE"}}
-        """;
+    final UpdateMeansDataCommand command =
+        UpdateMeansDataCommand.builder()
+            .eTag(0L)
+            .data(EligibilityData.builder().clientAge("18-24").build())
+            .result(new ObjectMapper().createObjectNode().put("status", "ELIGIBLE"))
+            .build();
+    final String payload = toJson(command);
 
     mockMvc
         .perform(
