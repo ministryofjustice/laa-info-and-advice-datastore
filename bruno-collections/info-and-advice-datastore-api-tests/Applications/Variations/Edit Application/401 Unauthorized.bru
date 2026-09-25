@@ -1,0 +1,30 @@
+meta {
+  name: 401 Unauthorized
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/00000000-0000-0000-0000-000000000000:edit-application
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer invalid-token
+  X-Authorization: Bearer invalid-token
+  X-Service-Name: bruno-test
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "laaReference": "LAA-REF-001"
+  }
+}
+
+tests {
+  test("invalid authentication returns 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+}

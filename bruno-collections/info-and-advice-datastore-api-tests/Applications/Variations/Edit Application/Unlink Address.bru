@@ -1,0 +1,45 @@
+meta {
+  name: Unlink Address
+  type: http
+  seq: 17
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 1,
+    "scopingQuestions": {
+      "priorLegalAidReason": null
+    },
+    "clientDetails": {
+      "noFixedAbode": true,
+      "address": null
+    }
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Variations/Edit Application/Seed Application");
+}
+
+tests {
+  test("no fixed abode explicitly unlinks the address", function() {
+    expect(res.getStatus()).to.equal(204);
+    expect(res.getHeader("etag")).to.equal('"2"');
+  });
+
+  await test("the address relationship is absent", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.client.noFixedAbode).to.equal(true);
+    expect(application.client.address == null).to.equal(true);
+    expect(application.scopingQuestions).to.deep.equal({
+      priorLegalAid: "same_matter",
+      unrelatedAnswer: "keep"
+    });
+  });
+}

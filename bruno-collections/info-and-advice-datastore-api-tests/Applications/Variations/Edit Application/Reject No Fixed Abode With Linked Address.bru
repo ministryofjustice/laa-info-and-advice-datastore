@@ -1,0 +1,37 @@
+meta {
+  name: Reject No Fixed Abode With Linked Address
+  type: http
+  seq: 21
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 1,
+    "clientDetails": {
+      "noFixedAbode": true
+    }
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Variations/Edit Application/Seed Application");
+}
+
+tests {
+  test("no fixed abode cannot retain an omitted existing address", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  await test("the rejected patch leaves fixed-address state unchanged", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.eTag).to.equal(1);
+    expect(application.client.noFixedAbode).to.equal(false);
+    expect(application.client.address.addressLine1).to.equal("10 Downing Street");
+  });
+}

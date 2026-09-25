@@ -1,0 +1,42 @@
+meta {
+  name: Merge Scoping Reason
+  type: http
+  seq: 15
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 1,
+    "reasonForReapplication": "Replaced root reason",
+    "scopingQuestions": {
+      "priorLegalAidReason": "Updated journey reason"
+    }
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Variations/Edit Application/Seed Application");
+}
+
+tests {
+  test("supplied root and scoping values replace existing values", function() {
+    expect(res.getStatus()).to.equal(204);
+    expect(res.getHeader("etag")).to.equal('"2"');
+  });
+
+  await test("journey reasons merge without disturbing unrelated scoping answers", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.reasonForReapplication).to.equal("Replaced root reason");
+    expect(application.scopingQuestions).to.deep.equal({
+      priorLegalAid: "same_matter",
+      priorLegalAidReason: "Updated journey reason",
+      unrelatedAnswer: "keep"
+    });
+  });
+}

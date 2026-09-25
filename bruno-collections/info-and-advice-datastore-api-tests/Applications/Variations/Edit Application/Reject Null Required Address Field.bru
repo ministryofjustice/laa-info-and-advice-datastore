@@ -1,0 +1,39 @@
+meta {
+  name: Reject Null Required Address Field
+  type: http
+  seq: 19
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 1,
+    "clientDetails": {
+      "address": {
+        "addressLine1": null,
+        "country": "GB"
+      }
+    }
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Variations/Edit Application/Seed Application");
+}
+
+tests {
+  test("explicit null for a required address field is rejected", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  await test("the rejected patch leaves the application unchanged", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.eTag).to.equal(1);
+    expect(application.client.address.addressLine1).to.equal("10 Downing Street");
+  });
+}
