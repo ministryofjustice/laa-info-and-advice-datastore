@@ -1,5 +1,5 @@
 meta {
-  name: Update Scoping Data Omitted
+  name: Omitted Scoping Data Clears Existing Questions
   type: http
   seq: 24
 }
@@ -21,11 +21,11 @@ script:pre-request {
 }
 
 tests {
-  test("omitted scopingQuestions retains the existing operation behavior", function() {
+  test("request succeeds when scopingQuestions is omitted", function() {
     expect(res.getStatus()).to.equal(204);
   });
 
-  await test("the omitted property writes JSON null", async function() {
+  await test("omitting scopingQuestions clears the saved answers", async function() {
     const application = (await bru.runRequest("Applications/Get Application")).data;
     expect(application.scopingQuestions).to.equal(null);
   });
