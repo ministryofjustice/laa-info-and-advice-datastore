@@ -286,10 +286,10 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                 .content(
                     """
                     {
-                        'eTag':0,
-                        'clientDetails': {
-                            'firstName':'Jane',
-                            'noFixedAbode':true
+                        "eTag":0,
+                        "clientDetails": {
+                            "firstName":"Jane",
+                            "noFixedAbode":true
                         }
                     }
                     """))
