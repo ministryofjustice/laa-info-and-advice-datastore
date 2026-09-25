@@ -35,7 +35,7 @@ import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBu
 public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
   @Test
-  void shouldUnlinkAndDeleteAddress_whenClientHasNoFixedAbode() throws Exception {
+  void shouldUnlinkAndDeleteAddress_whenAddressIsExplicitlyCleared() throws Exception {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
@@ -125,7 +125,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  void shouldRejectInconsistentAddressPatchesWithoutMutatingOrRecordingEvent() throws Exception {
+  void shouldAllowCorrespondenceAddressWhenClientHasNoFixedAbode() throws Exception {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
@@ -144,31 +144,27 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
             .getId();
     clearCache();
 
-    List<String> invalidPatches =
-        List.of(
-            "{\"eTag\":0,\"clientDetails\":{\"firstName\":\"Changed\",\"noFixedAbode\":true}}",
-            "{\"eTag\":0,\"clientDetails\":{\"noFixedAbode\":false,\"address\":null}}",
-            """
-            {"eTag":0,"clientDetails":{"firstName":"Changed","noFixedAbode":true,
-              "address":{"addressLine1":"4 Example Street","country":"GB"}}}
-            """);
-    for (String patch : invalidPatches) {
-      mockMvc
-          .perform(
-              patch(TestConstants.EditApplication, applicationId)
-                  .withBearerWriteToken()
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(patch))
-          .andExpect(status().isBadRequest());
-    }
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag":0,"clientDetails":{"firstName":"Changed","noFixedAbode":true,
+                      "address":{"addressLine1":"4 Example Street","country":"GB"}}}
+                    """))
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("ETag", "\"1\""));
 
     clearCache();
-    final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
-    assertThat(unchanged.getEtag()).isZero();
-    assertThat(unchanged.getClientDetails().getFirstName()).isEqualTo("Original");
-    assertThat(unchanged.getClientDetails().isNoFixedAbode()).isFalse();
-    assertThat(unchanged.getClientDetails().getAddress()).isNotNull();
-    assertThat(eventRepository.findAll()).isEmpty();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getEtag()).isEqualTo(1L);
+    assertThat(updated.getClientDetails().getFirstName()).isEqualTo("Changed");
+    assertThat(updated.getClientDetails().isNoFixedAbode()).isTrue();
+    assertThat(updated.getClientDetails().getAddress().getAddressLine1())
+        .isEqualTo("4 Example Street");
+    assertThat(eventRepository.findAll()).hasSize(1);
   }
 
   @Test
@@ -208,7 +204,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  void shouldPatchNameBirthDateAndEmptyStringsOnLegacyAddressState() throws Exception {
+  void shouldPatchNameBirthDateAndEmptyStringsWithoutAddress() throws Exception {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
@@ -217,7 +213,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                         builder
                             .clientDetails(
                                 ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder -> clientBuilder.noFixedAbode(false)))
+                                    clientBuilder -> clientBuilder.noFixedAbode(true)))
                             .providerFirmCode(FIRM_CODE)
                             .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
@@ -287,13 +283,23 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
             patch(TestConstants.EditApplication, applicationId)
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"eTag\":0,\"clientDetails\":{\"firstName\":\"Jane\"}}"))
+                .content(
+                    """
+                    {
+                        'eTag':0,
+                        'clientDetails': {
+                            'firstName':'Jane',
+                            'noFixedAbode':true
+                        }
+                    }
+                    """))
         .andExpect(status().isNoContent());
 
     clearCache();
     final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
     assertThat(updated.getClientDetails().getFirstName()).isEqualTo("Jane");
     assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("AB123456Q");
+    assertThat(updated.getClientDetails().isNoFixedAbode()).isTrue();
     assertThat(updated.getClientDetails().getAddress().getId()).isEqualTo(addressId);
     assertThat(updated.getClientDetails().getAddress().getCounty()).isEqualTo("Kent");
     assertThat(entityManager.find(AddressEntity.class, addressId)).isNotNull();

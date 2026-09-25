@@ -17,7 +17,6 @@ body:json {
       "priorLegalAidReason": "Address created"
     },
     "clientDetails": {
-      "noFixedAbode": false,
       "address": {
         "addressLine1": "1 New Street",
         "country": "GB"
@@ -36,9 +35,8 @@ tests {
     expect(res.getHeader("etag")).to.equal('"3"');
   });
 
-  await test("the new fixed address is persisted", async function() {
+  await test("the new address is persisted", async function() {
     const application = (await bru.runRequest("Applications/Get Application")).data;
-    expect(application.client.noFixedAbode).to.equal(false);
     expect(application.client.address.addressLine1).to.equal("1 New Street");
     expect(application.client.address.country).to.equal("GB");
     expect(application.scopingQuestions.priorLegalAidReason).to.equal("Address created");

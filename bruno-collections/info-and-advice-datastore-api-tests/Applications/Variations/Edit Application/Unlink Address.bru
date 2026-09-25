@@ -28,14 +28,13 @@ script:pre-request {
 }
 
 tests {
-  test("no fixed abode explicitly unlinks the address", function() {
+  test("explicit null unlinks the address", function() {
     expect(res.getStatus()).to.equal(204);
     expect(res.getHeader("etag")).to.equal('"2"');
   });
 
   await test("the address relationship is absent", async function() {
     const application = (await bru.runRequest("Applications/Get Application")).data;
-    expect(application.client.noFixedAbode).to.equal(true);
     expect(application.client.address == null).to.equal(true);
     expect(application.scopingQuestions).to.deep.equal({
       priorLegalAid: "same_matter",

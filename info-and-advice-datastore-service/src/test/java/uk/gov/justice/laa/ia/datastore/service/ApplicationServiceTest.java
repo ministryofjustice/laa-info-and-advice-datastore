@@ -40,7 +40,6 @@ import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
-import uk.gov.justice.laa.ia.datastore.exception.InvalidClientDetailsPatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
@@ -1046,7 +1045,7 @@ public class ApplicationServiceTest {
   }
 
   @Test
-  void editApplication_shouldUnlinkAddressWhenNoFixedAbodeIsSupplied() {
+  void editApplication_shouldUnlinkAddressWhenExplicitlyCleared() {
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
     final AddressEntity address = new AddressEntity();
@@ -1101,10 +1100,12 @@ public class ApplicationServiceTest {
   }
 
   @Test
-  void editApplication_shouldRejectFixedAddressPatch_whenClientHasNoAddress() {
+  void editApplication_shouldRetainAddressWhenNoFixedAbodeIsSupplied() {
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
-    final ClientDetailsEntity clientDetails = ClientDetailsEntity.builder().build();
+    final AddressEntity address = new AddressEntity();
+    final ClientDetailsEntity clientDetails =
+        ClientDetailsEntity.builder().noFixedAbode(false).address(address).build();
     final ApplicationEntity application =
         ApplicationEntity.builder()
             .id(applicationId)
@@ -1113,21 +1114,19 @@ public class ApplicationServiceTest {
             .build();
     final var clientPatch =
         uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData.builder()
-            .noFixedAbode(false)
+            .noFixedAbode(true)
             .build();
     final EditApplicationCommand command =
         EditApplicationCommand.builder().eTag(0L).clientDetails(clientPatch).build();
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
-    assertThrows(
-        InvalidClientDetailsPatchException.class,
-        () -> sut.editApplication(applicationId, command));
-    assertThat(clientDetails.getAddress()).isNull();
-    verify(clientDetailsMapper, never()).patchClientDetailsEntity(any(), any());
-    verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    assertTrue(sut.editApplication(applicationId, command).isPresent());
+    assertThat(clientDetails.getAddress()).isSameAs(address);
+    verify(repo).save(application);
+    verify(eventService).record(command, officeCode);
   }
 
   @Test

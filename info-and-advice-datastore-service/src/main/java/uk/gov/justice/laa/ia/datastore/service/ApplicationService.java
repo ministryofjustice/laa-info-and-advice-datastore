@@ -450,44 +450,17 @@ public class ApplicationService {
 
   private void validateClientPatch(
       ClientDetailsEntity clientDetails, PatchClientDetailsData command) {
-    if (clientDetails == null
-        || command == null
-        || (command.getNoFixedAbode() == null && !isPresent(command.getAddress()))) {
+    if (clientDetails == null || command == null || !isPresent(command.getAddress())) {
       return;
     }
 
-    boolean noFixedAbode =
-        command.getNoFixedAbode() != null
-            ? command.getNoFixedAbode()
-            : clientDetails.isNoFixedAbode();
-    boolean hasAddress = hasAddressAfterPatch(clientDetails.getAddress(), command);
-
-    if (noFixedAbode && hasAddress) {
-      throw new InvalidClientDetailsPatchException(
-          "A client with no fixed abode cannot have an address");
-    }
-    if (!noFixedAbode && !hasAddress) {
-      throw new InvalidClientDetailsPatchException(
-          "A client with a fixed address must have an address");
-    }
-  }
-
-  private boolean hasAddressAfterPatch(
-      AddressEntity existingAddress, PatchClientDetailsData command) {
-    if (!isPresent(command.getAddress())) {
-      return existingAddress != null;
-    }
     PatchAddressData addressCommand = command.getAddress().get();
-    if (addressCommand == null) {
-      return false;
-    }
-
-    if (existingAddress == null
+    if (addressCommand != null
+        && clientDetails.getAddress() == null
         && (addressCommand.getAddressLine1() == null || addressCommand.getCountry() == null)) {
       throw new InvalidClientDetailsPatchException(
           "An address must have an addressLine1 and country when created");
     }
-    return true;
   }
 
   private void applyAddressPatch(
