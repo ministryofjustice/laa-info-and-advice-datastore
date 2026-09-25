@@ -15,6 +15,7 @@ import org.hibernate.Session;
 import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -51,6 +52,7 @@ public abstract class BaseIntegrationTest {
   protected final ObjectMapper objectMapper =
       new ObjectMapper()
           .registerModule(new JavaTimeModule())
+          .registerModule(new JsonNullableModule())
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
   @MockitoBean private UserContextInterceptor userContextInterceptor;
   @MockitoBean private UserContext userContext;

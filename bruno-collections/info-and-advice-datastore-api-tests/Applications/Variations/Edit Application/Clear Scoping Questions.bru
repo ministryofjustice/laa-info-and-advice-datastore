@@ -1,0 +1,35 @@
+meta {
+  name: Clear Scoping Questions
+  type: http
+  seq: 14
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 1,
+    "scopingQuestions": null
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Fixtures/Seed Application");
+}
+
+tests {
+  test("null scopingQuestions clears the full JSON object", function() {
+    expect(res.getStatus()).to.equal(204);
+    expect(res.getHeader("etag")).to.equal('"2"');
+  });
+
+  await test("the root reason remains unchanged", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.scopingQuestions).to.equal(null);
+    expect(application.reasonForReapplication).to.equal("Retained root reason");
+  });
+}

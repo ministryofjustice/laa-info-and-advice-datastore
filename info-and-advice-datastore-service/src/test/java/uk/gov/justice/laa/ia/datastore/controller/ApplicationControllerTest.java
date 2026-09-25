@@ -25,6 +25,7 @@ import java.util.OptionalLong;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
@@ -71,6 +72,7 @@ public class ApplicationControllerTest {
   private final ObjectMapper objectMapper =
       new ObjectMapper()
           .registerModule(new JavaTimeModule())
+          .registerModule(new JsonNullableModule())
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   @MockitoBean private ApplicationService applicationService;
@@ -528,6 +530,31 @@ public class ApplicationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
         .andExpect(status().isBadRequest());
+    verify(applicationService, never())
+        .editApplication(eq(applicationId), any(EditApplicationCommand.class));
+  }
+
+  @Test
+  void editApplication_returns400_whenNonNullableJourneyFieldsAreExplicitNull() throws Exception {
+    UUID applicationId = UUID.randomUUID();
+    List<String> invalidBodies =
+        List.of(
+            "{\"eTag\":0,\"clientDetails\":{\"firstName\":null}}",
+            "{\"eTag\":0,\"clientDetails\":{\"lastName\":null}}",
+            "{\"eTag\":0,\"clientDetails\":{\"dateOfBirth\":null}}",
+            "{\"eTag\":0,\"clientDetails\":{\"noFixedAbode\":null}}",
+            "{\"eTag\":0,\"clientDetails\":{\"address\":{\"addressLine1\":null}}}",
+            "{\"eTag\":0,\"clientDetails\":{\"address\":{\"country\":null}}}");
+
+    for (String body : invalidBodies) {
+      mockMvc
+          .perform(
+              patch(TestConstants.EditApplication, applicationId)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(body))
+          .andExpect(status().isBadRequest());
+    }
+
     verify(applicationService, never())
         .editApplication(eq(applicationId), any(EditApplicationCommand.class));
   }

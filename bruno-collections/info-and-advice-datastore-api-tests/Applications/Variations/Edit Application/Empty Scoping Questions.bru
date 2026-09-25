@@ -1,0 +1,39 @@
+meta {
+  name: Empty Scoping Questions
+  type: http
+  seq: 16
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 1,
+    "ecfFlag": false,
+    "scopingQuestions": {}
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Fixtures/Seed Application");
+}
+
+tests {
+  test("an empty scoping object succeeds and increments the ETag", function() {
+    expect(res.getStatus()).to.equal(204);
+    expect(res.getHeader("etag")).to.equal('"2"');
+  });
+
+  await test("an empty scoping object leaves existing keys unchanged", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.scopingQuestions).to.deep.equal({
+      priorLegalAid: "same_matter",
+      priorLegalAidReason: "Existing reason",
+      unrelatedAnswer: "keep"
+    });
+  });
+}

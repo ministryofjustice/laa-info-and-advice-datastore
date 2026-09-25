@@ -1,0 +1,30 @@
+meta {
+  name: 404 Not Found
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/ffffffff-ffff-ffff-ffff-ffffffffffff:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "laaReference": "LAA-REF-001"
+  }
+}
+
+script:pre-request {
+  if (!bru.getEnvVar("token")) {
+    await bru.runRequest("Get Authentication Token");
+  }
+}
+
+tests {
+  test("a missing application returns 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}

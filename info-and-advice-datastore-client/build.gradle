@@ -21,11 +21,38 @@ dependencies {
     implementation 'jakarta.validation:jakarta.validation-api'
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.55'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 sourceSets.main.java.srcDirs += ['generated/src/main/java']
 
 checkstyleMain.exclude "*"
+test {
+    useJUnitPlatform()
+}
+
+def generatedClientClasses = [
+        '**/uk/gov/justice/laa/ia/datastore/client/api/**',
+        '**/uk/gov/justice/laa/ia/datastore/client/model/**',
+        '**/uk/gov/justice/laa/ia/datastore/client/invoker/**'
+]
+
+jacocoTestReport {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: generatedClientClasses)
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: generatedClientClasses)
+        }))
+    }
+}
 
 openApiGenerate {
     generatorName = "java"
@@ -41,6 +68,7 @@ openApiGenerate {
             useJakartaEe     : "true",
             useTags          : "true",
             dateLibrary      : "java8",
+            openApiNullable  : "true",
     ]
 }
 

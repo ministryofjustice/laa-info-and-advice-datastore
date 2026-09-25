@@ -1,0 +1,65 @@
+meta {
+  name: Clear Nullable Fields
+  type: http
+  seq: 13
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 1,
+    "reasonForReapplication": null,
+    "ecfFlag": null,
+    "scopingQuestions": {
+      "priorLegalAidReason": null
+    },
+    "clientDetails": {
+      "niNumber": null,
+      "address": {
+        "addressLine1": "5 Broadway",
+        "addressLine2": null,
+        "addressLine3": null,
+        "addressLine4": null,
+        "townOrCity": null,
+        "postCode": null,
+        "county": null,
+        "country": "US"
+      }
+    }
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Fixtures/Seed Application");
+}
+
+tests {
+  test("nullable values can be explicitly cleared", function() {
+    expect(res.getStatus()).to.equal(204);
+    expect(res.getHeader("etag")).to.equal('"2"');
+  });
+
+  await test("clears preserve unrelated values and the retained root reason", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.reasonForReapplication).to.equal("Retained root reason");
+    expect(application.ecfFlag).to.equal(null);
+    expect(application.scopingQuestions).to.deep.equal({
+      priorLegalAid: "same_matter",
+      unrelatedAnswer: "keep"
+    });
+    expect(application.client.niNumber).to.equal(null);
+    expect(application.client.address.addressLine1).to.equal("5 Broadway");
+    expect(application.client.address.addressLine2).to.equal(null);
+    expect(application.client.address.addressLine3).to.equal(null);
+    expect(application.client.address.addressLine4).to.equal(null);
+    expect(application.client.address.townOrCity).to.equal(null);
+    expect(application.client.address.postCode).to.equal(null);
+    expect(application.client.address.county).to.equal(null);
+    expect(application.client.address.country).to.equal("US");
+  });
+}

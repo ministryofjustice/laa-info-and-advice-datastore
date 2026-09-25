@@ -1,0 +1,39 @@
+meta {
+  name: 409 Completed Application
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 999,
+    "laaReference": "LAA-REF-COMPLETED"
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Update Application");
+}
+
+tests {
+  test("status is 409", function() {
+    expect(res.getStatus()).to.equal(409);
+  });
+
+  test("body identifies the completed application conflict", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(409);
+    expect(body.detail).to.equal("Completed applications cannot be edited.");
+  });
+}
+
+docs {
+  Completes a fresh application, then verifies edit requests are rejected with
+  409 even when their ETag is stale.
+}
