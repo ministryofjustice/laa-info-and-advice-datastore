@@ -51,7 +51,7 @@ script:pre-request {
 tests {
   test("seed state is accepted", function() {
     expect(res.getStatus()).to.equal(204);
-    expect(res.getHeader("etag")).to.equal('"1"');
+    expect(res.getHeader("etag")).to.equal('\"1\"');
   });
 
   await test("seed values are present", async function() {

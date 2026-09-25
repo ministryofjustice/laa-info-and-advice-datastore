@@ -35,7 +35,7 @@ body:json {
 }
 
 script:pre-request {
-  await bru.runRequest("Applications/Variations/Edit Application/Seed Application");
+  await bru.runRequest("Applications/Fixtures/Seed Application");
 }
 
 tests {
