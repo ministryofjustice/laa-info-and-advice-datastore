@@ -77,6 +77,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
+   * The handler for EditCompletedApplicationException.
+   *
+   * @param exception the exception
+   * @return 409 Conflict response
+   */
+  @ExceptionHandler(EditCompletedApplicationException.class)
+  public ResponseEntity<ProblemDetail> handleCompletedApplicationException(
+      EditCompletedApplicationException exception) {
+    log.warn("Completed application edit rejected: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+  }
+
+  /**
    * The handler for DataIntegrityViolationException — a safety net for database-level constraint
    * violations (e.g. a concurrent request creating a duplicate UFN) that were not caught by
    * application-level validation.

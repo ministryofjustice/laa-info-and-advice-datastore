@@ -23,6 +23,7 @@ import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.DeclarationAlreadySignedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
+import uk.gov.justice.laa.ia.datastore.exception.EditCompletedApplicationException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.exception.InvalidClientDetailsPatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
@@ -384,6 +385,9 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
+    if (application.getApplicationState() == ApplicationState.COMPLETED) {
+      throw new EditCompletedApplicationException();
+    }
     validateEtag(application, command.geteTag());
 
     String ufn = command.getUfn();

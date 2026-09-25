@@ -3,6 +3,7 @@ package uk.gov.justice.laa.ia.datastore.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,6 +23,7 @@ import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
@@ -33,6 +35,39 @@ import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBu
  */
 @ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class EditApplicationIntegrationTest extends BaseIntegrationTest {
+
+  @Test
+  void shouldRejectEditOfCompletedApplicationBeforeCheckingEtag() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                            .applicationState(ApplicationState.COMPLETED)
+                            .laaReference("original")))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"eTag\":999,\"laaReference\":\"changed\"}"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.detail").value("Completed applications cannot be edited."));
+
+    clearCache();
+    final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(unchanged.getApplicationState()).isEqualTo(ApplicationState.COMPLETED);
+    assertThat(unchanged.getLaaReference()).isEqualTo("original");
+    assertThat(unchanged.getEtag()).isZero();
+    assertThat(eventRepository.findAll()).isEmpty();
+  }
 
   @Test
   void shouldUnlinkAndDeleteAddress_whenAddressIsExplicitlyCleared() throws Exception {
