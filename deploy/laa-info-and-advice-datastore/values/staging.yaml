@@ -160,3 +160,7 @@ volumeMounts: []
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+# Metabase not yet deployed to this environment.
+metabase:
+  enabled: false

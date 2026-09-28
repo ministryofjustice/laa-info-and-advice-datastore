@@ -1,0 +1,32 @@
+{{- if and .Values.metabase.enabled .Values.metabase.ingress.enabled }}
+{{- $fullName := printf "%s-metabase" (include "your-repo-name.fullname" .) }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "your-repo-name.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metabase
+  {{- with .Values.metabase.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.metabase.ingress.className }}
+  ingressClassName: {{ .Values.metabase.ingress.className }}
+  {{- end }}
+  tls:
+    - hosts:
+        - {{ .Values.metabase.ingress.host | quote }}
+  rules:
+    - host: {{ .Values.metabase.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ .Values.metabase.service.port }}
+{{- end }}
