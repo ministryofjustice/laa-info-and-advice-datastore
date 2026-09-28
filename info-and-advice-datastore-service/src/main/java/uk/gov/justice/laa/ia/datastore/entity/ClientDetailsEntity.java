@@ -49,7 +49,7 @@ public class ClientDetailsEntity {
   @Column(name = "ni_number")
   private String niNumber;
 
-  @OneToOne(cascade = CascadeType.ALL)
+  @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "address_id", nullable = true)
   private AddressEntity address;
 

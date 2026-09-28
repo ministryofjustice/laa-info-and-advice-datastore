@@ -112,31 +112,45 @@ components:
         ufn:
           type: string
           maxLength: 9
+          x-jackson-json-include-policy: NON_NULL
         laaReference:
           type: string
+          x-jackson-json-include-policy: NON_NULL
         reasonForReapplication:
           type: string
+          nullable: true
         meansAssessmentRequired:
           type: boolean
+          x-jackson-json-include-policy: NON_NULL
         typeOfNonMeans:
           type: boolean
+          x-jackson-json-include-policy: NON_NULL
         ecfFlag:
           type: boolean
+          nullable: true
         contribution:
           type: string
+          x-jackson-json-include-policy: NON_NULL
         determinationId:
           type: string
           format: uuid
+          x-jackson-json-include-policy: NON_NULL
         scopingQuestions:
           type: object
           nullable: true
           additionalProperties: true
         clientDetails:
-          $ref: '#/components/schemas/PatchClientDetailsData'
+          allOf:
+            - $ref: '#/components/schemas/PatchClientDetailsData'
+          x-jackson-json-include-policy: NON_NULL
         declaration:
-          $ref: '#/components/schemas/PatchDeclarationData'
+          allOf:
+            - $ref: '#/components/schemas/PatchDeclarationData'
+          x-jackson-json-include-policy: NON_NULL
         evidence:
-          $ref: '#/components/schemas/PatchEvidenceData'
+          allOf:
+            - $ref: '#/components/schemas/PatchEvidenceData'
+          x-jackson-json-include-policy: NON_NULL
 
     PatchClientDetailsData:
       type: object
@@ -146,21 +160,70 @@ components:
       properties:
         firstName:
           type: string
+          x-jackson-json-setter-nulls: FAIL
+          x-jackson-json-include-policy: NON_NULL
         lastName:
           type: string
+          x-jackson-json-setter-nulls: FAIL
+          x-jackson-json-include-policy: NON_NULL
         dateOfBirth:
           type: string
           format: date
+          x-jackson-json-setter-nulls: FAIL
+          x-jackson-json-include-policy: NON_NULL
         niNumber:
           type: string
+          nullable: true
           example: QQ123456B
           minLength: 9
           maxLength: 9
           pattern: '^(?!BG|GB|KN|NK|NT|TN|ZZ)[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z][0-9]{6}[ABCD]$'
         noFixedAbode:
           type: boolean
+          x-jackson-json-setter-nulls: FAIL
+          x-jackson-json-include-policy: NON_NULL
         address:
-          $ref: '#/components/schemas/UpdateAddressCommand'
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/PatchAddressData'
+
+    PatchAddressData:
+      type: object
+      description: >-
+        Partial update of a client's address. Only fields present are changed;
+        addressLine1 and country are required when creating an address.
+      properties:
+        addressLine1:
+          type: string
+          example: 10 Downing Street
+          x-jackson-json-setter-nulls: FAIL
+          x-jackson-json-include-policy: NON_NULL
+        addressLine2:
+          type: string
+          nullable: true
+        addressLine3:
+          type: string
+          nullable: true
+        addressLine4:
+          type: string
+          nullable: true
+        townOrCity:
+          type: string
+          nullable: true
+          example: London
+        postCode:
+          type: string
+          nullable: true
+          example: SW1A 2AA
+        county:
+          type: string
+          nullable: true
+        country:
+          type: string
+          maxLength: 2
+          example: GB
+          x-jackson-json-setter-nulls: FAIL
+          x-jackson-json-include-policy: NON_NULL
 
     PatchDeclarationData:
       type: object
@@ -169,10 +232,12 @@ components:
       properties:
         declarationConfirmation:
           type: boolean
+          x-jackson-json-include-policy: NON_NULL
         dateSigned:
           type: string
           format: date
           x-extra-annotation: "@jakarta.validation.constraints.PastOrPresent"
+          x-jackson-json-include-policy: NON_NULL
 
     PatchEvidenceData:
       type: object
@@ -181,13 +246,17 @@ components:
       properties:
         evidenceExemptionCode:
           type: string
+          x-jackson-json-include-policy: NON_NULL
         evidenceExemptionReason:
           type: string
           maxLength: 400
+          x-jackson-json-include-policy: NON_NULL
         incomeEvidenceChecklist:
           type: object
+          x-jackson-json-include-policy: NON_NULL
         expenditureCapitalEvidenceChecklist:
           type: object
+          x-jackson-json-include-policy: NON_NULL
 
     UpdateClientDetailsCommand:
       type: object

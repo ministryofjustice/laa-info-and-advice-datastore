@@ -76,6 +76,8 @@ public abstract class ClientDetailsMapper {
   @Mapping(target = "modifiedBy", expression = "java(userContext.getCurrentUser())")
   @Mapping(target = "dataRetentionEventUuid", ignore = true)
   @Mapping(target = "dataRetentionDate", ignore = true)
+  @Mapping(target = "niNumber", ignore = true)
+  @Mapping(target = "address", ignore = true)
   public abstract void patchClientDetailsEntity(
       PatchClientDetailsData cmd, @MappingTarget ClientDetailsEntity entity);
 }

@@ -1,7 +1,10 @@
 package uk.gov.justice.laa.ia.datastore.client.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
-
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -10,6 +13,8 @@ import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -46,7 +51,14 @@ public class DatastoreApiClientConfiguration {
   @ConditionalOnMissingBean
   public ApplicationApi applicationApi(
       DatastoreClientProperties props, OAuth2AuthorizedClientManager clientManager) {
-    RestTemplate restTemplate = new RestTemplate();
+    RestTemplate restTemplate = new RestTemplate(new JdkClientHttpRequestFactory());
+    MappingJackson2HttpMessageConverter jacksonConverter =
+        new MappingJackson2HttpMessageConverter();
+    ObjectMapper objectMapper = jacksonConverter.getObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.registerModule(new JsonNullableModule());
+    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    restTemplate.getMessageConverters().add(0, jacksonConverter);
     restTemplate
         .getInterceptors()
         .add(new DatastoreAuthInterceptor(clientManager, props.clientRegistrationId()));

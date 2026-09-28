@@ -1,0 +1,65 @@
+meta {
+  name: Seed Application
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "reasonForReapplication": "Retained root reason",
+    "ecfFlag": true,
+    "scopingQuestions": {
+      "priorLegalAid": "same_matter",
+      "priorLegalAidReason": "Existing reason",
+      "unrelatedAnswer": "keep"
+    },
+    "clientDetails": {
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "dateOfBirth": "1990-01-01",
+      "niNumber": "AB123456A",
+      "noFixedAbode": false,
+      "address": {
+        "addressLine1": "10 Downing Street",
+        "addressLine2": "Old line 2",
+        "addressLine3": "Old line 3",
+        "addressLine4": "Old line 4",
+        "townOrCity": "London",
+        "postCode": "SW1A 2AA",
+        "county": "Greater London",
+        "country": "GB"
+      }
+    }
+  }
+}
+
+script:pre-request {
+  if (!bru.getEnvVar("token")) {
+    await bru.runRequest("Get Authentication Token");
+  }
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
+}
+
+tests {
+  test("seed state is accepted", function() {
+    expect(res.getStatus()).to.equal(204);
+    expect(res.getHeader("etag")).to.equal('\"1\"');
+  });
+
+  await test("seed values are present", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.reasonForReapplication).to.equal("Retained root reason");
+    expect(application.ecfFlag).to.equal(true);
+    expect(application.client.niNumber).to.equal("AB123456A");
+    expect(application.client.address.addressLine2).to.equal("Old line 2");
+    expect(application.scopingQuestions.priorLegalAidReason).to.equal("Existing reason");
+  });
+}

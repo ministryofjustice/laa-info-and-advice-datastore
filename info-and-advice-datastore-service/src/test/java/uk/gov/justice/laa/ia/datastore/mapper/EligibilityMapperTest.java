@@ -29,7 +29,8 @@ public class EligibilityMapperTest {
     final var mappedModel = eligibilityMapper.toEligibilityResult(entity);
 
     assertNotNull(mappedModel.getData());
-    assertEquals(entity.getData().get("client_age").asText(), mappedModel.getData().getClientAge());
+    assertEquals(
+        entity.getData().get("client_age").asText(), mappedModel.getData().getClientAge().get());
     assertEquals(entity.getResultJson(), objectMapper.valueToTree(mappedModel.getResult()));
   }
 }

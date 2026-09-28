@@ -187,7 +187,8 @@ public class ApplicationMapperTest {
   }
 
   private void assertEligibiltyEquals(EligibilityResultEntity expected, EligibilityResult model) {
-    assertEquals(expected.getData().get("client_age").asText(), model.getData().getClientAge());
+    assertEquals(
+        expected.getData().get("client_age").asText(), model.getData().getClientAge().get());
     assertEquals(expected.getResultJson(), objectMapper.valueToTree(model.getResult()));
   }
 

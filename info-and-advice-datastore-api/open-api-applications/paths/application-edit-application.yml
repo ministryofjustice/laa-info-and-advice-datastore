@@ -9,7 +9,7 @@ patch:
     the request body are changed; omitted fields are left unchanged. The declaration and evidence
     are created if they don't already exist on the application. A declaration that has already
     been signed (has a dateSigned) is immutable and cannot be patched; attempting to do so returns
-    a 409 Conflict.
+    a 409 Conflict. Applications with COMPLETED status cannot be edited and return 409 Conflict.
   parameters:
     - name: id
       in: path
@@ -41,6 +41,6 @@ patch:
     '404': { description: Not found }
     '409':
       {
-        description: 'Conflict - ETag mismatch, UFN already in use for this provider office code, or the declaration has already been signed',
+        description: 'Conflict - application is completed, ETag mismatch, UFN already in use for this provider office code, or the declaration has already been signed',
       }
     '500': { description: Internal server error }

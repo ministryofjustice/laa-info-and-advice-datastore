@@ -1,0 +1,44 @@
+meta {
+  name: Create Address
+  type: http
+  seq: 18
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:edit-application
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 2,
+    "scopingQuestions": {
+      "priorLegalAidReason": "Address created"
+    },
+    "clientDetails": {
+      "address": {
+        "addressLine1": "1 New Street",
+        "country": "GB"
+      }
+    }
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Variations/Edit Application/Unlink Address");
+}
+
+tests {
+  test("an address can be created after unlinking", function() {
+    expect(res.getStatus()).to.equal(204);
+    expect(res.getHeader("etag")).to.equal('"3"');
+  });
+
+  await test("the new address is persisted", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.client.address.addressLine1).to.equal("1 New Street");
+    expect(application.client.address.country).to.equal("GB");
+    expect(application.scopingQuestions.priorLegalAidReason).to.equal("Address created");
+  });
+}

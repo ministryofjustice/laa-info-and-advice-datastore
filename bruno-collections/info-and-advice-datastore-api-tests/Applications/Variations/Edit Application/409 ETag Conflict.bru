@@ -1,5 +1,5 @@
 meta {
-  name: Edit Application
+  name: 409 ETag Conflict
   type: http
   seq: 7
 }
@@ -16,6 +16,14 @@ body:json {
     "ufn": "123456789",
     "laaReference": "LAA-REF-001"
   }
+}
+
+script:pre-request {
+  if (!bru.getEnvVar("token")) {
+    await bru.runRequest("Get Authentication Token");
+  }
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
 }
 
 tests {
