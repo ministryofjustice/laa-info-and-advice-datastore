@@ -1,0 +1,32 @@
+meta {
+  name: Omitted Scoping Data Clears Existing Questions
+  type: http
+  seq: 24
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-scoping-data
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 1
+  }
+}
+
+script:pre-request {
+  await bru.runRequest("Applications/Fixtures/Seed Application");
+}
+
+tests {
+  test("request succeeds when scopingQuestions is omitted", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+
+  await test("omitting scopingQuestions clears the saved answers", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.scopingQuestions).to.equal(null);
+  });
+}
