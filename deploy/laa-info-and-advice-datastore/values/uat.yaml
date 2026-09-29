@@ -169,7 +169,7 @@ metabase:
   image:
     repository: metabase/metabase
     pullPolicy: IfNotPresent
-    tag: v0.49.7
+    tag: v0.63.18
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 10000
