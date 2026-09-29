@@ -163,6 +163,53 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
-# Metabase not yet deployed to this environment.
+# Metabase, giving MI/BI read-only access to the sanitised mi_reporting
+# views (via the mi_reporting_metabase DB login) without exposing client
+# PII. Uses its own dedicated RDS instance for Metabase's own metadata
+# store (see rds-metabase.tf in the cloud-platform-environments namespace),
+# fully separate from the product database.
 metabase:
-  enabled: false
+  enabled: true
+  image:
+    repository: metabase/metabase
+    pullPolicy: IfNotPresent
+    tag: v0.63.18
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10000
+    runAsGroup: 10000
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 10000
+    runAsGroup: 10000
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+  resources:
+    requests:
+      cpu: 25m
+      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 3Gi
+  service:
+    port: 80
+  ingress:
+    enabled: true
+    className: modsec
+    host: laa-info-and-advice-datastore-metabase-prod.cloud-platform.service.justice.gov.uk
+    annotations:
+      external-dns.alpha.kubernetes.io/set-identifier: "laa-info-and-advice-datastore-metabase-laa-info-and-advice-datastore-prod-green"
+      external-dns.alpha.kubernetes.io/aws-weight: "100"
+      nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+      nginx.ingress.kubernetes.io/enable-owasp-core-rules: "true"
+      nginx.ingress.kubernetes.io/modsecurity-transaction-id: "$request_id"
+      nginx.ingress.kubernetes.io/modsecurity-snippet: |
+        SecRuleEngine On
+        SecDefaultAction "phase:2,pass,log,tag:github_team=info-advice-datastore"
+        SecRule REMOTE_ADDR "!@ipMatch 35.176.93.186/32" "id:1001,deny,status:403,tag:github_team=info-advice-datastore"
