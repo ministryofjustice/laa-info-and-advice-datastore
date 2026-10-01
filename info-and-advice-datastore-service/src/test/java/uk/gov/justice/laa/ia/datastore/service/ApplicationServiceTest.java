@@ -985,12 +985,12 @@ public class ApplicationServiceTest {
   }
 
   @Test
-  void editApplication_shouldPreserveRootReason_whenExplicitlyNull() {
+  void editApplication_shouldClearReapplicationReason_whenExplicitlyNull() {
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
     final ApplicationEntity application =
         ApplicationEntity.builder().id(applicationId).providerOfficeCode(officeCode).build();
-    application.setReasonForReapplication("Existing root reason");
+    application.setReasonForReapplication("Existing ReapplicationReason");
     final EditApplicationCommand command =
         EditApplicationCommand.builder()
             .eTag(0L)
@@ -1002,7 +1002,7 @@ public class ApplicationServiceTest {
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     assertTrue(sut.editApplication(applicationId, command).isPresent());
-    assertThat(application.getReasonForReapplication()).isEqualTo("Existing root reason");
+    assertThat(application.getReasonForReapplication()).isNull();
   }
 
   @Test
