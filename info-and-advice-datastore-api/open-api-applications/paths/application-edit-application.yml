@@ -40,7 +40,9 @@ patch:
     '403': { description: Forbidden }
     '404': { description: Not found }
     '409':
-      {
-        description: 'Conflict - application is completed, ETag mismatch, UFN already in use for this provider office code, or the declaration has already been signed',
-      }
+      description: >-
+        Conflict. ProblemDetail reason is APPLICATION_VERSION_CONFLICT for ETag
+        mismatches and concurrent version updates, and APPLICATION_COMPLETED for
+        completed applications. UFN conflicts and signed-declaration conflicts
+        also return 409.
     '500': { description: Internal server error }

@@ -60,7 +60,8 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"eTag\":999,\"laaReference\":\"changed\"}"))
         .andExpect(status().isConflict())
-        .andExpect(jsonPath("$.detail").value("Completed applications cannot be edited."));
+        .andExpect(jsonPath("$.detail").value("Completed applications cannot be edited."))
+        .andExpect(jsonPath("$.reason").value("APPLICATION_COMPLETED"));
 
     clearCache();
     final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
