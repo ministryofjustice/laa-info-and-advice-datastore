@@ -55,6 +55,10 @@ public class EventEntity {
   @Column(name = "payload", columnDefinition = "jsonb")
   private JsonNode payload;
 
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "pii_data", columnDefinition = "jsonb")
+  private JsonNode piiData;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   @CreationTimestamp
   private Instant createdAt;

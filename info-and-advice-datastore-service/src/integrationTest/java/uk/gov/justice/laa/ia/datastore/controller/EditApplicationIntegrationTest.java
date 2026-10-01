@@ -398,12 +398,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     List<EventEntity> events = eventRepository.findAll();
     assertThat(events).hasSize(1);
-    assertThat(events.getFirst().getPayload()).isEqualTo(objectMapper.readTree(payload));
-    assertThat(events.getFirst().getPayload().get("reasonForReapplication").isNull()).isTrue();
-    assertThat(events.getFirst().getPayload().get("ecfFlag").isNull()).isTrue();
-    assertThat(events.getFirst().getPayload().get("clientDetails").get("niNumber").isNull())
-        .isTrue();
-    assertThat(events.getFirst().getPayload().get("clientDetails").has("address")).isFalse();
+    EventEntity event = events.getFirst();
+    assertThat(event.getPayload().get("reasonForReapplication").isNull()).isTrue();
+    assertThat(event.getPayload().get("ecfFlag").isNull()).isTrue();
+    // niNumber is a configured PII field, so explicit null is redacted to the nil UUID constant.
+    assertThat(event.getPayload().get("clientDetails").get("niNumber").asText())
+        .isEqualTo("00000000-0000-0000-0000-000000000000");
+    assertThat(event.getPayload().get("clientDetails").has("address")).isFalse();
   }
 
   @Test
