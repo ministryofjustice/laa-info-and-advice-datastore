@@ -1,0 +1,28 @@
+# Pact PROVIDER verification config (Java / pact-jvm), profile: test
+# Boot the app with no DB and no real security so state handlers just stub ApplicationService.
+
+laa:
+  datastore:
+    # Only read by TrustedCallerJwtDecoder's @Value injection (not an autoconfig bean, so it isn't
+    # covered by the excludes below) - dummy values since SecurityFilterChainAutoConfiguration is
+    # excluded and nothing in this test actually validates a JWT against them.
+    trusted-caller:
+      issuer-uri: https://placeholder.issuer.uri/v2.0
+      audience: api://placeholder-caller-audience
+
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+      # Disables the laa-spring-boot-starter-oauth2 security filter chain so the
+      # @TargetRequestFilter-injected headers aren't rejected by real JWT validation.
+      - uk.gov.laa.springboot.oauth2.SecurityFilterChainAutoConfiguration
+      - uk.gov.laa.springboot.oauth2.MultiTenantJwtAuthenticationManagerResolverAutoConfiguration
+  jpa:
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      mode: never

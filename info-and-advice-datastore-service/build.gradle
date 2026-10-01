@@ -9,6 +9,49 @@ test {
     finalizedBy jacocoTestReport
 }
 
+// --- Pact provider verification: dedicated source set, no DB, service layer mocked ---
+sourceSets {
+    pactTest {
+        compileClasspath += sourceSets.main.output + sourceSets.test.output
+        runtimeClasspath += compileClasspath
+    }
+}
+
+configurations {
+    pactTestImplementation.extendsFrom implementation, testImplementation
+    pactTestRuntimeOnly.extendsFrom   runtimeOnly, testRuntimeOnly
+}
+
+dependencies {
+    pactTestImplementation 'au.com.dius.pact.provider:spring7:4.7.0-beta.3'
+    pactTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    pactTestImplementation 'org.apache.httpcomponents.client5:httpclient5'
+}
+
+// Fetches consumer pacts from the broker, verifies them against this app, publishes results.
+tasks.register('pactTest', Test) {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.pactTest.output.classesDirs
+    classpath       = sourceSets.pactTest.runtimeClasspath
+
+    systemProperty 'pact.provider.version',        System.getenv('GIT_SHA') ?: project.version
+    systemProperty 'pact.provider.branch',         System.getenv('GIT_BRANCH') ?: 'main'
+    systemProperty 'pact.verifier.publishResults', 'true'
+    systemProperty 'pact.broker.url',              System.getenv('PACT_BROKER_URL')
+    systemProperty 'pact.broker.auth.username',    System.getenv('PACT_BROKER_USERNAME')
+    systemProperty 'pact.broker.auth.password',    System.getenv('PACT_BROKER_PASSWORD')
+
+    // Consumer version selectors - which consumer pacts to verify.
+    def consumer       = System.getenv('PACT_CONSUMER')         // set by the broker webhook
+    def consumerBranch = System.getenv('PACT_CONSUMER_BRANCH')  // set by the broker webhook
+    def selectors = [ [mainBranch: true], [matchingBranch: true] ]
+    if (consumer && consumerBranch) {
+        selectors << [pacticipant: consumer, branch: consumerBranch]
+    }
+    systemProperty 'pactbroker.consumerversionselectors.rawjson',
+        groovy.json.JsonOutput.toJson(selectors)
+}
+
 jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
