@@ -3,11 +3,13 @@ package uk.gov.justice.laa.ia.datastore.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
 import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor;
 
 /** Web MVC configuration to register interceptors. */
 @Configuration
 @RequiredArgsConstructor
+@ExcludeFromCodeCoverage(reason = "Config")
 public class WebMvcConfig implements WebMvcConfigurer {
 
   private final UserContextInterceptor userContextInterceptor;
