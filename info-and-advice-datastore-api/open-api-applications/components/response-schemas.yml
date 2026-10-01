@@ -66,7 +66,7 @@ components:
           type: boolean
         ufn:
           type: string
-          maxLength: 9
+          maxLength: 10
         determinationId:
           type: string
           format: uuid
