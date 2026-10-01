@@ -1,6 +1,8 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -14,7 +16,15 @@ import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
@@ -26,6 +36,7 @@ import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
+import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
@@ -36,6 +47,10 @@ import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBu
  */
 @ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class EditApplicationIntegrationTest extends BaseIntegrationTest {
+
+  @MockitoSpyBean private ApplicationRepository applicationRepositorySpy;
+  @Autowired private JdbcTemplate jdbcTemplate;
+  @Autowired private PlatformTransactionManager transactionManager;
 
   @Test
   void shouldRejectEditOfCompletedApplicationBeforeCheckingEtag() throws Exception {
@@ -356,7 +371,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                             .clientDetails(
                                 ClientDetailsEntityGenerator.createWithoutId(
                                     clientBuilder -> clientBuilder.noFixedAbode(true)))
-                            .reasonForReapplication("Legacy root reason")
+                            .reasonForReapplication("Legacy ReapplicationReason")
                             .ecfFlag(true)
                             .scopingQuestions(existingScopingQuestions)
                             .providerFirmCode(FIRM_CODE)
@@ -389,7 +404,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     clearCache();
     ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
-    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(updated.getReasonForReapplication()).isNull();
     assertThat(updated.getEcfFlag()).isNull();
     assertThat(updated.getClientDetails().getNiNumber()).isNull();
     assertThat(updated.getScopingQuestions().has("priorLegalAidReason")).isFalse();
@@ -429,7 +444,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                                                         addressBuilder
                                                             .addressLine3("Old line 3")
                                                             .county("Kent")))))
-                            .reasonForReapplication("Existing root reason")
+                            .reasonForReapplication("Existing ReapplicationReason")
                             .scopingQuestions(existingScopingQuestions)
                             .ecfFlag(true)
                             .providerFirmCode(FIRM_CODE)
@@ -454,7 +469,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     clearCache();
     ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
-    assertThat(updated.getReasonForReapplication()).isEqualTo("Existing root reason");
+    assertThat(updated.getReasonForReapplication()).isEqualTo("Existing ReapplicationReason");
     assertThat(updated.getEcfFlag()).isTrue();
     assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("AB123456Q");
     assertThat(updated.getScopingQuestions()).isEqualTo(existingScopingQuestions);
@@ -536,7 +551,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                             .clientDetails(
                                 ClientDetailsEntityGenerator.createWithoutId(
                                     clientBuilder -> clientBuilder.noFixedAbode(true)))
-                            .reasonForReapplication("Existing root reason")
+                            .reasonForReapplication("Existing ReapplicationReason")
                             .ecfFlag(true)
                             .scopingQuestions(existingScopingQuestions)
                             .providerFirmCode(FIRM_CODE)
@@ -553,7 +568,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                     """
                     {
                       "eTag": 0,
-                      "reasonForReapplication": "Updated root reason",
+                      "reasonForReapplication": "Updated ReapplicationReason",
                       "ecfFlag": false,
                       "clientDetails": {"niNumber": "AB123456C"},
                       "scopingQuestions": {"priorLegalAidReason": "new reason"}
@@ -564,13 +579,42 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     clearCache();
     ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
-    assertThat(updated.getReasonForReapplication()).isEqualTo("Updated root reason");
+    assertThat(updated.getReasonForReapplication()).isEqualTo("Updated ReapplicationReason");
     assertThat(updated.getEcfFlag()).isFalse();
     assertThat(updated.getClientDetails().getNiNumber()).isEqualTo("AB123456C");
     assertThat(updated.getScopingQuestions().get("priorLegalAidReason").asText())
         .isEqualTo("new reason");
     assertThat(updated.getScopingQuestions().get("unrelatedAnswer").asText())
         .isEqualTo("preserve me");
+  }
+
+  @Test
+  void shouldPreserveEmptyReapplicationReasonWhenSupplied() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .reasonForReapplication("Existing ReapplicationReason")
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"eTag\":0,\"reasonForReapplication\":\"\"}"))
+        .andExpect(status().isNoContent());
+
+    clearCache();
+    assertThat(
+            applicationRepository.findById(applicationId).orElseThrow().getReasonForReapplication())
+        .isEmpty();
   }
 
   @Test
@@ -585,7 +629,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .reasonForReapplication("Legacy root reason")
+                            .reasonForReapplication("Legacy ReapplicationReason")
                             .scopingQuestions(existingScopingQuestions)
                             .providerFirmCode(FIRM_CODE)
                             .providerOfficeCode(PROVIDER_OFFICE_CODE)))
@@ -604,7 +648,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     clearCache();
     final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
     assertThat(updated.getScopingQuestions()).isEqualTo(existingScopingQuestions);
-    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy ReapplicationReason");
     assertThat(eventRepository.findAll()).hasSize(1);
     assertThat(eventRepository.findAll().getFirst().getPayload().get("scopingQuestions").isEmpty())
         .isTrue();
@@ -620,7 +664,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .reasonForReapplication("Legacy root reason")
+                            .reasonForReapplication("Legacy ReapplicationReason")
                             .scopingQuestions(existingScopingQuestions)
                             .providerFirmCode(FIRM_CODE)
                             .providerOfficeCode(PROVIDER_OFFICE_CODE)))
@@ -638,13 +682,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     clearCache();
     final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
     assertThat(updated.getScopingQuestions()).isNull();
-    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy ReapplicationReason");
     assertThat(eventRepository.findAll().getFirst().getPayload().get("scopingQuestions").isNull())
         .isTrue();
   }
 
   @Test
-  void shouldUpdateNestedReasonWithoutChangingRootReason() throws Exception {
+  void shouldUpdateNestedReasonWithoutChangingReapplicationReason() throws Exception {
     JsonNode existingScopingQuestions =
         objectMapper.readTree(
             "{\"unrelatedAnswer\":\"preserve me\",\"priorLegalAidReason\":\"old reason\"}");
@@ -655,7 +699,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .reasonForReapplication("Legacy root reason")
+                            .reasonForReapplication("Legacy ReapplicationReason")
                             .scopingQuestions(existingScopingQuestions)
                             .providerFirmCode(FIRM_CODE)
                             .providerOfficeCode(PROVIDER_OFFICE_CODE)))
@@ -673,7 +717,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     clearCache();
     final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
-    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(updated.getReasonForReapplication()).isEqualTo("Legacy ReapplicationReason");
     assertThat(updated.getScopingQuestions().get("priorLegalAidReason").asText())
         .isEqualTo("new reason");
     assertThat(updated.getScopingQuestions().get("unrelatedAnswer").asText())
@@ -692,7 +736,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                             .clientDetails(
                                 ClientDetailsEntityGenerator.createWithoutId(
                                     clientBuilder -> clientBuilder.noFixedAbode(true)))
-                            .reasonForReapplication("Legacy root reason")
+                            .reasonForReapplication("Legacy ReapplicationReason")
                             .ecfFlag(true)
                             .scopingQuestions(existingScopingQuestions)
                             .providerFirmCode(FIRM_CODE)
@@ -711,16 +755,61 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                      "clientDetails":{"firstName":"Changed","niNumber":null},
                      "scopingQuestions":{"answer":"changed"}}
                     """))
-        .andExpect(status().isConflict());
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.reason").value("APPLICATION_VERSION_CONFLICT"));
 
     clearCache();
     final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
     assertThat(unchanged.getEtag()).isZero();
-    assertThat(unchanged.getReasonForReapplication()).isEqualTo("Legacy root reason");
+    assertThat(unchanged.getReasonForReapplication()).isEqualTo("Legacy ReapplicationReason");
     assertThat(unchanged.getEcfFlag()).isTrue();
     assertThat(unchanged.getClientDetails().getFirstName()).isEqualTo("Joe");
     assertThat(unchanged.getClientDetails().getNiNumber()).isEqualTo("AB123456Q");
     assertThat(unchanged.getScopingQuestions()).isEqualTo(existingScopingQuestions);
+    assertThat(eventRepository.findAll()).isEmpty();
+  }
+
+  @Test
+  @Transactional(propagation = Propagation.NEVER)
+  void shouldReturnVersionConflictReason_whenConcurrentUpdateWins() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    entityManager.clear();
+
+    TransactionTemplate concurrentTransaction = new TransactionTemplate(transactionManager);
+    concurrentTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    doAnswer(
+            invocation -> {
+              concurrentTransaction.executeWithoutResult(
+                  transactionStatus ->
+                      jdbcTemplate.update(
+                          "UPDATE applications SET etag = etag + 1 WHERE id = ?", applicationId));
+              return invocation.getArgument(0);
+            })
+        .when(applicationRepositorySpy)
+        .save(any(ApplicationEntity.class));
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"eTag\":0,\"laaReference\":\"changed\"}"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.reason").value("APPLICATION_VERSION_CONFLICT"));
+
+    entityManager.clear();
+    final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(unchanged.getEtag()).isEqualTo(1);
+    assertThat(unchanged.getLaaReference()).isNull();
     assertThat(eventRepository.findAll()).isEmpty();
   }
 

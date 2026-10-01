@@ -44,9 +44,9 @@ tests {
     expect(res.getHeader("etag")).to.equal('"2"');
   });
 
-  await test("clears preserve unrelated values and the retained root reason", async function() {
+  await test("clears preserve unrelated values and the retained ReapplicationReason", async function() {
     const application = (await bru.runRequest("Applications/Get Application")).data;
-    expect(application.reasonForReapplication).to.equal("Retained root reason");
+    expect(application.reasonForReapplication).to.equal("Retained ReapplicationReason");
     expect(application.ecfFlag).to.equal(null);
     expect(application.scopingQuestions).to.deep.equal({
       priorLegalAid: "same_matter",
