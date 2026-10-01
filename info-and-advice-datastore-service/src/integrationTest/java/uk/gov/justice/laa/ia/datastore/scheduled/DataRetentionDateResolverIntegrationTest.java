@@ -21,6 +21,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.models.ApplicationClaimResponse;
 import uk.gov.justice.laa.ia.datastore.models.ClaimsModel;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
@@ -36,7 +37,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
   static final int DATA_RETENTION_YEARS_OFFSET = 3;
 
   @BeforeEach
-  void setUp() {
+  void setUpResolver() {
     this.sut =
         new DataRetentionDateResolver(
             claimsGateway, DATA_RETENTION_YEARS_OFFSET, applicationRepository);
@@ -57,6 +58,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
                     .withDefaultClientDetails()
                     .ufn(ufn)
                     .dataRetentionDate(null)
+                    .applicationState(ApplicationState.COMPLETED)
                     .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
@@ -84,6 +86,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
                     .withDefaultClientDetails()
                     .ufn(ufn)
                     .dataRetentionDate(null)
+                    .applicationState(ApplicationState.COMPLETED)
                     .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
@@ -120,6 +123,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
                     .withDefaultClientDetails()
                     .ufn(ufn)
                     .dataRetentionDate(null)
+                    .applicationState(ApplicationState.COMPLETED)
                     .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
@@ -166,6 +170,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
                     .withDefaultClientDetails()
                     .ufn(ufn)
                     .dataRetentionDate(null)
+                    .applicationState(ApplicationState.COMPLETED)
                     .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
@@ -192,6 +197,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
                     .withDefaultClientDetails()
                     .ufn(ufnWithRetentionDate)
                     .dataRetentionDate(existingDataRetentionDate)
+                    .applicationState(ApplicationState.COMPLETED)
                     .providerOfficeCode(officeCode));
     final ApplicationEntity applicationWithoutRetentionDate =
         ApplicationEntityGenerator.createWithoutId(
@@ -200,6 +206,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
                     .withDefaultClientDetails()
                     .ufn(ufn)
                     .dataRetentionDate(null)
+                    .applicationState(ApplicationState.COMPLETED)
                     .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(applicationWithRetentionDate);
     applicationRepository.saveAndFlush(applicationWithoutRetentionDate);
@@ -210,5 +217,29 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
     // Assert
     verify(claimsGateway, times(0)).getClaims(officeCode, ufnWithRetentionDate);
     verify(claimsGateway, times(1)).getClaims(officeCode, ufn);
+  }
+
+  @Test
+  void givenApplicationIsNotCompleted_thenDoNotResolveDataRetentionDate() {
+    // Arrange
+    final String ufn = "777777/1";
+    final ApplicationEntity draftApplication =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(ufn)
+                    .dataRetentionDate(null)
+                    .applicationState(ApplicationState.DRAFT)
+                    .providerOfficeCode(officeCode));
+    applicationRepository.saveAndFlush(draftApplication);
+
+    // Act
+    sut.run();
+
+    // Assert
+    var savedApplication = applicationRepository.findById(draftApplication.getId()).orElseThrow();
+    assertNull(savedApplication.getDataRetentionDate());
+    verify(claimsGateway, times(0)).getClaims(officeCode, ufn);
   }
 }

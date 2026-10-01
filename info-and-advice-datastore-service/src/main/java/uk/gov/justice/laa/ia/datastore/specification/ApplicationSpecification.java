@@ -14,9 +14,12 @@ public class ApplicationSpecification {
     // private constructor to prevent instantiation
   }
 
-  /** Setups a specification for finding applications without a data retention date. */
-  public static Specification<ApplicationEntity> findByMissingDateRetentionDate() {
-    return (root, query, criteriaBuilder) -> criteriaBuilder.isNull(root.get("dataRetentionDate"));
+  /** Setups a specification for finding completed applications without a data retention date. */
+  public static Specification<ApplicationEntity> findByMissingDataRetentionDateAndStatus() {
+    return (root, query, criteriaBuilder) ->
+        criteriaBuilder.and(
+            criteriaBuilder.isNull(root.get("dataRetentionDate")),
+            criteriaBuilder.equal(root.get("applicationState"), ApplicationState.COMPLETED));
   }
 
   /**

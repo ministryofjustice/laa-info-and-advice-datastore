@@ -39,7 +39,8 @@ public class DataRetentionDateResolver {
    */
   public void run() {
     final var applications =
-        applicationRepository.findAll(ApplicationSpecification.findByMissingDateRetentionDate());
+        applicationRepository.findAll(
+            ApplicationSpecification.findByMissingDataRetentionDateAndStatus());
     log.info("Found {} applications missing a retention date", applications.size());
     for (var application : applications) {
       RetentionDateUpdate update = shouldUpdateDataRetentionDate(application);
