@@ -39,10 +39,9 @@ import uk.gov.justice.laa.ia.datastore.service.EventService;
  * autoconfiguration and {@code UserContextInterceptor} (see field javadoc below) are also
  * neutralised so requests reach the controller without real JWTs.
  *
- * <p>{@code @State} handlers live here (rather than on the broker-backed or local-folder-backed
- * subclasses) so both {@link ApplicationProviderPactTests} (real broker) and {@link
- * LocalPactSmokeTest} (local pact file, no broker needed) share the exact same stubbing - one
- * source of truth for "what a consumer gets back for each state".
+ * <p>{@code @State} handlers live here (as opposed to on {@link ApplicationProviderPactTests}
+ * itself) so they're ready to be shared again if a local/offline verification path is reintroduced
+ * later - one source of truth for "what a consumer gets back for each state".
  */
 @EnableAutoConfiguration(
     exclude = {

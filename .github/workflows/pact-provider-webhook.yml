@@ -1,7 +1,8 @@
-# NOTE: deliberately workflow_dispatch-only for now. We don't yet have broker credentials
-# (PACT_BROKER_URL/USERNAME/PASSWORD secrets) or any consumer publishing a pact against this
-# provider, so running this on every PR/push would just fail CI. Re-add `pull_request`/`push`
-# triggers once broker access is confirmed and at least one consumer pact exists to verify.
+# NOTE: deliberately workflow_dispatch-only for now. Broker credentials ARE configured
+# (PACT_BROKER_URL/USERNAME/PASSWORD secrets), but no consumer has published a pact naming this
+# provider yet - the broker 404s "for-verification" requests for pacticipants it has never seen,
+# so running this on every PR/push would just fail CI. Re-add `pull_request`/`push` triggers once
+# at least one consumer pact exists to verify.
 name: Pact Provider Verification
 run-name: Pact verify — ${{ github.event.inputs.consumer || 'manual' }}
 

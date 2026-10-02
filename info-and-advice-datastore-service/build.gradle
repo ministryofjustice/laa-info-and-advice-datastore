@@ -35,11 +35,16 @@ tasks.register('pactTest', Test) {
     classpath       = sourceSets.pactTest.runtimeClasspath
 
     systemProperty 'pact.provider.version',        System.getenv('GIT_SHA') ?: project.version
-    systemProperty 'pact.provider.branch',         System.getenv('GIT_BRANCH') ?: 'main'
     systemProperty 'pact.verifier.publishResults', 'true'
-    systemProperty 'pact.broker.url',              System.getenv('PACT_BROKER_URL')
-    systemProperty 'pact.broker.auth.username',    System.getenv('PACT_BROKER_USERNAME')
-    systemProperty 'pact.broker.auth.password',    System.getenv('PACT_BROKER_PASSWORD')
+    // Property names matter: @PactBroker's defaults resolve these exact keys (`pactbroker.*`, no
+    // dot after "pact") - `pact.broker.url` etc. would silently be ignored, leaving the broker host
+    // unset ("Invalid pact broker host specified").
+    systemProperty 'pactbroker.url',              System.getenv('PACT_BROKER_URL')
+    systemProperty 'pactbroker.auth.username',    System.getenv('PACT_BROKER_USERNAME')
+    systemProperty 'pactbroker.auth.password',    System.getenv('PACT_BROKER_PASSWORD')
+    // Required (camelCase, not `pact.provider.branch`) whenever a `matchingBranch` selector is used
+    // below - the broker rejects the "for-verification" request with a 400 otherwise.
+    systemProperty 'pactbroker.providerBranch',   System.getenv('GIT_BRANCH') ?: 'main'
 
     // Consumer version selectors - which consumer pacts to verify.
     def consumer       = System.getenv('PACT_CONSUMER')         // set by the broker webhook
