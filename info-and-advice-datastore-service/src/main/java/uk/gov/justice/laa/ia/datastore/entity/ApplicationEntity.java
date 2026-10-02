@@ -79,7 +79,7 @@ public class ApplicationEntity {
   @Column(name = "is_means_tested")
   private Boolean isMeansTested;
 
-  @Column(name = "ufn", length = 9)
+  @Column(name = "ufn", length = 10)
   private String ufn;
 
   @Column(name = "data_retention_event_uuid")
