@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,7 @@ class UserDrivenEventServiceTest {
   @Mock private UserContext userContext;
   @Mock private HttpServletRequest request;
   @Mock private ObjectMapper objectMapper;
+  @Mock private PiiRedactor piiRedactor;
 
   @InjectMocks private UserDrivenEventService sut;
 
@@ -35,6 +37,7 @@ class UserDrivenEventServiceTest {
     // Arrange
     final Object payload = new Object();
     final JsonNode payloadNode = new ObjectMapper().createObjectNode();
+    final ObjectNode piiDataNode = new ObjectMapper().createObjectNode().put("uuid", "Jane");
     when(userContext.getCurrentUser()).thenReturn("test-user");
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getCorrelationId()).thenReturn("test-correlation-id");
@@ -42,6 +45,7 @@ class UserDrivenEventServiceTest {
     when(request.getMethod()).thenReturn("POST");
     when(request.getRequestURI()).thenReturn("/api/v0/applications:start-application");
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
+    when(piiRedactor.redact(payloadNode)).thenReturn(piiDataNode);
     when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
     final UUID applicationId = UUID.randomUUID();
 
@@ -61,5 +65,6 @@ class UserDrivenEventServiceTest {
     assertThat(saved.getHttpMethod()).isEqualTo("POST");
     assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-application");
     assertThat(saved.getPayload()).isEqualTo(payloadNode);
+    assertThat(saved.getPiiData()).isEqualTo(piiDataNode);
   }
 }
