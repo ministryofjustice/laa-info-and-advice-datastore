@@ -9,14 +9,7 @@ test {
     finalizedBy jacocoTestReport
 }
 
-integrationTest {
-    finalizedBy jacocoTestReport
-}
-
 jacocoTestReport {
-    dependsOn test, integrationTest
-    executionData(test, integrationTest)
-
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(
@@ -31,9 +24,6 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-    dependsOn test, integrationTest
-    executionData(test, integrationTest)
-
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(

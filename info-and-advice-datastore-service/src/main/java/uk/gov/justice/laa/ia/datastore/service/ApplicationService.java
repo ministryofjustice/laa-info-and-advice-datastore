@@ -96,7 +96,7 @@ public class ApplicationService {
     entity.setApplicationState(ApplicationState.DRAFT);
     ApplicationEntity saved = repository.save(entity);
     entityManager.refresh(saved);
-    eventService.record(startApplication, startApplication.getProviderOfficeCode());
+    eventService.record(startApplication, startApplication.getProviderOfficeCode(), saved.getId());
     return applicationMapper.toApplication(saved);
   }
 
@@ -186,7 +186,7 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -242,7 +242,7 @@ public class ApplicationService {
     application.setDeclaration(declarationEntity);
 
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -281,7 +281,7 @@ public class ApplicationService {
     application.setEvidence(savedEvidence);
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -323,7 +323,7 @@ public class ApplicationService {
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -352,7 +352,7 @@ public class ApplicationService {
 
     applicationMapper.updateApplicationEntity(command, application);
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -432,7 +432,7 @@ public class ApplicationService {
 
     ApplicationEntity saved = repository.save(application);
     repository.flush();
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -568,7 +568,7 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 }

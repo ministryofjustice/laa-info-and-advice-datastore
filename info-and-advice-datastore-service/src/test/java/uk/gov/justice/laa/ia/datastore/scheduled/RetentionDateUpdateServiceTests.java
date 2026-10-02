@@ -43,10 +43,11 @@ class RetentionDateUpdateServiceTests {
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(builder -> builder.etag(1L));
     final Instant newRetentionDate = Instant.now();
+    final UUID claimsId = UUID.randomUUID();
     when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
 
     // Act
-    sut.saveAndRecord(application.getId(), 1L, null, newRetentionDate);
+    sut.saveAndRecord(application.getId(), 1L, null, newRetentionDate, claimsId);
 
     // Assert
     final ArgumentCaptor<ApplicationEntity> savedCaptor =
@@ -58,7 +59,8 @@ class RetentionDateUpdateServiceTests {
             any(),
             eq(application.getProviderOfficeCode()),
             eq(application.getProviderFirmCode()),
-            any());
+            any(),
+            eq(application.getId()));
   }
 
   @Test
@@ -69,11 +71,11 @@ class RetentionDateUpdateServiceTests {
     when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
 
     // Act
-    sut.saveAndRecord(application.getId(), 1L, null, Instant.now());
+    sut.saveAndRecord(application.getId(), 1L, null, Instant.now(), UUID.randomUUID());
 
     // Assert
     verify(applicationRepository, never()).save(any());
-    verify(systemDrivenEventService, never()).record(any(), any(), any(), any());
+    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -83,9 +85,10 @@ class RetentionDateUpdateServiceTests {
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.empty());
 
     // Act & Assert
-    assertThatThrownBy(() -> sut.saveAndRecord(applicationId, 1L, null, Instant.now()))
+    assertThatThrownBy(
+            () -> sut.saveAndRecord(applicationId, 1L, null, Instant.now(), UUID.randomUUID()))
         .isInstanceOf(EntityNotFoundException.class);
     verify(applicationRepository, never()).save(any());
-    verify(systemDrivenEventService, never()).record(any(), any(), any(), any());
+    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any());
   }
 }

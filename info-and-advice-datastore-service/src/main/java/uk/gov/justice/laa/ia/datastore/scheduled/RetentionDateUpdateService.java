@@ -39,7 +39,8 @@ public class RetentionDateUpdateService {
       UUID applicationId,
       long expectedEtag,
       Instant previousRetentionDate,
-      Instant newRetentionDate) {
+      Instant newRetentionDate,
+      UUID claimsId) {
     ApplicationEntity application =
         applicationRepository
             .findById(applicationId)
@@ -56,13 +57,17 @@ public class RetentionDateUpdateService {
     }
 
     ObjectNode dataRetentionDate =
-        JsonNodeFactory.instance.objectNode().put("dataRetentionDate", newRetentionDate.toString());
+        JsonNodeFactory.instance
+            .objectNode()
+            .put("dataRetentionDate", newRetentionDate.toString())
+            .put("claimsId", claimsId.toString());
     application.setDataRetentionDate(newRetentionDate);
     applicationRepository.save(application);
     systemDrivenEventService.record(
         dataRetentionDate,
         application.getProviderOfficeCode(),
         application.getProviderFirmCode(),
-        DataRetentionDateResolver.class.getSimpleName());
+        DataRetentionDateResolver.class.getSimpleName(),
+        applicationId);
   }
 }

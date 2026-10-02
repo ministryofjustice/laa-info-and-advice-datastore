@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
   void givenApplicationWithNoClaims_thenDoNotSetDataRetentionDate() {
     // Arrange
 
-    final String ufn = "111111/1";
+    final String ufn = "111111/001";
     when(claimsGateway.getClaims(officeCode, ufn))
         .thenReturn(ApplicationClaimResponse.builder().claims(List.of()).build());
 
@@ -114,11 +115,12 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
         OffsetDateTime.of(2029, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC).toInstant();
     final ClaimsModel claim =
         ClaimsModel.builder()
+            .claimId(UUID.randomUUID())
             .status("APPROVED")
             .createdOn(claimApprovedDate)
             .updatedOn(claimApprovedDate)
             .build();
-    final String ufn = "333333/1";
+    final String ufn = "333333/001";
     when(claimsGateway.getClaims(officeCode, ufn))
         .thenReturn(ApplicationClaimResponse.builder().claims(List.of(claim)).build());
 
@@ -163,6 +165,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
         OffsetDateTime.of(2029, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC).toInstant();
     final ClaimsModel claim =
         ClaimsModel.builder()
+            .claimId(UUID.randomUUID())
             .status("APPROVED")
             .createdOn(claimApprovedDate)
             .updatedOn(claimApprovedDate)
@@ -173,7 +176,8 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
             .createdOn(earlierClaimDate)
             .updatedOn(earlierClaimDate)
             .build();
-    final String ufn = "444444/1";
+    final String ufn = "444444/001";
+
     when(claimsGateway.getClaims(officeCode, ufn))
         .thenReturn(
             ApplicationClaimResponse.builder().claims(List.of(claim, earlierClaim)).build());
@@ -203,7 +207,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
   void givenApplicationAlreadyHasRententionDate_thenDoNotTryToGetClaims() {
     // Arrange
     final Instant existingDataRetentionDate = Instant.now();
-    final String ufn = "555555/1";
+    final String ufn = "555555/001";
     final String ufnWithRetentionDate = "666666/1";
     final ApplicationEntity applicationWithRetentionDate =
         ApplicationEntityGenerator.createWithoutId(
@@ -237,7 +241,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
   @Test
   void givenApplicationIsNotCompleted_thenDoNotResolveDataRetentionDate() {
     // Arrange
-    final String ufn = "777777/1";
+    final String ufn = "777777/001";
     final ApplicationEntity draftApplication =
         ApplicationEntityGenerator.createWithoutId(
             builder ->

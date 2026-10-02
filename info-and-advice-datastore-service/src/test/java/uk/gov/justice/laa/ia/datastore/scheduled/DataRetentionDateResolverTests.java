@@ -161,7 +161,7 @@ class DataRetentionDateResolverTests {
     // Assert
     final ArgumentCaptor<UUID> savedIdCaptor = ArgumentCaptor.forClass(UUID.class);
     verify(retentionDateUpdateService, times(1))
-        .saveAndRecord(savedIdCaptor.capture(), anyLong(), any(), any());
+        .saveAndRecord(savedIdCaptor.capture(), anyLong(), any(), any(), any());
     assertThat(savedIdCaptor.getValue()).isEqualTo(succeedingApplication.getId());
   }
 
@@ -202,15 +202,15 @@ class DataRetentionDateResolverTests {
         .thenReturn(ApplicationClaimResponse.builder().claims(List.of(approvedClaim)).build());
     doThrow(new RuntimeException("DB constraint violation"))
         .when(retentionDateUpdateService)
-        .saveAndRecord(eq(failingApplication.getId()), anyLong(), any(), any());
+        .saveAndRecord(eq(failingApplication.getId()), anyLong(), any(), any(), any());
 
     // Act
     sut.run();
 
     // Assert
     verify(retentionDateUpdateService, times(1))
-        .saveAndRecord(eq(failingApplication.getId()), anyLong(), any(), any());
+        .saveAndRecord(eq(failingApplication.getId()), anyLong(), any(), any(), any());
     verify(retentionDateUpdateService, times(1))
-        .saveAndRecord(eq(succeedingApplication.getId()), anyLong(), any(), any());
+        .saveAndRecord(eq(succeedingApplication.getId()), anyLong(), any(), any(), any());
   }
 }

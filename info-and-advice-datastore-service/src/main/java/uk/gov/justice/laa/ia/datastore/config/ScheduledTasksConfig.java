@@ -10,7 +10,6 @@ import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolver;
 import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataRetentionScheduler;
-import uk.gov.justice.laa.ia.datastore.scheduled.ProdDataRetentionScheduler;
 import uk.gov.justice.laa.ia.datastore.scheduled.RetentionDateUpdateService;
 
 /** Configuration class for scheduled tasks. */
@@ -28,16 +27,16 @@ public class ScheduledTasksConfig {
         claimsGateway, dataRetentionYearsOffset, applicationRepository, retentionDateUpdateService);
   }
 
-  /**
-   * Bean for the production/staging/uat data retention scheduler, runs based on config defaulting
-   * to midnight.
-   */
-  @Bean
-  @Profile("!local")
-  public ProdDataRetentionScheduler prodDataRetentionScheduler(
-      DataRetentionDateResolver dataRetentionDateResolver) {
-    return new ProdDataRetentionScheduler(dataRetentionDateResolver);
-  }
+  //
+  // Bean for the production/staging/uat data retention scheduler, runs based on config defaulting
+  // to midnight.
+  //
+  // @Bean
+  // @Profile("!local")
+  // public ProdDataRetentionScheduler prodDataRetentionScheduler(
+  //     DataRetentionDateResolver dataRetentionDateResolver) {
+  //   return new ProdDataRetentionScheduler(dataRetentionDateResolver);
+  // }
 
   /**
    * Bean for the local development data retention scheduler, runs immediately on startup and then

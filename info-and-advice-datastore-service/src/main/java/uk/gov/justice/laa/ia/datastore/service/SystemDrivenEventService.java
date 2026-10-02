@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
@@ -13,6 +14,7 @@ public class SystemDrivenEventService {
 
   private static final String SYSTEM_USER = "SYSTEM";
   private static final String HTTP_METHOD = "SCHEDULED";
+  private static final UUID EMPTY_APPLICATION_ID = new UUID(0L, 0L);
 
   private final EventRepository repository;
   private final ObjectMapper objectMapper;
@@ -26,14 +28,21 @@ public class SystemDrivenEventService {
    * @param providerOfficeCode the provider office code of the application the mutation relates to.
    * @param providerFirmCode the provider firm code of the application the mutation relates to.
    * @param source the name of the system process that triggered the event.
+   * @param applicationId the ID of the application the mutation relates to, or an empty guid if not
+   *     known.
    */
   public void record(
-      Object payload, String providerOfficeCode, String providerFirmCode, String source) {
+      Object payload,
+      String providerOfficeCode,
+      String providerFirmCode,
+      String source,
+      UUID applicationId) {
     EventEntity event =
         EventEntity.builder()
             .changedBy(SYSTEM_USER)
             .providerOfficeCode(providerOfficeCode)
             .providerFirmCode(providerFirmCode)
+            .applicationId(applicationId != null ? applicationId : EMPTY_APPLICATION_ID)
             .serviceName(SYSTEM_USER)
             .httpMethod(HTTP_METHOD)
             .urlPath(source)

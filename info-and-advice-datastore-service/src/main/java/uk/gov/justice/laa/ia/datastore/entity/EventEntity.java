@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,6 +39,9 @@ public class EventEntity {
 
   @Column(name = "provider_office_code")
   private String providerOfficeCode;
+
+  @Column(name = "application_id")
+  private UUID applicationId;
 
   @Column(name = "correlation_id")
   private String correlationId;

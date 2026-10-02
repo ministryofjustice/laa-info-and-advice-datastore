@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.scheduled;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -59,7 +60,11 @@ public class DataRetentionDateResolver {
                 .toInstant();
         try {
           retentionDateUpdateService.saveAndRecord(
-              application.getId(), application.getEtag(), previousRetentionDate, newRetentionDate);
+              application.getId(),
+              application.getEtag(),
+              previousRetentionDate,
+              newRetentionDate,
+              update.claimsId());
           log.debug("Updated data retention date for application with ID {}", application.getId());
         } catch (Exception e) {
           log.error(
@@ -72,13 +77,14 @@ public class DataRetentionDateResolver {
     }
   }
 
-  private record RetentionDateUpdate(boolean shouldUpdate, OffsetDateTime newRetentionDate) {
-    static RetentionDateUpdate hasApproval(OffsetDateTime newRetentionDate) {
-      return new RetentionDateUpdate(true, newRetentionDate);
+  private record RetentionDateUpdate(
+      boolean shouldUpdate, OffsetDateTime newRetentionDate, UUID claimsId) {
+    static RetentionDateUpdate hasApproval(OffsetDateTime newRetentionDate, UUID claimsId) {
+      return new RetentionDateUpdate(true, newRetentionDate, claimsId);
     }
 
     static RetentionDateUpdate noApproval() {
-      return new RetentionDateUpdate(false, null);
+      return new RetentionDateUpdate(false, null, null);
     }
   }
 
@@ -88,7 +94,8 @@ public class DataRetentionDateResolver {
           claimsGateway.getClaims(application.getProviderOfficeCode(), application.getUfn());
       final var latestClaim = getLatestClaim(response);
       if (latestClaim != null && STATUS_TO_CHECK.equals(latestClaim.getStatus())) {
-        return RetentionDateUpdate.hasApproval(latestClaim.getCreatedOn());
+        return RetentionDateUpdate.hasApproval(
+            latestClaim.getCreatedOn(), latestClaim.getClaimId());
       }
       return RetentionDateUpdate.noApproval();
     } catch (Exception e) {

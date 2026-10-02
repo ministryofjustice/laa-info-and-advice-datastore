@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -42,9 +43,10 @@ class UserDrivenEventServiceTest {
     when(request.getRequestURI()).thenReturn("/api/v0/applications:start-application");
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
     when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
+    final UUID applicationId = UUID.randomUUID();
 
     // Act
-    sut.record(payload, "office-code-1");
+    sut.record(payload, "office-code-1", applicationId);
 
     // Assert
     ArgumentCaptor<EventEntity> captor = ArgumentCaptor.forClass(EventEntity.class);
@@ -53,6 +55,7 @@ class UserDrivenEventServiceTest {
     assertThat(saved.getChangedBy()).isEqualTo("test-user");
     assertThat(saved.getProviderFirmCode()).isEqualTo("123456");
     assertThat(saved.getProviderOfficeCode()).isEqualTo("office-code-1");
+    assertThat(saved.getApplicationId()).isEqualTo(applicationId);
     assertThat(saved.getCorrelationId()).isEqualTo("test-correlation-id");
     assertThat(saved.getServiceName()).isEqualTo("test-service");
     assertThat(saved.getHttpMethod()).isEqualTo("POST");
