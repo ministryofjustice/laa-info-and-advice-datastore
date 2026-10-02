@@ -61,12 +61,34 @@ logging:
 
 laa:
   datastore:
+    data-retention:
+      years-offset: ${DATA_RETENTION_YEARS_OFFSET:6}
+      cron: ${RETENTION_RESOLVER_CRON:0 0 0 * * *}
     # Trusts the forwarded X-Authorization token (UserContextInterceptor) issued for the calling
     # service's own audience - deliberately separate from resourceserver.jwt tenants below so this
     # trust never extends to the primary Authorization header/endpoint authorization.
     trusted-caller:
       issuer-uri: ${LAA_OAUTH2_ISSUER_URI:https://placeholder.issuer.uri/v2.0}
       audience: ${TRUSTED_CALLER_AUDIENCE:api://placeholder-caller-audience}
+    # Field names redacted out of recorded event payloads (see EventService/PiiRedactor) and
+    # stashed in EventEntity.piiData instead, keyed by a generated UUID.
+    events:
+      pii:
+        fields:
+          - firstName
+          - lastName
+          - dateOfBirth
+          - niNumber
+          - nationalInsuranceNumber
+          - addressLine1
+          - addressLine2
+          - addressLine3
+          - addressLine4
+          - townOrCity
+          - postCode
+          - county
+          - clientFirstName
+          - clientLastName
   springboot.starter:
     oauth2:
       scopes-claim-path: scp

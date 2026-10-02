@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -398,12 +399,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     List<EventEntity> events = eventRepository.findAll();
     assertThat(events).hasSize(1);
-    assertThat(events.getFirst().getPayload()).isEqualTo(objectMapper.readTree(payload));
-    assertThat(events.getFirst().getPayload().get("reasonForReapplication").isNull()).isTrue();
-    assertThat(events.getFirst().getPayload().get("ecfFlag").isNull()).isTrue();
-    assertThat(events.getFirst().getPayload().get("clientDetails").get("niNumber").isNull())
-        .isTrue();
-    assertThat(events.getFirst().getPayload().get("clientDetails").has("address")).isFalse();
+    EventEntity event = events.getFirst();
+    assertThat(event.getPayload().get("reasonForReapplication").isNull()).isTrue();
+    assertThat(event.getPayload().get("ecfFlag").isNull()).isTrue();
+    // niNumber is a configured PII field, so explicit null is redacted to the nil UUID constant.
+    assertThat(event.getPayload().get("clientDetails").get("niNumber").asText())
+        .isEqualTo("00000000-0000-0000-0000-000000000000");
+    assertThat(event.getPayload().get("clientDetails").has("address")).isFalse();
   }
 
   @Test
@@ -732,7 +734,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                     builder ->
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .ufn("123456/1")
+                            .ufn("123456/12")
                             .laaReference("LAA-123")
                             .meansAssessmentRequired(true)
                             .typeOfNonMeans(false)
@@ -766,7 +768,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
 
     clearCache();
     final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
-    assertThat(updated.getUfn()).isEqualTo("123456/1");
+    assertThat(updated.getUfn()).isEqualTo("123456/12");
     assertThat(updated.getLaaReference()).isEqualTo("LAA-123");
     assertThat(updated.getMeansAssessmentRequired()).isTrue();
     assertThat(updated.getTypeOfNonMeans()).isFalse();
@@ -774,6 +776,125 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(updated.getDeterminationId()).isEqualTo(determinationId);
     assertThat(updated.getDeclaration()).isNotNull();
     assertThat(updated.getEvidence().getEvidenceExemptionCode()).isEqualTo("EXEMPT_01");
+  }
+
+  @Test
+  void shouldPatchTenCharacterUfnAndDeclaration() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .ufn("123456/12")
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag":0,"ufn":"123456/123","declaration":
+                     {"declarationConfirmation":true,"dateSigned":"2025-01-01"}}
+                    """))
+        .andExpect(status().isNoContent())
+        .andExpect(header().string("ETag", "\"1\""));
+
+    clearCache();
+    final ApplicationEntity updated = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(updated.getUfn()).isEqualTo("123456/123");
+    assertThat(updated.getDeclaration().isDeclarationConfirmation()).isTrue();
+    assertThat(updated.getDeclaration().getDateSigned().toString()).isEqualTo("2025-01-01");
+
+    mockMvc
+        .perform(get("/api/v0/applications/{id}", applicationId).withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.ufn").value("123456/123"))
+        .andExpect(jsonPath("$.declaration.declarationConfirmation").value(true));
+  }
+
+  @Test
+  void shouldRejectElevenCharacterUfnWithoutChangingUfnOrDeclaration() throws Exception {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .declaration(DeclarationEntityGenerator.createWithoutId(null))
+                            .ufn("123456/12")
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag":0,"ufn":"123456/1234","declaration":
+                     {"declarationConfirmation":true,"dateSigned":"2025-01-01"}}
+                    """))
+        .andExpect(status().isBadRequest());
+
+    clearCache();
+    final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(unchanged.getUfn()).isEqualTo("123456/12");
+    assertThat(unchanged.getDeclaration().isDeclarationConfirmation()).isFalse();
+    assertThat(unchanged.getDeclaration().getDateSigned()).isNull();
+  }
+
+  @Test
+  void shouldRejectDuplicateUfnWithoutChangingUfnOrDeclaration() throws Exception {
+    applicationRepository.saveAndFlush(
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                    .ufn("123456/12")
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .declaration(DeclarationEntityGenerator.createWithoutId(null))
+                            .ufn("654321/98")
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
+    clearCache();
+
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                    {"eTag":0,"ufn":"123456/12","declaration":
+                     {"declarationConfirmation":true,"dateSigned":"2025-01-01"}}
+                    """))
+        .andExpect(status().isConflict());
+
+    clearCache();
+    final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
+    assertThat(unchanged.getUfn()).isEqualTo("654321/98");
+    assertThat(unchanged.getDeclaration().isDeclarationConfirmation()).isFalse();
+    assertThat(unchanged.getDeclaration().getDateSigned()).isNull();
   }
 
   @Test
