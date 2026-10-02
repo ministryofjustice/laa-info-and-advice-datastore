@@ -1,8 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -16,15 +14,7 @@ import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
@@ -36,7 +26,6 @@ import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
-import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
@@ -47,10 +36,6 @@ import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBu
  */
 @ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class EditApplicationIntegrationTest extends BaseIntegrationTest {
-
-  @MockitoSpyBean private ApplicationRepository applicationRepositorySpy;
-  @Autowired private JdbcTemplate jdbcTemplate;
-  @Autowired private PlatformTransactionManager transactionManager;
 
   @Test
   void shouldRejectEditOfCompletedApplicationBeforeCheckingEtag() throws Exception {
@@ -770,8 +755,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  @Transactional(propagation = Propagation.NEVER)
-  void shouldReturnVersionConflictReason_whenConcurrentUpdateWins() throws Exception {
+  void shouldReturnVersionConflictReason_whenEtagDoesNotMatch() throws Exception {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
@@ -780,22 +764,10 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                         builder
                             .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
                             .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                            .etag(1L)))
             .getId();
-    entityManager.clear();
-
-    TransactionTemplate concurrentTransaction = new TransactionTemplate(transactionManager);
-    concurrentTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-    doAnswer(
-            invocation -> {
-              concurrentTransaction.executeWithoutResult(
-                  transactionStatus ->
-                      jdbcTemplate.update(
-                          "UPDATE applications SET etag = etag + 1 WHERE id = ?", applicationId));
-              return invocation.getArgument(0);
-            })
-        .when(applicationRepositorySpy)
-        .save(any(ApplicationEntity.class));
+    clearCache();
 
     mockMvc
         .perform(
