@@ -1,10 +1,8 @@
 package uk.gov.justice.laa.ia.datastore.client.config;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
-import org.openapitools.jackson.nullable.JsonNullableModule;
+import org.openapitools.jackson.nullable.JsonNullableJackson3Module;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -14,7 +12,7 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
@@ -22,7 +20,8 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.resource.authentication.AbstractOAuth2TokenAuthenticationToken;
 import org.springframework.web.client.RestTemplate;
-
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import uk.gov.justice.laa.ia.datastore.client.api.ApplicationApi;
 import uk.gov.justice.laa.ia.datastore.client.invoker.ApiClient;
 
@@ -33,14 +32,17 @@ import uk.gov.justice.laa.ia.datastore.client.invoker.ApiClient;
  *
  * <ul>
  *   <li>An {@link OAuth2AuthorizedClientManager} bean (provided by spring-security-oauth2-client)
- *   <li>{@code laa.datastore.client.base-url} and {@code laa.datastore.client.client-registration-id} properties
+ *   <li>{@code laa.datastore.client.base-url} and {@code
+ *       laa.datastore.client.client-registration-id} properties
  * </ul>
  *
  * <p>The configured {@link RestTemplate} attaches two auth headers to every request:
  *
  * <ul>
- *   <li>{@code Authorization}: app-level Bearer token acquired via the OAuth2 client credentials grant
- *   <li>{@code X-Authorization}: the incoming user's JWT, forwarded from the active {@link SecurityContextHolder}
+ *   <li>{@code Authorization}: app-level Bearer token acquired via the OAuth2 client credentials
+ *       grant
+ *   <li>{@code X-Authorization}: the incoming user's JWT, forwarded from the active {@link
+ *       SecurityContextHolder}
  * </ul>
  */
 @AutoConfiguration
@@ -52,13 +54,16 @@ public class DatastoreApiClientConfiguration {
   public ApplicationApi applicationApi(
       DatastoreClientProperties props, OAuth2AuthorizedClientManager clientManager) {
     RestTemplate restTemplate = new RestTemplate(new JdkClientHttpRequestFactory());
-    MappingJackson2HttpMessageConverter jacksonConverter =
-        new MappingJackson2HttpMessageConverter();
-    ObjectMapper objectMapper = jacksonConverter.getObjectMapper();
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.registerModule(new JsonNullableModule());
-    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    JsonMapper.Builder mapperBuilder =
+        JsonMapper.builder()
+            .addModule(new JsonNullableJackson3Module())
+            .changeDefaultPropertyInclusion(
+                inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL))
+            .configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+    JacksonJsonHttpMessageConverter jacksonConverter =
+        new JacksonJsonHttpMessageConverter(mapperBuilder);
     restTemplate.getMessageConverters().add(0, jacksonConverter);
+    restTemplate.getMessageConverters().add(0, new ApplicationResponseHttpMessageConverter());
     restTemplate
         .getInterceptors()
         .add(new DatastoreAuthInterceptor(clientManager, props.clientRegistrationId()));
@@ -92,8 +97,7 @@ public class DatastoreApiClientConfiguration {
           OAuth2AuthorizeRequest.withClientRegistrationId(clientRegistrationId)
               .principal("datastore-client")
               .build();
-      OAuth2AccessToken accessToken =
-          clientManager.authorize(authorizeRequest).getAccessToken();
+      OAuth2AccessToken accessToken = clientManager.authorize(authorizeRequest).getAccessToken();
       request.getHeaders().setBearerAuth(accessToken.getTokenValue());
     }
 
