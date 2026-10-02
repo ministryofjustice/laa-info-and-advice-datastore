@@ -1,12 +1,13 @@
-# NOTE: deliberately workflow_dispatch-only for now. Broker credentials ARE configured
-# (PACT_BROKER_URL/USERNAME/PASSWORD secrets), but no consumer has published a pact naming this
-# provider yet - the broker 404s "for-verification" requests for pacticipants it has never seen,
-# so running this on every PR/push would just fail CI. Re-add `pull_request`/`push` triggers once
-# at least one consumer pact exists to verify.
+# Runs on every PR/push to main (verifying against main/matching-branch consumer pacts), and can
+# also be triggered manually - either by hand or by the broker's webhook when a new/changed
+# consumer pact is published, passing the specific consumer/branch to verify.
 name: Pact Provider Verification
-run-name: Pact verify — ${{ github.event.inputs.consumer || 'manual' }}
 
 on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       consumer:
@@ -41,6 +42,8 @@ jobs:
           PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
           PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
           GIT_SHA: ${{ github.sha }}
-          GIT_BRANCH: ${{ github.ref_name }}
+          # github.ref_name is the PR merge ref (e.g. "123/merge") on pull_request events, not the
+          # actual branch name - head_ref gives the real branch name there instead.
+          GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
           PACT_CONSUMER: ${{ github.event.inputs.consumer }}
           PACT_CONSUMER_BRANCH: ${{ github.event.inputs.consumerBranch }}
