@@ -806,7 +806,7 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.reason").value("APPLICATION_VERSION_CONFLICT"));
 
-    entityManager.clear();
+    clearCache();
     final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
     assertThat(unchanged.getEtag()).isEqualTo(1);
     assertThat(unchanged.getLaaReference()).isNull();
