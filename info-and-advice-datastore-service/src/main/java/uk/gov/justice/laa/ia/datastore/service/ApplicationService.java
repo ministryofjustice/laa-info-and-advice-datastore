@@ -439,7 +439,7 @@ public class ApplicationService {
   private void applyApplicationPatch(
       EditApplicationCommand command, ApplicationEntity application) {
     JsonNullable<String> reasonForReapplication = command.getReasonForReapplication();
-    if (isPresent(reasonForReapplication) && reasonForReapplication.get() != null) {
+    if (isPresent(reasonForReapplication)) {
       application.setReasonForReapplication(reasonForReapplication.get());
     }
     applyNullable(command.getEcfFlag(), application::setEcfFlag);

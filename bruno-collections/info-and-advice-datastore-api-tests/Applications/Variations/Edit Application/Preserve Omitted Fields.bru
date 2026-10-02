@@ -32,7 +32,7 @@ tests {
 
   await test("omitted nullable properties preserve their values", async function() {
     const application = (await bru.runRequest("Applications/Get Application")).data;
-    expect(application.reasonForReapplication).to.equal("Retained root reason");
+    expect(application.reasonForReapplication).to.equal("Retained ReapplicationReason");
     expect(application.ecfFlag).to.equal(true);
     expect(application.scopingQuestions).to.deep.equal({
       priorLegalAid: "same_matter",
