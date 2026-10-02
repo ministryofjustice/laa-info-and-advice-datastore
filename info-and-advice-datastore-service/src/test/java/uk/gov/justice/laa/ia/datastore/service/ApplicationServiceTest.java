@@ -81,7 +81,7 @@ public class ApplicationServiceTest {
   @Mock private ClientDetailsMapper clientDetailsMapper;
   @Mock private UserContext userContext;
   @Mock private ObjectMapper objectMapper;
-  @Mock private EventService eventService;
+  @Mock private UserDrivenEventService eventService;
   @Mock private EntityManager entityManager;
 
   @InjectMocks private ApplicationService sut;
@@ -135,7 +135,7 @@ public class ApplicationServiceTest {
     assertThrows(ProviderOfficeNotAuthorizedException.class, () -> sut.createApplication(cmd));
 
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(StartApplicationCommand.class), any());
+    verify(eventService, never()).record(any(StartApplicationCommand.class), any(), any());
   }
 
   @Test
@@ -156,7 +156,7 @@ public class ApplicationServiceTest {
 
     verify(mapper, never()).toApplicationEntity(any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(StartApplicationCommand.class), any());
+    verify(eventService, never()).record(any(StartApplicationCommand.class), any(), any());
   }
 
   @Test
@@ -540,9 +540,11 @@ public class ApplicationServiceTest {
   void shouldRecordEvent_whenApplicationCreated() {
     // Arrange
     final String officeCode = UUID.randomUUID().toString();
+    UUID applicationId = UUID.randomUUID();
     final StartApplicationCommand cmd =
         StartApplicationCommand.builder().providerOfficeCode(officeCode).build();
     final ApplicationEntity entity = new ApplicationEntity();
+    entity.setId(applicationId);
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
     when(repo.save(any(ApplicationEntity.class))).thenAnswer(i -> i.getArgument(0));
@@ -551,7 +553,7 @@ public class ApplicationServiceTest {
     sut.createApplication(cmd);
 
     // Assert
-    verify(eventService, times(1)).record(cmd, officeCode);
+    verify(eventService, times(1)).record(cmd, officeCode, applicationId);
   }
 
   @Test
@@ -587,7 +589,7 @@ public class ApplicationServiceTest {
     sut.updateMeansData(UUID.randomUUID(), UpdateMeansDataCommand.builder().eTag(0L).build());
 
     // Assert
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -611,7 +613,7 @@ public class ApplicationServiceTest {
     sut.updateClientDeclaration(applicationId, command);
 
     // Assert
-    verify(eventService, times(1)).record(command, officeCode);
+    verify(eventService, times(1)).record(command, officeCode, applicationId);
   }
 
   @Test
@@ -624,7 +626,7 @@ public class ApplicationServiceTest {
     sut.updateClientDeclaration(UUID.randomUUID(), (DeclarationCommand) null);
 
     // Assert
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -646,7 +648,8 @@ public class ApplicationServiceTest {
     sut.updateEvidence(application.getId(), command);
 
     // Assert
-    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+    verify(eventService, times(1))
+        .record(command, application.getProviderOfficeCode(), application.getId());
   }
 
   @Test
@@ -659,7 +662,7 @@ public class ApplicationServiceTest {
     sut.updateEvidence(UUID.randomUUID(), (UpdateEvidenceCommand) null);
 
     // Assert
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -806,7 +809,8 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(mapper, times(1)).updateApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+    verify(eventService, times(1))
+        .record(command, application.getProviderOfficeCode(), applicationId);
   }
 
   @Test
@@ -824,7 +828,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(mapper, never()).updateApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -981,7 +985,8 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(mapper, times(1)).editApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+    verify(eventService, times(1))
+        .record(command, application.getProviderOfficeCode(), applicationId);
   }
 
   @Test
@@ -1126,7 +1131,7 @@ public class ApplicationServiceTest {
     assertTrue(sut.editApplication(applicationId, command).isPresent());
     assertThat(clientDetails.getAddress()).isSameAs(address);
     verify(repo).save(application);
-    verify(eventService).record(command, officeCode);
+    verify(eventService).record(command, officeCode, applicationId);
   }
 
   @Test
@@ -1351,7 +1356,7 @@ public class ApplicationServiceTest {
     assertThrows(DuplicateUfnException.class, () -> sut.editApplication(applicationId, command));
     verify(mapper, never()).editApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -1368,7 +1373,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(mapper, never()).editApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -1441,7 +1446,8 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(clientDetailsMapper, times(1)).updateClientDetailsEntity(command, clientDetails);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+    verify(eventService, times(1))
+        .record(command, application.getProviderOfficeCode(), applicationId);
   }
 
   @Test
@@ -1459,7 +1465,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test

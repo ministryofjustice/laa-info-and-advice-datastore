@@ -7,8 +7,10 @@ import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
 
 /** Configuration for Jackson ObjectMapper. */
+@ExcludeFromCodeCoverage(reason = "Config")
 @Configuration
 public class JacksonConfig {
 
