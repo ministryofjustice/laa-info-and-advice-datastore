@@ -9,6 +9,54 @@ test {
     finalizedBy jacocoTestReport
 }
 
+// --- Pact provider verification: dedicated source set, no DB, service layer mocked ---
+sourceSets {
+    pactTest {
+        compileClasspath += sourceSets.main.output + sourceSets.test.output
+        runtimeClasspath += compileClasspath
+    }
+}
+
+configurations {
+    pactTestImplementation.extendsFrom implementation, testImplementation
+    pactTestRuntimeOnly.extendsFrom   runtimeOnly, testRuntimeOnly
+}
+
+dependencies {
+    pactTestImplementation 'au.com.dius.pact.provider:spring7:4.7.5'
+    pactTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    pactTestImplementation 'org.apache.httpcomponents.client5:httpclient5'
+}
+
+// Fetches consumer pacts from the broker, verifies them against this app, publishes results.
+tasks.register('pactTest', Test) {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.pactTest.output.classesDirs
+    classpath       = sourceSets.pactTest.runtimeClasspath
+
+    systemProperty 'pact.provider.version',        System.getenv('GIT_SHA') ?: project.version
+    systemProperty 'pact.verifier.publishResults', 'true'
+    // Property names matter: @PactBroker's defaults resolve these exact keys (`pactbroker.*`, no
+    // dot after "pact") - `pact.broker.url` etc. would silently be ignored, leaving the broker host
+    // unset ("Invalid pact broker host specified").
+    systemProperty 'pactbroker.url',              System.getenv('PACT_BROKER_URL')
+    systemProperty 'pactbroker.auth.username',    System.getenv('PACT_BROKER_USERNAME')
+    systemProperty 'pactbroker.auth.password',    System.getenv('PACT_BROKER_PASSWORD')
+    // Required (camelCase, not `pact.provider.branch`) whenever a `matchingBranch` selector is used
+    // below - the broker rejects the "for-verification" request with a 400 otherwise.
+    systemProperty 'pactbroker.providerBranch',   System.getenv('GIT_BRANCH') ?: 'main'
+
+    // Consumer version selectors - which consumer pacts to verify.
+    def consumer       = System.getenv('PACT_CONSUMER')         // set by the broker webhook
+    def consumerBranch = System.getenv('PACT_CONSUMER_BRANCH')  // set by the broker webhook
+    def selectors = [ [mainBranch: true], [matchingBranch: true] ]
+    if (consumer && consumerBranch) {
+        selectors << [pacticipant: consumer, branch: consumerBranch]
+    }
+    systemProperty 'pactbroker.consumerversionselectors.rawjson',
+        groovy.json.JsonOutput.toJson(selectors)
+}
+
 jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
