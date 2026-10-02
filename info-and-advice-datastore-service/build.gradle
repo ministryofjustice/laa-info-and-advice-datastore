@@ -23,7 +23,7 @@ configurations {
 }
 
 dependencies {
-    pactTestImplementation 'au.com.dius.pact.provider:spring7:4.7.0-beta.3'
+    pactTestImplementation 'au.com.dius.pact.provider:spring7:4.7.5'
     pactTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     pactTestImplementation 'org.apache.httpcomponents.client5:httpclient5'
 }
