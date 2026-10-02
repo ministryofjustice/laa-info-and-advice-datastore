@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
@@ -46,7 +47,16 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .content(payload))
         .andExpect(status().isCreated());
 
-    assertSingleEventRecorded("POST", "/api/v0/applications:start-application", payload);
+    EventEntity event = assertSingleEventRecorded("POST", "/api/v0/applications:start-application");
+    JsonNode originalClient = objectMapper.readTree(payload).get("client");
+    JsonNode storedClient = event.getPayload().get("client");
+    assertPiiRedacted(event, storedClient, originalClient, "firstName");
+    assertPiiRedacted(event, storedClient, originalClient, "lastName");
+    assertPiiRedacted(event, storedClient, originalClient, "dateOfBirth");
+    assertPiiRedacted(event, storedClient, originalClient, "nationalInsuranceNumber");
+    assertThat(storedClient.get("noFixedAbode")).isEqualTo(originalClient.get("noFixedAbode"));
+    assertThat(event.getPayload().get("providerOfficeCode"))
+        .isEqualTo(objectMapper.readTree(payload).get("providerOfficeCode"));
   }
 
   @Test
@@ -68,7 +78,8 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .content(payload))
         .andExpect(status().isNoContent());
 
-    assertSingleEventRecorded("PUT", applicationId.toString(), payload);
+    EventEntity event = assertSingleEventRecorded("PUT", applicationId.toString());
+    assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(payload));
   }
 
   @Test
@@ -90,7 +101,8 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .content(payload))
         .andExpect(status().isNoContent());
 
-    assertSingleEventRecorded("PATCH", applicationId.toString(), payload);
+    EventEntity event = assertSingleEventRecorded("PATCH", applicationId.toString());
+    assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(payload));
   }
 
   @Test
@@ -106,7 +118,8 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
                 .content(payload))
         .andExpect(status().isNoContent());
 
-    assertSingleEventRecorded("PUT", applicationId.toString(), payload);
+    EventEntity event = assertSingleEventRecorded("PUT", applicationId.toString());
+    assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(payload));
   }
 
   @Test
@@ -147,8 +160,8 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     assertThat(events.get(1).getUrlPath()).contains(":update-evidence");
   }
 
-  private void assertSingleEventRecorded(
-      String expectedMethod, String expectedUrlContains, String expectedPayload) throws Exception {
+  private EventEntity assertSingleEventRecorded(String expectedMethod, String expectedUrlContains)
+      throws Exception {
     clearCache();
     List<EventEntity> events = eventRepository.findAll();
     assertThat(events).hasSize(1);
@@ -159,7 +172,15 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
     assertThat(event.getProviderFirmCode()).isEqualTo(FIRM_CODE);
     assertThat(event.getSequenceNumber()).isNotNull();
     assertThat(event.getCreatedAt()).isNotNull();
-    assertThat(event.getPayload()).isEqualTo(objectMapper.readTree(expectedPayload));
+    return event;
+  }
+
+  // Asserts a PII field was replaced by a UUID in the stored payload, resolvable via piiData.
+  private static void assertPiiRedacted(
+      EventEntity event, JsonNode storedParent, JsonNode originalParent, String field) {
+    String uuid = storedParent.get(field).asText();
+    assertThat(uuid).isNotEqualTo(originalParent.get(field).asText());
+    assertThat(event.getPiiData().get(uuid)).isEqualTo(originalParent.get(field));
   }
 
   private UUID savedApplicationId() {

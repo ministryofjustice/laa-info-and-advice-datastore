@@ -1,6 +1,8 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ public class EventService {
   private final UserContext userContext;
   private final HttpServletRequest request;
   private final ObjectMapper objectMapper;
+  private final PiiRedactor piiRedactor;
 
   /**
    * Records a mutation event. Must be called within an active transaction so that the event and the
@@ -27,6 +30,8 @@ public class EventService {
    *     as stored on the application record.
    */
   public void record(Object payload, String providerOfficeCode) {
+    JsonNode payloadNode = objectMapper.valueToTree(payload);
+    ObjectNode piiData = piiRedactor.redact(payloadNode);
     EventEntity event =
         EventEntity.builder()
             .changedBy(userContext.getCurrentUser())
@@ -36,7 +41,8 @@ public class EventService {
             .serviceName(userContext.getServiceName())
             .httpMethod(request.getMethod())
             .urlPath(request.getRequestURI())
-            .payload(objectMapper.valueToTree(payload))
+            .payload(payloadNode)
+            .piiData(piiData)
             .build();
     repository.save(event);
   }
