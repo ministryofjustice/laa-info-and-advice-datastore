@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.scheduled;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,21 +22,26 @@ public class DataRetentionDateResolver {
   private final ClaimsGateway claimsGateway;
   private final int dataRetentionYearsOffset;
   private final ApplicationRepository applicationRepository;
+  private final RetentionDateUpdateService retentionDateUpdateService;
   private static final String STATUS_TO_CHECK = "APPROVED";
 
   /** Constructs the resolver, binding the configured data retention years offset. */
   public DataRetentionDateResolver(
       ClaimsGateway claimsGateway,
       @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
-      ApplicationRepository applicationRepository) {
+      ApplicationRepository applicationRepository,
+      RetentionDateUpdateService retentionDateUpdateService) {
     this.claimsGateway = claimsGateway;
     this.dataRetentionYearsOffset = dataRetentionYearsOffset;
     this.applicationRepository = applicationRepository;
+    this.retentionDateUpdateService = retentionDateUpdateService;
   }
 
   /**
    * Executes the data retention date resolution process for all applications missing a retention
-   * date. Invoked by a profile-specific scheduler bean rather than scheduled directly.
+   * date. Invoked by a profile-specific scheduler bean rather than scheduled directly. Each
+   * application is saved and recorded in its own transaction so one failure doesn't prevent others
+   * in the collection from being processed.
    */
   public void run() {
     final var applications =
@@ -45,14 +51,23 @@ public class DataRetentionDateResolver {
     for (var application : applications) {
       RetentionDateUpdate update = shouldUpdateDataRetentionDate(application);
       if (update.shouldUpdate) {
-        // Logic to update the data retention date for the application goes here
-        application.setDataRetentionDate(
+        Instant previousRetentionDate = application.getDataRetentionDate();
+        Instant newRetentionDate =
             update
                 .newRetentionDate
                 .plus(dataRetentionYearsOffset, java.time.temporal.ChronoUnit.YEARS)
-                .toInstant());
-        applicationRepository.save(application);
-        log.debug("Updated data retention date for application with ID {}", application.getId());
+                .toInstant();
+        try {
+          retentionDateUpdateService.saveAndRecord(
+              application.getId(), application.getEtag(), previousRetentionDate, newRetentionDate);
+          log.debug("Updated data retention date for application with ID {}", application.getId());
+        } catch (Exception e) {
+          log.error(
+              "Error while saving updated data retention date "
+                  + "for application with ID {}, skipping application",
+              application.getId(),
+              e);
+        }
       }
     }
   }

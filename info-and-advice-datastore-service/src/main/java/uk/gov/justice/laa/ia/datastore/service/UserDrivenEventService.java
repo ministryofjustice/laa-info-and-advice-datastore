@@ -8,10 +8,13 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 
-/** Service for recording mutation events in the same transaction as the triggering operation. */
+/**
+ * Service for recording user-driven mutation events in the same transaction as the triggering
+ * operation.
+ */
 @Service
 @RequiredArgsConstructor
-public class EventService {
+public class UserDrivenEventService {
 
   private final EventRepository repository;
   private final UserContext userContext;

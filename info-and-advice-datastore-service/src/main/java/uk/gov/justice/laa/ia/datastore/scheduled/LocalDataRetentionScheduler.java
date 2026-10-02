@@ -13,7 +13,7 @@ public class LocalDataRetentionScheduler {
     this.dataRetentionDateResolver = dataRetentionDateResolver;
   }
 
-  @Scheduled(initialDelay = 0, fixedRate = 3_600_000)
+  @Scheduled(initialDelay = 0, fixedRate = 600000)
   public void run() {
     dataRetentionDateResolver.run();
   }

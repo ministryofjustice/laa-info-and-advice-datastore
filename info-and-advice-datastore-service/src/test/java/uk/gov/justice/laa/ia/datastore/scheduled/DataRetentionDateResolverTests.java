@@ -2,6 +2,9 @@ package uk.gov.justice.laa.ia.datastore.scheduled;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +40,7 @@ class DataRetentionDateResolverTests {
 
   @Mock private ClaimsGateway claimsGateway;
   @Mock private ApplicationRepository applicationRepository;
+  @Mock private RetentionDateUpdateService retentionDateUpdateService;
 
   private DataRetentionDateResolver sut;
 
@@ -43,7 +48,10 @@ class DataRetentionDateResolverTests {
   void setUp() {
     this.sut =
         new DataRetentionDateResolver(
-            claimsGateway, DATA_RETENTION_YEARS_OFFSET, applicationRepository);
+            claimsGateway,
+            DATA_RETENTION_YEARS_OFFSET,
+            applicationRepository,
+            retentionDateUpdateService);
   }
 
   @SuppressWarnings("unchecked")
@@ -151,9 +159,58 @@ class DataRetentionDateResolverTests {
     sut.run();
 
     // Assert
-    final ArgumentCaptor<ApplicationEntity> savedCaptor =
-        ArgumentCaptor.forClass(ApplicationEntity.class);
-    verify(applicationRepository, times(1)).save(savedCaptor.capture());
-    assertThat(savedCaptor.getValue().getUfn()).isEqualTo(succeedingUfn);
+    final ArgumentCaptor<UUID> savedIdCaptor = ArgumentCaptor.forClass(UUID.class);
+    verify(retentionDateUpdateService, times(1))
+        .saveAndRecord(savedIdCaptor.capture(), anyLong(), any(), any());
+    assertThat(savedIdCaptor.getValue()).isEqualTo(succeedingApplication.getId());
+  }
+
+  @Test
+  void givenSaveAndRecordThrowsExceptionForOneApplication_thenContinueProcessingOthers() {
+    // Arrange
+    final String failingUfn = "555555/1";
+    final String succeedingUfn = "666666/1";
+    final ApplicationEntity failingApplication =
+        ApplicationEntityGenerator.createWithId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(failingUfn)
+                    .dataRetentionDate(null)
+                    .providerOfficeCode(OFFICE_CODE));
+    final ApplicationEntity succeedingApplication =
+        ApplicationEntityGenerator.createWithId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(succeedingUfn)
+                    .dataRetentionDate(null)
+                    .providerOfficeCode(OFFICE_CODE));
+    when(applicationRepository.findAll(anySpecification()))
+        .thenReturn(List.of(failingApplication, succeedingApplication));
+    final OffsetDateTime claimApprovedDate =
+        OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    final ClaimsModel approvedClaim =
+        ClaimsModel.builder()
+            .status("APPROVED")
+            .createdOn(claimApprovedDate)
+            .updatedOn(claimApprovedDate)
+            .build();
+    when(claimsGateway.getClaims(OFFICE_CODE, failingUfn))
+        .thenReturn(ApplicationClaimResponse.builder().claims(List.of(approvedClaim)).build());
+    when(claimsGateway.getClaims(OFFICE_CODE, succeedingUfn))
+        .thenReturn(ApplicationClaimResponse.builder().claims(List.of(approvedClaim)).build());
+    doThrow(new RuntimeException("DB constraint violation"))
+        .when(retentionDateUpdateService)
+        .saveAndRecord(eq(failingApplication.getId()), anyLong(), any(), any());
+
+    // Act
+    sut.run();
+
+    // Assert
+    verify(retentionDateUpdateService, times(1))
+        .saveAndRecord(eq(failingApplication.getId()), anyLong(), any(), any());
+    verify(retentionDateUpdateService, times(1))
+        .saveAndRecord(eq(succeedingApplication.getId()), anyLong(), any(), any());
   }
 }

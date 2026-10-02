@@ -81,7 +81,7 @@ public class ApplicationServiceTest {
   @Mock private ClientDetailsMapper clientDetailsMapper;
   @Mock private UserContext userContext;
   @Mock private ObjectMapper objectMapper;
-  @Mock private EventService eventService;
+  @Mock private UserDrivenEventService eventService;
   @Mock private EntityManager entityManager;
 
   @InjectMocks private ApplicationService sut;

@@ -11,6 +11,7 @@ import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolver;
 import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataRetentionScheduler;
 import uk.gov.justice.laa.ia.datastore.scheduled.ProdDataRetentionScheduler;
+import uk.gov.justice.laa.ia.datastore.scheduled.RetentionDateUpdateService;
 
 /** Configuration class for scheduled tasks. */
 @Configuration
@@ -21,9 +22,10 @@ public class ScheduledTasksConfig {
   public DataRetentionDateResolver dataRetentionDateResolver(
       ClaimsGateway claimsGateway,
       @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
-      ApplicationRepository applicationRepository) {
+      ApplicationRepository applicationRepository,
+      RetentionDateUpdateService retentionDateUpdateService) {
     return new DataRetentionDateResolver(
-        claimsGateway, dataRetentionYearsOffset, applicationRepository);
+        claimsGateway, dataRetentionYearsOffset, applicationRepository, retentionDateUpdateService);
   }
 
   /**

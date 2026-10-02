@@ -68,7 +68,7 @@ public class ApplicationService {
   private final ClientDetailsMapper clientDetailsMapper;
   private final UserContext userContext;
   private final ObjectMapper objectMapper;
-  private final EventService eventService;
+  private final UserDrivenEventService eventService;
 
   /**
    * Create an application.

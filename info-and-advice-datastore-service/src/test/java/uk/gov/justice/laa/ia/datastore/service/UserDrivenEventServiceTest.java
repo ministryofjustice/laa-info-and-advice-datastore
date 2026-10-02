@@ -18,16 +18,16 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 
-/** Unit tests for {@link EventService}. */
+/** Unit tests for {@link UserDrivenEventService}. */
 @ExtendWith(MockitoExtension.class)
-class EventServiceTest {
+class UserDrivenEventServiceTest {
 
   @Mock private EventRepository repository;
   @Mock private UserContext userContext;
   @Mock private HttpServletRequest request;
   @Mock private ObjectMapper objectMapper;
 
-  @InjectMocks private EventService sut;
+  @InjectMocks private UserDrivenEventService sut;
 
   @Test
   void shouldSaveEventWithCorrectFields() {
