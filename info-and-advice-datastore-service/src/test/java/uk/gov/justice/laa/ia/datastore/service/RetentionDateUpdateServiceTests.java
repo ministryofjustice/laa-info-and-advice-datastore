@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.ia.datastore.scheduled;
+package uk.gov.justice.laa.ia.datastore.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
-import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
 
 /** Unit tests for the {@link RetentionDateUpdateService}. */
 @ExtendWith(MockitoExtension.class)

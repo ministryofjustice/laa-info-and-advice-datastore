@@ -29,11 +29,12 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.models.ApplicationClaimResponse;
 import uk.gov.justice.laa.ia.datastore.models.ClaimsModel;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 
-/** Unit tests for the {@link DataRetentionDateResolver}. */
+/** Unit tests for the {@link DataRetentionDateResolverTask}. */
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 @ExtendWith(MockitoExtension.class)
-class DataRetentionDateResolverTests {
+class DataRetentionDateResolverTaskTests {
 
   private static final int DATA_RETENTION_YEARS_OFFSET = 3;
   private static final String OFFICE_CODE = "test-office-code";
@@ -42,12 +43,12 @@ class DataRetentionDateResolverTests {
   @Mock private ApplicationRepository applicationRepository;
   @Mock private RetentionDateUpdateService retentionDateUpdateService;
 
-  private DataRetentionDateResolver sut;
+  private DataRetentionDateResolverTask sut;
 
   @BeforeEach
   void setUp() {
     this.sut =
-        new DataRetentionDateResolver(
+        new DataRetentionDateResolverTask(
             claimsGateway,
             DATA_RETENTION_YEARS_OFFSET,
             applicationRepository,

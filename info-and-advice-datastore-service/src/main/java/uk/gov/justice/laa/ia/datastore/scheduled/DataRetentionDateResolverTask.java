@@ -11,6 +11,7 @@ import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.models.ApplicationClaimResponse;
 import uk.gov.justice.laa.ia.datastore.models.ClaimsModel;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
 /**
@@ -19,7 +20,7 @@ import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
  */
 @Component
 @Slf4j
-public class DataRetentionDateResolver {
+public class DataRetentionDateResolverTask {
   private final ClaimsGateway claimsGateway;
   private final int dataRetentionYearsOffset;
   private final ApplicationRepository applicationRepository;
@@ -27,7 +28,7 @@ public class DataRetentionDateResolver {
   private static final String STATUS_TO_CHECK = "APPROVED";
 
   /** Constructs the resolver, binding the configured data retention years offset. */
-  public DataRetentionDateResolver(
+  public DataRetentionDateResolverTask(
       ClaimsGateway claimsGateway,
       @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
       ApplicationRepository applicationRepository,

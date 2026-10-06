@@ -25,15 +25,16 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.models.ApplicationClaimResponse;
 import uk.gov.justice.laa.ia.datastore.models.ClaimsModel;
+import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
-/** Integration tests for the DataRetentionDateResolver scheduled task. */
+/** Integration tests for the DataRetentionDateResolverTask scheduled task. */
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 @ExtendWith(MockitoExtension.class)
-public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTest {
+public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegrationTest {
 
-  private DataRetentionDateResolver sut;
+  private DataRetentionDateResolverTask sut;
   @Mock private ClaimsGateway claimsGateway;
   static final String officeCode = "test-office-code-for-data-retention";
   static final int DATA_RETENTION_YEARS_OFFSET = 3;
@@ -41,7 +42,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
   @BeforeEach
   void setUpResolver() {
     this.sut =
-        new DataRetentionDateResolver(
+        new DataRetentionDateResolverTask(
             claimsGateway,
             DATA_RETENTION_YEARS_OFFSET,
             applicationRepository,
@@ -149,7 +150,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
     var event = events.get(0);
     assertEquals(officeCode, event.getProviderOfficeCode());
     assertEquals("SYSTEM", event.getChangedBy());
-    assertEquals(DataRetentionDateResolver.class.getSimpleName(), event.getUrlPath());
+    assertEquals(DataRetentionDateResolverTask.class.getSimpleName(), event.getUrlPath());
     assertEquals(
         expectedDataRetentionDate.toString(), event.getPayload().get("dataRetentionDate").asText());
   }

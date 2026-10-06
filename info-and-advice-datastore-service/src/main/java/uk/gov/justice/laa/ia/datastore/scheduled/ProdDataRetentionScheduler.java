@@ -5,11 +5,12 @@ import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
 
 /** Triggers data retention resolution on a nightly cron for deployed environments. */
 @ExcludeFromCodeCoverage(
-    reason = "Just configures the scheduler, DataRetentionDateResolver handles the actual logic")
+    reason =
+        "Just configures the scheduler, DataRetentionDateResolverTask handles the actual logic")
 public class ProdDataRetentionScheduler {
-  private final DataRetentionDateResolver dataRetentionDateResolver;
+  private final DataRetentionDateResolverTask dataRetentionDateResolver;
 
-  public ProdDataRetentionScheduler(DataRetentionDateResolver dataRetentionDateResolver) {
+  public ProdDataRetentionScheduler(DataRetentionDateResolverTask dataRetentionDateResolver) {
     this.dataRetentionDateResolver = dataRetentionDateResolver;
   }
 

@@ -8,9 +8,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
 import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
-import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolver;
+import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolverTask;
 import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataRetentionScheduler;
-import uk.gov.justice.laa.ia.datastore.scheduled.RetentionDateUpdateService;
+import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 
 /** Configuration class for scheduled tasks. */
 @Configuration
@@ -18,12 +18,12 @@ import uk.gov.justice.laa.ia.datastore.scheduled.RetentionDateUpdateService;
 @ExcludeFromCodeCoverage(reason = "Config")
 public class ScheduledTasksConfig {
   @Bean
-  public DataRetentionDateResolver dataRetentionDateResolver(
+  public DataRetentionDateResolverTask dataRetentionDateResolver(
       ClaimsGateway claimsGateway,
       @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
       ApplicationRepository applicationRepository,
       RetentionDateUpdateService retentionDateUpdateService) {
-    return new DataRetentionDateResolver(
+    return new DataRetentionDateResolverTask(
         claimsGateway, dataRetentionYearsOffset, applicationRepository, retentionDateUpdateService);
   }
 
@@ -34,7 +34,7 @@ public class ScheduledTasksConfig {
   // @Bean
   // @Profile("!local")
   // public ProdDataRetentionScheduler prodDataRetentionScheduler(
-  //     DataRetentionDateResolver dataRetentionDateResolver) {
+  //     DataRetentionDateResolverTask dataRetentionDateResolver) {
   //   return new ProdDataRetentionScheduler(dataRetentionDateResolver);
   // }
 
@@ -45,7 +45,7 @@ public class ScheduledTasksConfig {
   @Bean
   @Profile("local")
   public LocalDataRetentionScheduler localDataRetentionScheduler(
-      DataRetentionDateResolver dataRetentionDateResolver) {
+      DataRetentionDateResolverTask dataRetentionDateResolver) {
     return new LocalDataRetentionScheduler(dataRetentionDateResolver);
   }
 }

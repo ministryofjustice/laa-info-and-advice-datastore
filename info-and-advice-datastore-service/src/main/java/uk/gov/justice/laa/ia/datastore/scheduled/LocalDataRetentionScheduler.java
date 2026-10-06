@@ -5,11 +5,12 @@ import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
 
 /** Triggers data retention resolution on startup and hourly for local development. */
 @ExcludeFromCodeCoverage(
-    reason = "Just configures the scheduler, DataRetentionDateResolver handles the actual logic")
+    reason =
+        "Just configures the scheduler, DataRetentionDateResolverTask handles the actual logic")
 public class LocalDataRetentionScheduler {
-  private final DataRetentionDateResolver dataRetentionDateResolver;
+  private final DataRetentionDateResolverTask dataRetentionDateResolver;
 
-  public LocalDataRetentionScheduler(DataRetentionDateResolver dataRetentionDateResolver) {
+  public LocalDataRetentionScheduler(DataRetentionDateResolverTask dataRetentionDateResolver) {
     this.dataRetentionDateResolver = dataRetentionDateResolver;
   }
 
