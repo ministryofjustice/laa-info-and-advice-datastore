@@ -14,7 +14,7 @@ public class LocalDataRetentionScheduler {
     this.dataRetentionDateResolver = dataRetentionDateResolver;
   }
 
-  @Scheduled(initialDelay = 0, fixedRate = 600000)
+  @Scheduled(initialDelay = 0, fixedRate = 600000) // 600000 ms = 10 minutes
   public void run() {
     dataRetentionDateResolver.run();
   }

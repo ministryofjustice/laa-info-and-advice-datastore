@@ -33,7 +33,7 @@ public class AddressEntity {
   @Column(name = "etag", nullable = false)
   private long etag;
 
-  @Column(name = "address_line_1", nullable = false)
+  @Column(name = "address_line_1")
   private String addressLine1;
 
   @Column(name = "address_line_2")

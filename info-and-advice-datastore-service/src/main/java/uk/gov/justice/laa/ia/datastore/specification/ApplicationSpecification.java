@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.specification;
 
 import jakarta.persistence.criteria.JoinType;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
@@ -20,6 +21,19 @@ public class ApplicationSpecification {
         criteriaBuilder.and(
             criteriaBuilder.isNull(root.get("dataRetentionDate")),
             criteriaBuilder.equal(root.get("applicationState"), ApplicationState.COMPLETED));
+  }
+
+  /**
+   * Setups a specification for finding completed, not-yet-deleted applications whose data retention
+   * date has expired.
+   */
+  public static Specification<ApplicationEntity> findByExpiredDataRetentionDateAndStatus() {
+    return (root, query, criteriaBuilder) ->
+        criteriaBuilder.and(
+            criteriaBuilder.isNotNull(root.get("dataRetentionDate")),
+            criteriaBuilder.lessThanOrEqualTo(root.get("dataRetentionDate"), Instant.now()),
+            criteriaBuilder.equal(root.get("applicationState"), ApplicationState.COMPLETED),
+            criteriaBuilder.isFalse(root.get("deleted")));
   }
 
   /**
