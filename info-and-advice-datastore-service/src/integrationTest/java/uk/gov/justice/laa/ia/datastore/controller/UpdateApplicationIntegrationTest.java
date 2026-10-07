@@ -180,4 +180,35 @@ public class UpdateApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(applicationRepository.findById(applicationId).orElseThrow().getApplicationState())
         .isEqualTo(ApplicationState.DRAFT);
   }
+
+  @Test
+  void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                            .deleted(true)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "applicationState": "COMPLETED"}
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isGone());
+  }
 }

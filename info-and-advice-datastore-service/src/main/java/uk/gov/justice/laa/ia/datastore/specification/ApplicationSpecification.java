@@ -46,11 +46,21 @@ public class ApplicationSpecification {
             (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("id"), applicationId));
   }
 
-  /** Setups a specification for filtering ApplicationEntity by providerFirmCode and officeCodes. */
-  public static Specification<ApplicationEntity> filterByProviderContractInformation(
+  /**
+   * Setups a specification for the default constraints applied to every application listing: must
+   * match the providerFirmCode, must have an officeCode in the user's authorized officeCodes, and
+   * must not have been deleted.
+   */
+  public static Specification<ApplicationEntity> filterByDefaultConstraints(
       String providerFirmCode, List<String> officeCodes) {
     return filterByProviderFirmCode(providerFirmCode)
-        .and(filterByProviderOfficesCodes(officeCodes));
+        .and(filterByProviderOfficesCodes(officeCodes))
+        .and(notDeleted());
+  }
+
+  /** Setups a specification for filtering out ApplicationEntity that have been deleted. */
+  public static Specification<ApplicationEntity> notDeleted() {
+    return (root, query, criteriaBuilder) -> criteriaBuilder.isFalse(root.get("deleted"));
   }
 
   /** Setups a specification for filtering ApplicationEntity by providerFirmCode. */

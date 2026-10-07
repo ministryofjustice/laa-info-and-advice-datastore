@@ -117,8 +117,7 @@ public class ProviderOfficeCodeSpecificationIntegrationTest extends BaseIntegrat
     clearCache();
 
     final Specification<ApplicationEntity> specification =
-        ApplicationSpecification.filterByProviderContractInformation(
-            providerFirmCode, List.of(officeCode));
+        ApplicationSpecification.filterByDefaultConstraints(providerFirmCode, List.of(officeCode));
 
     // Act
     final List<ApplicationEntity> applications = applicationRepository.findAll(specification);

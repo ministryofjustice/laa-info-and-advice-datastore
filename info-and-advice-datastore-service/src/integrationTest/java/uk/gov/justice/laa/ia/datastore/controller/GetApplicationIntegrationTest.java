@@ -119,4 +119,25 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
         .perform(get("/api/v0/applications/{id}", savedEntity.getId()).withBearerReadToken())
         .andExpect(status().isForbidden());
   }
+
+  @Test
+  void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
+    // Arrange
+    ApplicationEntity entity =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                    .deleted(true));
+    ApplicationEntity savedEntity = applicationRepository.save(entity);
+    clearCache();
+
+    // Act & Assert
+    mockMvc
+        .perform(get("/api/v0/applications/{id}", savedEntity.getId()).withBearerReadToken())
+        .andExpect(status().isGone())
+        .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("retention")));
+  }
 }

@@ -28,18 +28,17 @@ public class ProviderOfficeCodesSpecificationTests {
   }
 
   @Test
-  void givenNullOfficeCodes_whenFilterByProviderContractInformation_thenThrows() {
-    assertThatThrownBy(
-            () -> ApplicationSpecification.filterByProviderContractInformation("123456", null))
+  void givenNullOfficeCodes_whenFilterByDefaultConstraints_thenThrows() {
+    assertThatThrownBy(() -> ApplicationSpecification.filterByDefaultConstraints("123456", null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("officeCodes must not be null or empty");
   }
 
   @Test
-  void givenBlankProviderFirmCode_whenFilterByProviderContractInformation_thenThrows() {
+  void givenBlankProviderFirmCode_whenFilterByDefaultConstraints_thenThrows() {
     assertThatThrownBy(
             () ->
-                ApplicationSpecification.filterByProviderContractInformation(
+                ApplicationSpecification.filterByDefaultConstraints(
                     "", Collections.singletonList("office-1")))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("providerFirmCode must not be null or blank");

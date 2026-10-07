@@ -128,6 +128,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
+   * The handler for ApplicationDeletedException.
+   *
+   * @param exception the exception
+   * @return 410 Gone response
+   */
+  @ExceptionHandler(ApplicationDeletedException.class)
+  public ResponseEntity<ProblemDetail> handleApplicationDeletedException(
+      ApplicationDeletedException exception) {
+    log.warn("Application deleted: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.GONE, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.GONE).body(problemDetail);
+  }
+
+  /**
    * Handles invalid client details patches.
    *
    * @param exception the invalid patch exception
