@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.scheduled;
 
+import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,7 @@ public class DataDeletionTask {
     }
   }
 
+  @Transactional
   private void processApplication(ApplicationEntity application) {
     final ClaimsModel latestClaim;
     try {

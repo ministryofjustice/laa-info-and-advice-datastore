@@ -35,6 +35,7 @@ public class ScheduledTasksConfig {
    * and then hourly.
    */
   @Bean
+  @Profile("local")
   public DataDeletionTask dataDeletionTask(
       ApplicationRepository applicationRepository,
       ClaimsGateway claimsGateway,

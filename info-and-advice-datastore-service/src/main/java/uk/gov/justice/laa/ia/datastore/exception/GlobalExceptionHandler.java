@@ -136,7 +136,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(ApplicationDeletedException.class)
   public ResponseEntity<ProblemDetail> handleApplicationDeletedException(
       ApplicationDeletedException exception) {
-    log.warn("Application deleted: {}", exception.getMessage());
+    log.warn("Attempting to access a deleted application: {}", exception.getMessage());
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.GONE, exception.getMessage());
     return ResponseEntity.status(HttpStatus.GONE).body(problemDetail);
