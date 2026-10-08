@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class SystemDrivenEventService {
 
   private final EventRepository repository;
   private final ObjectMapper objectMapper;
+  private final PayloadHasher payloadHasher;
 
   /**
    * Records a mutation event raised by a system process. Must be called within an active
@@ -37,6 +39,7 @@ public class SystemDrivenEventService {
       String providerFirmCode,
       String source,
       UUID applicationId) {
+    JsonNode payloadNode = objectMapper.valueToTree(payload);
     EventEntity event =
         EventEntity.builder()
             .changedBy(SYSTEM_USER)
@@ -46,7 +49,8 @@ public class SystemDrivenEventService {
             .serviceName(SYSTEM_USER)
             .httpMethod(HTTP_METHOD)
             .urlPath(source)
-            .payload(objectMapper.valueToTree(payload))
+            .payload(payloadNode)
+            .payloadHash(payloadHasher.hash(payloadNode))
             .build();
     repository.save(event);
   }

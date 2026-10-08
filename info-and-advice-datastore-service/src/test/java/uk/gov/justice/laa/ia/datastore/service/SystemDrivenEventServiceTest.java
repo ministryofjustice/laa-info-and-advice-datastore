@@ -23,6 +23,7 @@ class SystemDrivenEventServiceTest {
 
   @Mock private EventRepository repository;
   @Mock private ObjectMapper objectMapper;
+  @Mock private PayloadHasher payloadHasher;
 
   @InjectMocks private SystemDrivenEventService sut;
 
@@ -32,6 +33,7 @@ class SystemDrivenEventServiceTest {
     final Object payload = new Object();
     final JsonNode payloadNode = new ObjectMapper().createObjectNode();
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
+    when(payloadHasher.hash(payloadNode)).thenReturn("hash-value");
     when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
     final UUID applicationId = UUID.randomUUID();
 
@@ -50,6 +52,7 @@ class SystemDrivenEventServiceTest {
     assertThat(saved.getHttpMethod()).isEqualTo("SCHEDULED");
     assertThat(saved.getUrlPath()).isEqualTo("DataRetentionDateResolver");
     assertThat(saved.getPayload()).isEqualTo(payloadNode);
+    assertThat(saved.getPayloadHash()).isEqualTo("hash-value");
   }
 
   @Test

@@ -29,6 +29,7 @@ class UserDrivenEventServiceTest {
   @Mock private HttpServletRequest request;
   @Mock private ObjectMapper objectMapper;
   @Mock private PiiRedactor piiRedactor;
+  @Mock private PayloadHasher payloadHasher;
 
   @InjectMocks private UserDrivenEventService sut;
 
@@ -46,6 +47,7 @@ class UserDrivenEventServiceTest {
     when(request.getRequestURI()).thenReturn("/api/v0/applications:start-application");
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
     when(piiRedactor.redact(payloadNode)).thenReturn(piiDataNode);
+    when(payloadHasher.hash(payloadNode)).thenReturn("hash-value");
     when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
     final UUID applicationId = UUID.randomUUID();
 
@@ -65,6 +67,38 @@ class UserDrivenEventServiceTest {
     assertThat(saved.getHttpMethod()).isEqualTo("POST");
     assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-application");
     assertThat(saved.getPayload()).isEqualTo(payloadNode);
+    assertThat(saved.getPayloadHash()).isEqualTo("hash-value");
     assertThat(saved.getPiiData()).isEqualTo(piiDataNode);
+  }
+
+  @Test
+  void isDuplicate_shouldReturnTrue_whenMatchingEventAlreadyRecorded() {
+    // Arrange
+    final Object payload = new Object();
+    final JsonNode payloadNode = new ObjectMapper().createObjectNode();
+    final UUID applicationId = UUID.randomUUID();
+    when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
+    when(payloadHasher.hash(payloadNode)).thenReturn("hash-value");
+    when(repository.existsByApplicationIdAndProviderOfficeCodeAndPayloadHash(
+            applicationId, "office-code-1", "hash-value"))
+        .thenReturn(true);
+
+    // Act + Assert
+    assertThat(sut.isDuplicate(payload, "office-code-1", applicationId)).isTrue();
+  }
+
+  @Test
+  void isDuplicate_shouldCheckEmptyGuid_whenApplicationIdIsNull() {
+    // Arrange
+    final Object payload = new Object();
+    final JsonNode payloadNode = new ObjectMapper().createObjectNode();
+    when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
+    when(payloadHasher.hash(payloadNode)).thenReturn("hash-value");
+    when(repository.existsByApplicationIdAndProviderOfficeCodeAndPayloadHash(
+            new UUID(0L, 0L), "office-code-1", "hash-value"))
+        .thenReturn(false);
+
+    // Act + Assert
+    assertThat(sut.isDuplicate(payload, "office-code-1", null)).isFalse();
   }
 }

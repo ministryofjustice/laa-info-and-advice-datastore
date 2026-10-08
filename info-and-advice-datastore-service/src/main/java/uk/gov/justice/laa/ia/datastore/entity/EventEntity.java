@@ -59,6 +59,9 @@ public class EventEntity {
   @Column(name = "payload", columnDefinition = "jsonb")
   private JsonNode payload;
 
+  @Column(name = "payload_hash")
+  private String payloadHash;
+
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "pii_data", columnDefinition = "jsonb")
   private JsonNode piiData;

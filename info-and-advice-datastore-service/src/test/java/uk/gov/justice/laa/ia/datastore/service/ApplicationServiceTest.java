@@ -38,6 +38,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.exception.DuplicatePayloadException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
@@ -153,6 +154,24 @@ public class ApplicationServiceTest {
 
     // Act + Assert
     assertThrows(DuplicateUfnException.class, () -> sut.createApplication(cmd));
+
+    verify(mapper, never()).toApplicationEntity(any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+    verify(eventService, never()).record(any(StartApplicationCommand.class), any(), any());
+  }
+
+  @Test
+  void createApplication_shouldThrowDuplicatePayloadException_whenPayloadAlreadyExists() {
+    // Arrange
+    final UUID officeId = UUID.randomUUID();
+    final StartApplicationCommand cmd =
+        StartApplicationCommand.builder().providerOfficeCode(officeId.toString()).build();
+
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeId.toString()));
+    when(eventService.isDuplicate(cmd, officeId.toString(), null)).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(DuplicatePayloadException.class, () -> sut.createApplication(cmd));
 
     verify(mapper, never()).toApplicationEntity(any());
     verify(repo, never()).save(any(ApplicationEntity.class));
@@ -348,6 +367,26 @@ public class ApplicationServiceTest {
         ProviderOfficeNotAuthorizedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
+    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateMeansData_shouldThrowDuplicatePayloadException_whenPayloadAlreadyExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).providerOfficeCode(officeCode).build();
+    final UpdateMeansDataCommand command = UpdateMeansDataCommand.builder().eTag(0L).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(eventService.isDuplicate(command, officeCode, applicationId)).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(
+        DuplicatePayloadException.class, () -> sut.updateMeansData(applicationId, command));
     verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
@@ -727,6 +766,25 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateClientDeclaration_shouldThrowDuplicatePayloadException_whenPayloadAlreadyExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application = new ApplicationEntity();
+    application.setProviderOfficeCode(officeCode);
+    final DeclarationCommand command = DeclarationCommand.builder().eTag(0L).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(eventService.isDuplicate(command, officeCode, applicationId)).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(
+        DuplicatePayloadException.class, () -> sut.updateClientDeclaration(applicationId, command));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void updateEvidence_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final ApplicationEntity application =
@@ -764,6 +822,26 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateEvidence_shouldThrowDuplicatePayloadException_whenPayloadAlreadyExists() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null));
+    final UpdateEvidenceCommand command = UpdateEvidenceCommand.builder().eTag(0L).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(application.getProviderOfficeCode()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(eventService.isDuplicate(
+            command, application.getProviderOfficeCode(), application.getId()))
+        .thenReturn(true);
+
+    // Act + Assert
+    assertThrows(
+        DuplicatePayloadException.class, () -> sut.updateEvidence(application.getId(), command));
+    verify(evidenceRepository, never()).save(any(EvidenceEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void updateScopingData_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -779,6 +857,25 @@ public class ApplicationServiceTest {
         () ->
             sut.updateScopingData(
                 applicationId, UpdateScopingDataCommand.builder().eTag(0L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateScopingData_shouldThrowDuplicatePayloadException_whenPayloadAlreadyExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).providerOfficeCode(officeCode).build();
+    final UpdateScopingDataCommand command = UpdateScopingDataCommand.builder().eTag(0L).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(eventService.isDuplicate(command, officeCode, applicationId)).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(
+        DuplicatePayloadException.class, () -> sut.updateScopingData(applicationId, command));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -873,6 +970,26 @@ public class ApplicationServiceTest {
         () ->
             sut.updateApplication(
                 applicationId, UpdateApplicationCommand.builder().eTag(0L).build()));
+    verify(mapper, never()).updateApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateApplication_shouldThrowDuplicatePayloadException_whenPayloadAlreadyExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).providerOfficeCode(officeCode).build();
+    final UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(eventService.isDuplicate(command, officeCode, applicationId)).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(
+        DuplicatePayloadException.class, () -> sut.updateApplication(applicationId, command));
     verify(mapper, never()).updateApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
@@ -1421,6 +1538,26 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void editApplication_shouldThrowDuplicatePayloadException_whenPayloadAlreadyExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder().id(applicationId).providerOfficeCode(officeCode).build();
+    final EditApplicationCommand command = EditApplicationCommand.builder().eTag(0L).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(eventService.isDuplicate(command, officeCode, applicationId)).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(
+        DuplicatePayloadException.class, () -> sut.editApplication(applicationId, command));
+    verify(mapper, never()).editApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void shouldUpdateClientDetails() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -1512,6 +1649,31 @@ public class ApplicationServiceTest {
         () ->
             sut.updateClientDetails(
                 applicationId, UpdateClientDetailsCommand.builder().eTag(0L).build()));
+    verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateClientDetails_shouldThrowDuplicatePayloadException_whenPayloadAlreadyExists() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .clientDetails(ClientDetailsEntity.builder().build())
+            .build();
+    final UpdateClientDetailsCommand command =
+        UpdateClientDetailsCommand.builder().eTag(0L).build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(eventService.isDuplicate(command, officeCode, applicationId)).thenReturn(true);
+
+    // Act + Assert
+    assertThrows(
+        DuplicatePayloadException.class, () -> sut.updateClientDetails(applicationId, command));
     verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
