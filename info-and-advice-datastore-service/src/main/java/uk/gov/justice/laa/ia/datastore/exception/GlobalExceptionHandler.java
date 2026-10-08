@@ -113,6 +113,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
+   * The handler for DuplicatePayloadException.
+   *
+   * @param exception the exception
+   * @return 409 Conflict response
+   */
+  @ExceptionHandler(DuplicatePayloadException.class)
+  public ResponseEntity<ProblemDetail> handleDuplicatePayloadException(
+      DuplicatePayloadException exception) {
+    log.warn("Duplicate payload: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    problemDetail.setProperty("reason", "DUPLICATE_PAYLOAD");
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+  }
+
+  /**
    * The handler for ProviderOfficeNotAuthorizedException.
    *
    * @param exception the exception

@@ -22,6 +22,7 @@ import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.DeclarationAlreadySignedException;
+import uk.gov.justice.laa.ia.datastore.exception.DuplicatePayloadException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EditCompletedApplicationException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
@@ -82,6 +83,7 @@ public class ApplicationService {
   @Transactional
   public ApplicationResponse createApplication(StartApplicationCommand startApplication) {
     validateProviderOfficeCode(startApplication.getProviderOfficeCode());
+    validateNotDuplicatePayload(startApplication, startApplication.getProviderOfficeCode(), null);
 
     String ufn = startApplication.getUfn();
     if (ufn != null
@@ -168,6 +170,7 @@ public class ApplicationService {
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
+    validateNotDuplicatePayload(command, application.getProviderOfficeCode(), applicationId);
 
     com.fasterxml.jackson.databind.JsonNode resultJson =
         objectMapper.valueToTree(command.getResult());
@@ -229,6 +232,7 @@ public class ApplicationService {
     final ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
+    validateNotDuplicatePayload(command, application.getProviderOfficeCode(), applicationId);
 
     DeclarationEntity declarationEntity = declarationMapper.toDeclarationEntity(command);
     // TODO: declaration status is currently undefined
@@ -266,6 +270,7 @@ public class ApplicationService {
     final ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
+    validateNotDuplicatePayload(command, application.getProviderOfficeCode(), applicationId);
 
     EvidenceEntity evidenceEntity = evidenceMapper.toEvidenceEntity(command);
     if (application.getEvidence() != null) {
@@ -298,6 +303,20 @@ public class ApplicationService {
   }
 
   /**
+   * Checks the event history for a prior request with an identical payload for the same application
+   * (or, for create requests where the application doesn't exist yet, the same provider office
+   * code), rejecting it as a duplicate submission.
+   *
+   * @throws DuplicatePayloadException if a matching payload has already been recorded
+   */
+  private void validateNotDuplicatePayload(
+      Object payload, String providerOfficeCode, UUID applicationId) {
+    if (eventService.isDuplicate(payload, providerOfficeCode, applicationId)) {
+      throw new DuplicatePayloadException();
+    }
+  }
+
+  /**
    * Update scoping data for an application.
    *
    * @param applicationId the application ID
@@ -319,6 +338,7 @@ public class ApplicationService {
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
+    validateNotDuplicatePayload(command, application.getProviderOfficeCode(), applicationId);
 
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
     application.setModifiedBy(userContext.getCurrentUser());
@@ -349,6 +369,7 @@ public class ApplicationService {
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
+    validateNotDuplicatePayload(command, application.getProviderOfficeCode(), applicationId);
 
     applicationMapper.updateApplicationEntity(command, application);
     ApplicationEntity saved = repository.save(application);
@@ -389,6 +410,7 @@ public class ApplicationService {
       throw new EditCompletedApplicationException();
     }
     validateEtag(application, command.geteTag());
+    validateNotDuplicatePayload(command, application.getProviderOfficeCode(), applicationId);
 
     String ufn = command.getUfn();
     if (ufn != null
@@ -562,6 +584,7 @@ public class ApplicationService {
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
     validateEtag(application, command.geteTag());
+    validateNotDuplicatePayload(command, application.getProviderOfficeCode(), applicationId);
 
     ClientDetailsEntity clientDetails = application.getClientDetails();
     clientDetailsMapper.updateClientDetailsEntity(command, clientDetails);

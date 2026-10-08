@@ -25,6 +25,7 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.models.ApplicationClaimResponse;
 import uk.gov.justice.laa.ia.datastore.models.ClaimsModel;
+import uk.gov.justice.laa.ia.datastore.service.PayloadHasher;
 import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
@@ -47,7 +48,7 @@ public class DataRetentionDateResolverIntegrationTest extends BaseIntegrationTes
             applicationRepository,
             new RetentionDateUpdateService(
                 applicationRepository,
-                new SystemDrivenEventService(eventRepository, objectMapper)));
+                new SystemDrivenEventService(eventRepository, objectMapper, new PayloadHasher())));
   }
 
   @Test

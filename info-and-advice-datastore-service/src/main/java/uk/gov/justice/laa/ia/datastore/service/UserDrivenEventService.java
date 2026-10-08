@@ -26,6 +26,7 @@ public class UserDrivenEventService {
   private final HttpServletRequest request;
   private final ObjectMapper objectMapper;
   private final PiiRedactor piiRedactor;
+  private final PayloadHasher payloadHasher;
 
   /**
    * Records a mutation event. Must be called within an active transaction so that the event and the
@@ -51,8 +52,27 @@ public class UserDrivenEventService {
             .httpMethod(request.getMethod())
             .urlPath(request.getRequestURI())
             .payload(payloadNode)
+            .payloadHash(payloadHasher.hash(payloadNode))
             .piiData(piiData)
             .build();
     repository.save(event);
+  }
+
+  /**
+   * Checks whether a create/update/patch request's payload is identical to one already recorded in
+   * the event history, to detect duplicate request submissions.
+   *
+   * @param payload the request body to check.
+   * @param providerOfficeCode the provider office code of the application the request relates to.
+   * @param applicationId the ID of the application the request relates to, or null if not yet known
+   *     (e.g. a create request).
+   * @return true if a matching event already exists.
+   */
+  public boolean isDuplicate(Object payload, String providerOfficeCode, UUID applicationId) {
+    JsonNode payloadNode = objectMapper.valueToTree(payload);
+    String payloadHash = payloadHasher.hash(payloadNode);
+    UUID applicationIdToCheck = applicationId != null ? applicationId : EMPTY_APPLICATION_ID;
+    return repository.existsByApplicationIdAndProviderOfficeCodeAndPayloadHash(
+        applicationIdToCheck, providerOfficeCode, payloadHash);
   }
 }

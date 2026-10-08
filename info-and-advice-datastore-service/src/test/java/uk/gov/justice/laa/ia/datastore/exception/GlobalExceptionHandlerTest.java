@@ -56,6 +56,20 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  void handleDuplicatePayloadException_returnsConflictStatusAndErrorMessage() {
+    DuplicatePayloadException exception = new DuplicatePayloadException();
+
+    ResponseEntity<ProblemDetail> result =
+        globalExceptionHandler.handleDuplicatePayloadException(exception);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getStatusCode()).isEqualTo(CONFLICT);
+    assertThat(result.getBody()).isNotNull();
+    assertThat(result.getBody().getStatus()).isEqualTo(CONFLICT.value());
+    assertThat(result.getBody().getDetail()).isEqualTo(exception.getMessage());
+  }
+
+  @Test
   void handleDeclarationAlreadySignedException_returnsConflictStatusAndErrorMessage() {
     UUID applicationId = UUID.randomUUID();
     DeclarationAlreadySignedException exception =
