@@ -238,4 +238,35 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
     assertThat(applicationRepository.findById(applicationId).orElseThrow().getScopingQuestions())
         .isNull();
   }
+
+  @Test
+  void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                            .deleted(true)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {"eTag": 0, "scopingQuestions": {"priorLegalAid": "same_matter"}}
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateScopingData, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isGone());
+  }
 }

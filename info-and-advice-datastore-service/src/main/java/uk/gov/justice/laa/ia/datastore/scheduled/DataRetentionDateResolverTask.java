@@ -11,6 +11,7 @@ import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.models.ApplicationClaimResponse;
 import uk.gov.justice.laa.ia.datastore.models.ClaimsModel;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
 /**
@@ -19,7 +20,7 @@ import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
  */
 @Component
 @Slf4j
-public class DataRetentionDateResolver {
+public class DataRetentionDateResolverTask {
   private final ClaimsGateway claimsGateway;
   private final int dataRetentionYearsOffset;
   private final ApplicationRepository applicationRepository;
@@ -27,7 +28,7 @@ public class DataRetentionDateResolver {
   private static final String STATUS_TO_CHECK = "APPROVED";
 
   /** Constructs the resolver, binding the configured data retention years offset. */
-  public DataRetentionDateResolver(
+  public DataRetentionDateResolverTask(
       ClaimsGateway claimsGateway,
       @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
       ApplicationRepository applicationRepository,
@@ -93,7 +94,7 @@ public class DataRetentionDateResolver {
       final var response =
           claimsGateway.getClaims(application.getProviderOfficeCode(), application.getUfn());
       final var latestClaim = getLatestClaim(response);
-      if (latestClaim != null && STATUS_TO_CHECK.equals(latestClaim.getStatus())) {
+      if (latestClaim != null) {
         return RetentionDateUpdate.hasApproval(
             latestClaim.getCreatedOn(), latestClaim.getClaimId());
       }
@@ -111,6 +112,7 @@ public class DataRetentionDateResolver {
   private static ClaimsModel getLatestClaim(ApplicationClaimResponse response) {
     return hasClaims(response)
         ? response.getClaims().stream()
+            .filter(claim -> STATUS_TO_CHECK.equals(claim.getStatus()))
             .sorted((c1, c2) -> c2.getCreatedOn().compareTo(c1.getCreatedOn()))
             .findFirst()
             .orElse(null)

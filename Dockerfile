@@ -1,6 +1,9 @@
 # Build stage
 FROM amazoncorretto:25-alpine AS builder
 
+# Patch known CVEs in base image packages (e.g. zlib) ahead of a new upstream image tag
+RUN apk update && apk upgrade --no-cache
+
 RUN mkdir -p /build
 WORKDIR /build
 
@@ -15,6 +18,9 @@ RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
 
 # Runtime stage
 FROM amazoncorretto:25-alpine
+
+# Patch known CVEs in base image packages (e.g. zlib) ahead of a new upstream image tag
+RUN apk update && apk upgrade --no-cache
 
 # Set up working directory in the container
 RUN mkdir -p /opt/laa-info-and-advice-datastore/

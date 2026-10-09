@@ -156,4 +156,31 @@ public class UpdateEvidenceIntegrationTest extends BaseIntegrationTest {
     clearCache();
     assertThat(applicationRepository.findById(applicationId).orElseThrow().getEvidence()).isNull();
   }
+
+  @Test
+  void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                            .deleted(true)))
+            .getId();
+    clearCache();
+    final String payload = toJson(EvidenceGenerator.createUpdateEvidenceCommand(0L));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put(TestConstants.UpdateEvidence, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isGone());
+  }
 }

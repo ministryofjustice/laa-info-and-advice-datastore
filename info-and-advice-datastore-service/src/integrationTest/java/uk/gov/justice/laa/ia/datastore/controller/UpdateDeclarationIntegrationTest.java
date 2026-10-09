@@ -207,4 +207,37 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
     assertThat(applicationRepository.findById(applicationId).orElseThrow().getDeclaration())
         .isNull();
   }
+
+  @Test
+  void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .save(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                            .deleted(true)))
+            .getId();
+    clearCache();
+    final String payload =
+        toJson(
+            DeclarationCommand.builder()
+                .eTag(0L)
+                .declarationConfirmation(true)
+                .dateSigned(java.time.LocalDate.now())
+                .build());
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.UpdateDeclarationData, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isGone());
+  }
 }

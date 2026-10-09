@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.specification;
 
 import jakarta.persistence.criteria.JoinType;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,6 +24,19 @@ public class ApplicationSpecification {
   }
 
   /**
+   * Setups a specification for finding completed, not-yet-deleted applications whose data retention
+   * date has expired.
+   */
+  public static Specification<ApplicationEntity> findByExpiredDataRetentionDateAndStatus() {
+    return (root, query, criteriaBuilder) ->
+        criteriaBuilder.and(
+            criteriaBuilder.isNotNull(root.get("dataRetentionDate")),
+            criteriaBuilder.lessThanOrEqualTo(root.get("dataRetentionDate"), Instant.now()),
+            criteriaBuilder.equal(root.get("applicationState"), ApplicationState.COMPLETED),
+            criteriaBuilder.isFalse(root.get("deleted")));
+  }
+
+  /**
    * Setups a specification for filtering ApplicationEntity by applicationId and providerFirmCode.
    */
   public static Specification<ApplicationEntity> findById(
@@ -32,11 +46,24 @@ public class ApplicationSpecification {
             (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("id"), applicationId));
   }
 
-  /** Setups a specification for filtering ApplicationEntity by providerFirmCode and officeCodes. */
-  public static Specification<ApplicationEntity> filterByProviderContractInformation(
+  /**
+   * Setups a specification for the default constraints applied to every application listing: must
+   * match the providerFirmCode, must have an officeCode in the user's authorized officeCodes, and
+   * must not have been deleted.
+   */
+  public static Specification<ApplicationEntity> filterByDefaultConstraints(
       String providerFirmCode, List<String> officeCodes) {
     return filterByProviderFirmCode(providerFirmCode)
-        .and(filterByProviderOfficesCodes(officeCodes));
+        .and(filterByProviderOfficesCodes(officeCodes))
+        .and(notExpired());
+  }
+
+  /**
+   * Setups a specification for filtering out ApplicationEntity that have expired data retention
+   * dates.
+   */
+  public static Specification<ApplicationEntity> notExpired() {
+    return (root, query, criteriaBuilder) -> criteriaBuilder.isFalse(root.get("deleted"));
   }
 
   /** Setups a specification for filtering ApplicationEntity by providerFirmCode. */

@@ -62,7 +62,7 @@ logging:
 laa:
   datastore:
     data-retention:
-      years-offset: ${DATA_RETENTION_YEARS_OFFSET:6}
+      years-offset: ${DATA_RETENTION_YEARS_OFFSET:3}
       cron: ${RETENTION_RESOLVER_CRON:0 0 0 * * *}
     # Trusts the forwarded X-Authorization token (UserContextInterceptor) issued for the calling
     # service's own audience - deliberately separate from resourceserver.jwt tenants below so this
