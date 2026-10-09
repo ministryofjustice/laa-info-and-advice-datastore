@@ -3,7 +3,7 @@ package uk.gov.justice.laa.ia.datastore.scheduled;
 import org.springframework.scheduling.annotation.Scheduled;
 import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
 
-/** Triggers data retention resolution on startup and hourly for local development. */
+/** Triggers data retention resolution on startup and every 10 minutes for local development. */
 @ExcludeFromCodeCoverage(
     reason =
         "Just configures the scheduler, DataRetentionDateResolverTask handles the actual logic")

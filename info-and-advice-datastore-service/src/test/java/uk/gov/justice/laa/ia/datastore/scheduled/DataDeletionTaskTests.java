@@ -95,7 +95,7 @@ class DataDeletionTaskTests {
   }
 
   @Test
-  void givenLatestClaimApprovedAndStillWithinRetention_thenExtendRetentionDate() {
+  void givenLatestClaimStillWithinRetention_thenExtendRetentionDate() {
     // Arrange
     final String ufn = "222222/1";
     final ApplicationEntity application =
@@ -127,7 +127,7 @@ class DataDeletionTaskTests {
   }
 
   @Test
-  void givenLatestClaimApprovedButStillExpiredAfterRecompute_thenDeleteApplication() {
+  void givenLatestClaimStillExpiredAfterRecompute_thenDeleteApplication() {
     // Arrange
     final String ufn = "333333/1";
     final ApplicationEntity application =
@@ -158,7 +158,7 @@ class DataDeletionTaskTests {
   }
 
   @Test
-  void givenLatestClaimNotApproved_thenDeleteApplication() {
+  void givenLatestClaimOutsideRetentionRegardlessOfStatus_thenDeleteApplication() {
     // Arrange
     final String ufn = "444444/1";
     final ApplicationEntity application =
@@ -172,7 +172,7 @@ class DataDeletionTaskTests {
                     List.of(
                         ClaimsModel.builder()
                             .status("REJECTED")
-                            .createdOn(OffsetDateTime.now())
+                            .createdOn(OffsetDateTime.now().minusYears(5))
                             .build()))
                 .build());
 
@@ -249,7 +249,7 @@ class DataDeletionTaskTests {
                     List.of(
                         ClaimsModel.builder()
                             .status("REJECTED")
-                            .createdOn(OffsetDateTime.now())
+                            .createdOn(OffsetDateTime.now().minusYears(5))
                             .build()))
                 .build());
     when(claimsGateway.getClaims(OFFICE_CODE, succeedingUfn))
@@ -259,7 +259,7 @@ class DataDeletionTaskTests {
                     List.of(
                         ClaimsModel.builder()
                             .status("REJECTED")
-                            .createdOn(OffsetDateTime.now())
+                            .createdOn(OffsetDateTime.now().minusYears(5))
                             .build()))
                 .build());
     doThrow(new RuntimeException("DB constraint violation"))

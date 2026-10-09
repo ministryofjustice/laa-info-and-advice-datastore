@@ -167,6 +167,85 @@ class DataRetentionDateResolverTaskTests {
   }
 
   @Test
+  void givenMostRecentClaimIsNotApproved_whenEarlierClaimIsApproved_thenSetDataRetentionDate() {
+    // Arrange
+    final String ufn = "777777/1";
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(ufn)
+                    .dataRetentionDate(null)
+                    .providerOfficeCode(OFFICE_CODE));
+    when(applicationRepository.findAll(anySpecification())).thenReturn(List.of(application));
+    final OffsetDateTime approvedClaimDate =
+        OffsetDateTime.of(2026, 9, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    final OffsetDateTime mostRecentClaimDate =
+        OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    final UUID approvedClaimId = UUID.randomUUID();
+    when(claimsGateway.getClaims(OFFICE_CODE, ufn))
+        .thenReturn(
+            ApplicationClaimResponse.builder()
+                .claims(
+                    List.of(
+                        ClaimsModel.builder()
+                            .claimId(approvedClaimId)
+                            .status("APPROVED")
+                            .createdOn(approvedClaimDate)
+                            .updatedOn(approvedClaimDate)
+                            .build(),
+                        ClaimsModel.builder()
+                            .claimId(UUID.randomUUID())
+                            .status("PENDING")
+                            .createdOn(mostRecentClaimDate)
+                            .updatedOn(mostRecentClaimDate)
+                            .build()))
+                .build());
+
+    // Act
+    sut.run();
+
+    // Assert
+    verify(retentionDateUpdateService, times(1))
+        .saveAndRecord(eq(application.getId()), anyLong(), any(), any(), eq(approvedClaimId));
+  }
+
+  @Test
+  void givenNoClaimsAreApproved_thenDoNotSetDataRetentionDate() {
+    // Arrange
+    final String ufn = "888888/1";
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(ufn)
+                    .dataRetentionDate(null)
+                    .providerOfficeCode(OFFICE_CODE));
+    when(applicationRepository.findAll(anySpecification())).thenReturn(List.of(application));
+    final OffsetDateTime claimDate = OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    when(claimsGateway.getClaims(OFFICE_CODE, ufn))
+        .thenReturn(
+            ApplicationClaimResponse.builder()
+                .claims(
+                    List.of(
+                        ClaimsModel.builder()
+                            .status("PENDING")
+                            .createdOn(claimDate)
+                            .updatedOn(claimDate)
+                            .build()))
+                .build());
+
+    // Act
+    sut.run();
+
+    // Assert
+    verify(retentionDateUpdateService, never())
+        .saveAndRecord(any(), anyLong(), any(), any(), any());
+  }
+
+  @Test
   void givenSaveAndRecordThrowsExceptionForOneApplication_thenContinueProcessingOthers() {
     // Arrange
     final String failingUfn = "555555/1";

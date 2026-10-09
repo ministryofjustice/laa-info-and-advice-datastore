@@ -3,7 +3,7 @@ package uk.gov.justice.laa.ia.datastore.scheduled;
 import org.springframework.scheduling.annotation.Scheduled;
 import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
 
-/** Triggers data deletion resolution on startup and hourly for local development. */
+/** Triggers data deletion resolution on startup and every 10 minutes for local development. */
 @ExcludeFromCodeCoverage(
     reason = "Just configures the scheduler, DataDeletionTask handles the actual logic")
 public class LocalDataDeletionScheduler {

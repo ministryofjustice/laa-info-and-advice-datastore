@@ -94,7 +94,7 @@ public class DataRetentionDateResolverTask {
       final var response =
           claimsGateway.getClaims(application.getProviderOfficeCode(), application.getUfn());
       final var latestClaim = getLatestClaim(response);
-      if (latestClaim != null && STATUS_TO_CHECK.equals(latestClaim.getStatus())) {
+      if (latestClaim != null) {
         return RetentionDateUpdate.hasApproval(
             latestClaim.getCreatedOn(), latestClaim.getClaimId());
       }
@@ -112,6 +112,7 @@ public class DataRetentionDateResolverTask {
   private static ClaimsModel getLatestClaim(ApplicationClaimResponse response) {
     return hasClaims(response)
         ? response.getClaims().stream()
+            .filter(claim -> STATUS_TO_CHECK.equals(claim.getStatus()))
             .sorted((c1, c2) -> c2.getCreatedOn().compareTo(c1.getCreatedOn()))
             .findFirst()
             .orElse(null)

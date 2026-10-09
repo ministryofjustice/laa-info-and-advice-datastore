@@ -205,6 +205,57 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
   }
 
   @Test
+  void givenMultipleClaims_whenLatestNotApproved_thenSetRetentionDateFromApprovedClaim() {
+    // Arrange
+    final OffsetDateTime approvedClaimDate =
+        OffsetDateTime.of(2026, 9, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    final OffsetDateTime mostRecentClaimDate =
+        OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    final Instant expectedDataRetentionDate =
+        OffsetDateTime.of(2029, 9, 1, 8, 30, 0, 0, ZoneOffset.UTC).toInstant();
+    final ClaimsModel approvedClaim =
+        ClaimsModel.builder()
+            .claimId(UUID.randomUUID())
+            .status("APPROVED")
+            .createdOn(approvedClaimDate)
+            .updatedOn(approvedClaimDate)
+            .build();
+    final ClaimsModel mostRecentClaim =
+        ClaimsModel.builder()
+            .status("PENDING")
+            .createdOn(mostRecentClaimDate)
+            .updatedOn(mostRecentClaimDate)
+            .build();
+    final String ufn = "999999/001";
+
+    when(claimsGateway.getClaims(officeCode, ufn))
+        .thenReturn(
+            ApplicationClaimResponse.builder()
+                .claims(List.of(mostRecentClaim, approvedClaim))
+                .build());
+
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(ufn)
+                    .dataRetentionDate(null)
+                    .applicationState(ApplicationState.COMPLETED)
+                    .providerOfficeCode(officeCode));
+    applicationRepository.saveAndFlush(application);
+
+    // Act
+    sut.run();
+
+    // Assert
+    var savedApplication = applicationRepository.findById(application.getId()).orElseThrow();
+    assertNotNull(savedApplication.getDataRetentionDate());
+    assertEquals(expectedDataRetentionDate, savedApplication.getDataRetentionDate());
+    verify(claimsGateway, times(1)).getClaims(officeCode, ufn);
+  }
+
+  @Test
   void givenApplicationAlreadyHasRententionDate_thenDoNotTryToGetClaims() {
     // Arrange
     final Instant existingDataRetentionDate = Instant.now();

@@ -22,8 +22,6 @@ import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 @Component
 @Slf4j
 public class DataDeletionTask {
-  private static final String APPROVED_STATUS = "APPROVED";
-
   private final ApplicationRepository applicationRepository;
   private final ClaimsGateway claimsGateway;
   private final int dataRetentionYearsOffset;
@@ -91,18 +89,16 @@ public class DataDeletionTask {
       return;
     }
 
-    if (APPROVED_STATUS.equals(latestClaim.getStatus())) {
-      Instant candidateRetentionDate =
-          latestClaim.getCreatedOn().plus(dataRetentionYearsOffset, ChronoUnit.YEARS).toInstant();
-      if (candidateRetentionDate.isAfter(Instant.now())) {
-        retentionDateUpdateService.saveAndRecord(
-            application.getId(),
-            application.getEtag(),
-            application.getDataRetentionDate(),
-            candidateRetentionDate,
-            latestClaim.getClaimId());
-        return;
-      }
+    Instant candidateRetentionDate =
+        latestClaim.getCreatedOn().plus(dataRetentionYearsOffset, ChronoUnit.YEARS).toInstant();
+    if (candidateRetentionDate.isAfter(Instant.now())) {
+      retentionDateUpdateService.saveAndRecord(
+          application.getId(),
+          application.getEtag(),
+          application.getDataRetentionDate(),
+          candidateRetentionDate,
+          latestClaim.getClaimId());
+      return;
     }
 
     applicationDataDeletionService.deleteAndRecord(application.getId(), application.getEtag());

@@ -55,11 +55,14 @@ public class ApplicationSpecification {
       String providerFirmCode, List<String> officeCodes) {
     return filterByProviderFirmCode(providerFirmCode)
         .and(filterByProviderOfficesCodes(officeCodes))
-        .and(notDeleted());
+        .and(notExpired());
   }
 
-  /** Setups a specification for filtering out ApplicationEntity that have been deleted. */
-  public static Specification<ApplicationEntity> notDeleted() {
+  /**
+   * Setups a specification for filtering out ApplicationEntity that have expired data retention
+   * dates.
+   */
+  public static Specification<ApplicationEntity> notExpired() {
     return (root, query, criteriaBuilder) -> criteriaBuilder.isFalse(root.get("deleted"));
   }
 
