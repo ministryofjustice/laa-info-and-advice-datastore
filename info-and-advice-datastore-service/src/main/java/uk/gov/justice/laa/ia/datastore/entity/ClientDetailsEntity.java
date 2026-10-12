@@ -37,13 +37,13 @@ public class ClientDetailsEntity {
   @Column(name = "etag", nullable = false)
   private long etag;
 
-  @Column(name = "first_name", nullable = false)
+  @Column(name = "first_name")
   private String firstName;
 
-  @Column(name = "surname", nullable = false)
+  @Column(name = "surname")
   private String lastName;
 
-  @Column(name = "date_of_birth", nullable = false)
+  @Column(name = "date_of_birth")
   private LocalDate dateOfBirth;
 
   @Column(name = "ni_number")

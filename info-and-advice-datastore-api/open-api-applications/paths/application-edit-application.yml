@@ -45,4 +45,5 @@ patch:
         mismatches and concurrent version updates, and APPLICATION_COMPLETED for
         completed applications. UFN conflicts and signed-declaration conflicts
         also return 409.
+    '410': { description: Gone - application has been deleted due to retention policies }
     '500': { description: Internal server error }

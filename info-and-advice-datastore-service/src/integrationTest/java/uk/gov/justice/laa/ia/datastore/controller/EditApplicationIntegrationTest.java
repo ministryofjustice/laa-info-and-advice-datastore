@@ -1181,4 +1181,30 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                 .content(payload))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                            .deleted(true)))
+            .getId();
+    clearCache();
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            patch(TestConstants.EditApplication, applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"eTag\":0,\"laaReference\":\"changed\"}"))
+        .andExpect(status().isGone());
+  }
 }

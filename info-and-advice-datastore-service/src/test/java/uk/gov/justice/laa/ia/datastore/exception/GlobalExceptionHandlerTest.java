@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.GONE;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 import java.util.UUID;
@@ -68,6 +69,21 @@ class GlobalExceptionHandlerTest {
     assertThat(result.getStatusCode()).isEqualTo(CONFLICT);
     assertThat(result.getBody()).isNotNull();
     assertThat(result.getBody().getStatus()).isEqualTo(CONFLICT.value());
+    assertThat(result.getBody().getDetail()).isEqualTo(exception.getMessage());
+  }
+
+  @Test
+  void handleApplicationDeletedException_returnsGoneStatusAndErrorMessage() {
+    UUID applicationId = UUID.randomUUID();
+    ApplicationDeletedException exception = new ApplicationDeletedException(applicationId);
+
+    ResponseEntity<ProblemDetail> result =
+        globalExceptionHandler.handleApplicationDeletedException(exception);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getStatusCode()).isEqualTo(GONE);
+    assertThat(result.getBody()).isNotNull();
+    assertThat(result.getBody().getStatus()).isEqualTo(GONE.value());
     assertThat(result.getBody().getDetail()).isEqualTo(exception.getMessage());
   }
 }

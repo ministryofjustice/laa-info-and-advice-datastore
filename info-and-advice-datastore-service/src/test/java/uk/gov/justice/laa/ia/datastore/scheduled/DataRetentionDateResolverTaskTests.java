@@ -29,11 +29,12 @@ import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.models.ApplicationClaimResponse;
 import uk.gov.justice.laa.ia.datastore.models.ClaimsModel;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 
-/** Unit tests for the {@link DataRetentionDateResolver}. */
+/** Unit tests for the {@link DataRetentionDateResolverTask}. */
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 @ExtendWith(MockitoExtension.class)
-class DataRetentionDateResolverTests {
+class DataRetentionDateResolverTaskTests {
 
   private static final int DATA_RETENTION_YEARS_OFFSET = 3;
   private static final String OFFICE_CODE = "test-office-code";
@@ -42,12 +43,12 @@ class DataRetentionDateResolverTests {
   @Mock private ApplicationRepository applicationRepository;
   @Mock private RetentionDateUpdateService retentionDateUpdateService;
 
-  private DataRetentionDateResolver sut;
+  private DataRetentionDateResolverTask sut;
 
   @BeforeEach
   void setUp() {
     this.sut =
-        new DataRetentionDateResolver(
+        new DataRetentionDateResolverTask(
             claimsGateway,
             DATA_RETENTION_YEARS_OFFSET,
             applicationRepository,
@@ -163,6 +164,85 @@ class DataRetentionDateResolverTests {
     verify(retentionDateUpdateService, times(1))
         .saveAndRecord(savedIdCaptor.capture(), anyLong(), any(), any(), any());
     assertThat(savedIdCaptor.getValue()).isEqualTo(succeedingApplication.getId());
+  }
+
+  @Test
+  void givenMostRecentClaimIsNotApproved_whenEarlierClaimIsApproved_thenSetDataRetentionDate() {
+    // Arrange
+    final String ufn = "777777/1";
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(ufn)
+                    .dataRetentionDate(null)
+                    .providerOfficeCode(OFFICE_CODE));
+    when(applicationRepository.findAll(anySpecification())).thenReturn(List.of(application));
+    final OffsetDateTime approvedClaimDate =
+        OffsetDateTime.of(2026, 9, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    final OffsetDateTime mostRecentClaimDate =
+        OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    final UUID approvedClaimId = UUID.randomUUID();
+    when(claimsGateway.getClaims(OFFICE_CODE, ufn))
+        .thenReturn(
+            ApplicationClaimResponse.builder()
+                .claims(
+                    List.of(
+                        ClaimsModel.builder()
+                            .claimId(approvedClaimId)
+                            .status("APPROVED")
+                            .createdOn(approvedClaimDate)
+                            .updatedOn(approvedClaimDate)
+                            .build(),
+                        ClaimsModel.builder()
+                            .claimId(UUID.randomUUID())
+                            .status("PENDING")
+                            .createdOn(mostRecentClaimDate)
+                            .updatedOn(mostRecentClaimDate)
+                            .build()))
+                .build());
+
+    // Act
+    sut.run();
+
+    // Assert
+    verify(retentionDateUpdateService, times(1))
+        .saveAndRecord(eq(application.getId()), anyLong(), any(), any(), eq(approvedClaimId));
+  }
+
+  @Test
+  void givenNoClaimsAreApproved_thenDoNotSetDataRetentionDate() {
+    // Arrange
+    final String ufn = "888888/1";
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(ufn)
+                    .dataRetentionDate(null)
+                    .providerOfficeCode(OFFICE_CODE));
+    when(applicationRepository.findAll(anySpecification())).thenReturn(List.of(application));
+    final OffsetDateTime claimDate = OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
+    when(claimsGateway.getClaims(OFFICE_CODE, ufn))
+        .thenReturn(
+            ApplicationClaimResponse.builder()
+                .claims(
+                    List.of(
+                        ClaimsModel.builder()
+                            .status("PENDING")
+                            .createdOn(claimDate)
+                            .updatedOn(claimDate)
+                            .build()))
+                .build());
+
+    // Act
+    sut.run();
+
+    // Assert
+    verify(retentionDateUpdateService, never())
+        .saveAndRecord(any(), anyLong(), any(), any(), any());
   }
 
   @Test

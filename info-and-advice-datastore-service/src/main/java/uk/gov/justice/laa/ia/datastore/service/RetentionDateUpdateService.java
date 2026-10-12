@@ -1,4 +1,4 @@
-package uk.gov.justice.laa.ia.datastore.scheduled;
+package uk.gov.justice.laa.ia.datastore.service;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
-import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
+import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolverTask;
 
 /**
  * Persists a single application's data retention date update and records the change as an event,
@@ -67,7 +67,7 @@ public class RetentionDateUpdateService {
         dataRetentionDate,
         application.getProviderOfficeCode(),
         application.getProviderFirmCode(),
-        DataRetentionDateResolver.class.getSimpleName(),
+        DataRetentionDateResolverTask.class.getSimpleName(),
         applicationId);
   }
 }

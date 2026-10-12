@@ -38,6 +38,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.exception.ApplicationDeletedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
@@ -275,6 +276,25 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void shouldThrowApplicationDeletedException_whenGettingDeletedApplication() {
+    // Arrange
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity entity =
+        ApplicationEntity.builder()
+            .id(UUID.randomUUID())
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
+
+    // Act + Assert
+    assertThrows(ApplicationDeletedException.class, () -> sut.getApplication(entity.getId()));
+    verify(mapper, never()).toApplication(any());
+  }
+
+  @Test
   void shouldUpdateMeansData() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -346,6 +366,30 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(
         ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
+    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateMeansData_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
     verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
@@ -727,6 +771,27 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateClientDeclaration_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application = new ApplicationEntity();
+    application.setProviderOfficeCode(officeCode);
+    application.setDeleted(true);
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
+        () ->
+            sut.updateClientDeclaration(
+                applicationId, DeclarationCommand.builder().eTag(0L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void updateEvidence_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final ApplicationEntity application =
@@ -764,6 +829,25 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateEvidence_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null).deleted(true));
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(application.getProviderOfficeCode()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
+        () ->
+            sut.updateEvidence(
+                application.getId(), UpdateEvidenceCommand.builder().eTag(0L).build()));
+    verify(evidenceRepository, never()).save(any(EvidenceEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void updateScopingData_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -776,6 +860,27 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(
         ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateScopingData(
+                applicationId, UpdateScopingDataCommand.builder().eTag(0L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateScopingData_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application = new ApplicationEntity();
+    application.setProviderOfficeCode(officeCode);
+    application.setDeleted(true);
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
         () ->
             sut.updateScopingData(
                 applicationId, UpdateScopingDataCommand.builder().eTag(0L).build()));
@@ -870,6 +975,31 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(
         ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateApplication(
+                applicationId, UpdateApplicationCommand.builder().eTag(0L).build()));
+    verify(mapper, never()).updateApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateApplication_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
         () ->
             sut.updateApplication(
                 applicationId, UpdateApplicationCommand.builder().eTag(0L).build()));
@@ -1421,6 +1551,30 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void editApplication_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
+        () ->
+            sut.editApplication(applicationId, EditApplicationCommand.builder().eTag(0L).build()));
+    verify(mapper, never()).editApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void shouldUpdateClientDetails() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -1509,6 +1663,32 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(
         ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateClientDetails(
+                applicationId, UpdateClientDetailsCommand.builder().eTag(0L).build()));
+    verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateClientDetails_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .clientDetails(ClientDetailsEntity.builder().build())
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
         () ->
             sut.updateClientDetails(
                 applicationId, UpdateClientDetailsCommand.builder().eTag(0L).build()));

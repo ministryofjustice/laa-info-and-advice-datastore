@@ -196,4 +196,39 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
                 .anyMatch(result -> result.getApplicationId().equals(applicationId)))
         .isFalse();
   }
+
+  @Test
+  void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
+    // Arrange
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                            .deleted(true)))
+            .getId();
+    clearCache();
+
+    final String payload =
+        """
+        {
+          "eTag": 0,
+          "data": {"client_age": "18-24"},
+          "result": {"status": "ELIGIBLE"}
+        }
+        """;
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            put("/api/v0/applications/{id}:update-means-data", applicationId)
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isGone());
+  }
 }
