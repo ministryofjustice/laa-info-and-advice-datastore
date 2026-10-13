@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
+import uk.gov.justice.laa.ia.datastore.config.interceptor.RateLimitInterceptor;
 import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor;
 
 /** Web MVC configuration to register interceptors. */
@@ -12,12 +13,13 @@ import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor
 @ExcludeFromCodeCoverage(reason = "Config")
 public class WebMvcConfig implements WebMvcConfigurer {
 
+  private final RateLimitInterceptor rateLimitInterceptor;
   private final UserContextInterceptor userContextInterceptor;
 
   @Override
   public void addInterceptors(
       org.springframework.web.servlet.config.annotation.InterceptorRegistry registry) {
+    registry.addInterceptor(rateLimitInterceptor).addPathPatterns("/api/**");
     registry.addInterceptor(userContextInterceptor).addPathPatterns("/api/**");
-    ;
   }
 }

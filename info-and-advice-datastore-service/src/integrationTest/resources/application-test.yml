@@ -1,0 +1,6 @@
+laa:
+  datastore:
+    # Every integration test shares one principal and Spring context, so the limiter is off by
+    # default; RateLimitIntegrationTest opts back in.
+    rate-limit:
+      enabled: false
