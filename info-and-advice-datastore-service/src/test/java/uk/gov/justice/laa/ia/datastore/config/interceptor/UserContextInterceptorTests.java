@@ -89,6 +89,7 @@ public class UserContextInterceptorTests {
     assertTrue(interceptor.preHandle(request, response, null));
 
     // Assert
+    assertThat(userContext.getCurrentUser()).isEqualTo("user-oid");
     assertThat(userContext.getProviderFirmCode()).isEqualTo(expectedProviderFirmCode);
     assertThat(userContext.getOfficeCodes()).isEqualTo(expectedOfficeCodes);
     assertThat(userContext.getCorrelationId()).isEqualTo("test-correlation-id");
