@@ -66,6 +66,10 @@ logging:
 
 laa:
   datastore:
+    # Generous local limit so the Bruno collection (many requests as one user) isn't throttled;
+    # the limiter stays enabled so it is still exercised.
+    rate-limit:
+      limit-for-period: ${RATE_LIMIT_REQUESTS:10000}
     # Trusts the forwarded X-Authorization token (UserContextInterceptor) issued for the calling
     # service's own audience - deliberately separate from resourceserver.jwt tenants below so this
     # trust never extends to the primary Authorization header/endpoint authorization.
