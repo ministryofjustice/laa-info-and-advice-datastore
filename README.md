@@ -296,6 +296,10 @@ The autoconfigured client attaches two Bearer tokens to every request automatica
 
 The `X-Authorization` token is taken directly from the incoming request's security context, so it is propagated transparently as long as your service authenticates its own callers via Spring Security.
 
+### Rate limiting
+
+The datastore applies an in-memory rate limit per end user (default 100 requests per minute, per datastore container). When exceeded it returns `429 Too Many Requests` with a `Retry-After` header (seconds) and an `ApiError` problem body. The client surfaces this as a Spring `HttpClientErrorException.TooManyRequests`; read `Retry-After` from `getResponseHeaders()` if you want to back off. The generated `ApiClient` does not retry by default (`maxAttemptsForRetry = 1`), so callers should decide their own retry behaviour.
+
 ### Response version deserialization
 
 `ApplicationResponse.eTag` accepts only JSON integer tokens within the signed 64-bit range. Missing, `null`, malformed, and out-of-range values deserialize as `null`; strings, decimals, booleans, and containers are not coerced. This JSON field is separate from an HTTP `ETag` header.

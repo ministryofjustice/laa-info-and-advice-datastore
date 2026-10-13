@@ -61,6 +61,12 @@ logging:
 
 laa:
   datastore:
+    # In-memory, per-caller rate limit (Resilience4j). Counters are per container instance, so the
+    # effective limit scales with the number of running containers.
+    rate-limit:
+      enabled: ${RATE_LIMIT_ENABLED:true}
+      limit-for-period: ${RATE_LIMIT_REQUESTS:100}
+      refresh-period: ${RATE_LIMIT_REFRESH_PERIOD:1m}
     data-retention:
       years-offset: ${DATA_RETENTION_YEARS_OFFSET:3}
       cron: ${RETENTION_RESOLVER_CRON:0 0 0 * * *}
