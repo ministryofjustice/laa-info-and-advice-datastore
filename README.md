@@ -226,7 +226,7 @@ With credentials in `~/.m2/settings.xml`:
 
 ### Versioning
 
-The API and client packages share a single version, set by the root `version` property in `gradle.properties`. Bump it manually whenever the API contract changes; on merge to `main`, CI compares this value to the previous commit and publishes new API/client package versions only when it has changed. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
+The API and client packages share a single version, set by the root `version` property in `gradle.properties`. Bump it manually whenever the API contract or published client behavior changes; on merge to `main`, CI compares this value to the previous commit and publishes new API/client package versions only when it has changed. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
 
 ## Using the Client Package
 
@@ -242,7 +242,7 @@ The `info-and-advice-datastore-client` module is published to GitHub Packages an
 
 **Gradle:**
 ```gradle
-implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client:0.10.0'
+implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client:0.13.0'
 ```
 
 **Maven:**
@@ -250,7 +250,7 @@ implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client
 <dependency>
   <groupId>uk.gov.justice.laa.ia.datastore</groupId>
   <artifactId>info-and-advice-datastore-client</artifactId>
-  <version>0.10.0</version>
+  <version>0.13.0</version>
 </dependency>
 ```
 
@@ -295,6 +295,16 @@ The autoconfigured client attaches two Bearer tokens to every request automatica
 | `X-Authorization` | The JWT of the currently authenticated user, forwarded from the active Spring `SecurityContext` — must contain a `FIRM_CODE` claim |
 
 The `X-Authorization` token is taken directly from the incoming request's security context, so it is propagated transparently as long as your service authenticates its own callers via Spring Security.
+
+### Response version deserialization
+
+`ApplicationResponse.eTag` accepts only JSON integer tokens within the signed 64-bit range. Missing, `null`, malformed, and out-of-range values deserialize as `null`; strings, decimals, booleans, and containers are not coerced. This JSON field is separate from an HTTP `ETag` header.
+
+The auto-configured `ApplicationApi` installs this response converter automatically. When using a custom `RestTemplate`, install it before the general Jackson converter:
+
+```java
+restTemplate.getMessageConverters().add(0, new ApplicationResponseHttpMessageConverter());
+```
 
 ### Usage
 

@@ -70,8 +70,11 @@ public abstract class BaseIntegrationTest {
     when(userContext.getServiceName()).thenReturn("IntegrationTest");
   }
 
+  /** Flushes pending changes when possible, then clears the persistence context. */
   public void clearCache() {
-    entityManager.flush();
+    if (entityManager.isJoinedToTransaction()) {
+      entityManager.flush();
+    }
     entityManager.clear();
   }
 

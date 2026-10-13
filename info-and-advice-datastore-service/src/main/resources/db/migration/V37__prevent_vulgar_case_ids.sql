@@ -1,0 +1,236 @@
+-- Blocklist of substrings that must never appear in a generated case ID.
+-- Checked against the letters/digits only (dashes stripped) so that a word cannot
+-- slip through by spanning the boundary between the two generated groups. Digits are
+-- additionally translated back to their common leetspeak letter equivalents (e.g. '5' -> 'S')
+-- before matching, so a word can't slip through by substituting a number for a letter
+-- (e.g. '5H1T' for 'SHIT') - this matters most for G/I/O/S/Z, which the case ID generator's
+-- own alphabet excludes, so those letters can otherwise only ever appear as digit lookalikes.
+-- Sourced from https://github.com/censor-text/profanity-list (list/en.txt), filtered to
+-- alphabetic entries of 2-7 characters - a case ID is always exactly 7 characters
+-- (L + 3 + 3), so any longer word could never appear as a substring.
+CREATE OR REPLACE FUNCTION contains_vulgar_word(candidate TEXT) RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS
+$$
+  DECLARE blocked_words TEXT[] := ARRAY[
+    'ABBO', 'ABEED', 'ABUSE', 'AEOLUS', 'AHOLE', 'AMCIK', 'ANAL', 'ANALSEX',
+    'ANUS', 'APESHIT', 'ARABUSH', 'AREOLA', 'AREOLE', 'ARGIE', 'ARMO', 'ARMOS',
+    'AROUSED', 'ARRSE', 'ARSE', 'ARYAN', 'ASHOLES', 'ASS', 'ASSBAG', 'ASSBANG',
+    'ASSBITE', 'ASSCOCK', 'ASSES', 'ASSFACE', 'ASSFUCK', 'ASSHAT', 'ASSHEAD', 'ASSHOLE',
+    'ASSHOLZ', 'ASSHORE', 'ASSKISS', 'ASSLICK', 'ASSMAN', 'ASSSHIT', 'ASSWAD', 'ASSWIPE',
+    'AXWOUND', 'AYIR', 'AZAZEL', 'AZZ', 'AZZHOLE', 'BABES', 'BADFUCK', 'BAGGING',
+    'BALLBAG', 'BALLS', 'BAMPOT', 'BANGBRO', 'BANGBUS', 'BANGER', 'BANGING', 'BARF',
+    'BARFACE', 'BASTARD', 'BAWDY', 'BAZOOMS', 'BBW', 'BCH', 'BDSM', 'BEANER',
+    'BEANERS', 'BEANEY', 'BEANEYS', 'BEATCH', 'BEATOFF', 'BELLEND', 'BEOTCH', 'BESTIAL',
+    'BIATCH', 'BICH', 'BIGASS', 'BIGBUTT', 'BIGTITS', 'BIMBO', 'BIMBOS', 'BINT',
+    'BITCH', 'BITCHED', 'BITCHER', 'BITCHES', 'BITCHEZ', 'BITCHIN', 'BITCHY', 'BITEME',
+    'BITTIES', 'BLACKS', 'BLOODY', 'BLOWJOB', 'BLUEGUM', 'BOANG', 'BOCHE', 'BOCHES',
+    'BODILY', 'BOFFING', 'BOGAN', 'BOHUNK', 'BOINK', 'BOIOLAS', 'BOLLICK', 'BOLLOCK',
+    'BOLLOK', 'BOLLOX', 'BOMBERS', 'BOMBING', 'BOMD', 'BONDAGE', 'BONED', 'BONER',
+    'BONERS', 'BONG', 'BOOB', 'BOOBIE', 'BOOBS', 'BOOKIE', 'BOONG', 'BOONGA',
+    'BOONGAS', 'BOONGS', 'BOONIE', 'BOONIES', 'BOOOBS', 'BOOOOBS', 'BOOTEE', 'BOOTLIP',
+    'BOOZER', 'BOOZY', 'BOSCH', 'BOSCHE', 'BOSCHES', 'BOSCHS', 'BOSOMY', 'BREASTS',
+    'BTCH', 'BUCETA', 'BUFFIES', 'BUGGER', 'BUGGERY', 'BUKAKE', 'BUKKAKE', 'BUM',
+    'BUMFUCK', 'BUNG', 'BUNGA', 'BUNGAS', 'BUSTY', 'BUTT', 'BUTTMAN', 'BYATCH',
+    'CABRON', 'CACA', 'CACKER', 'CAHONE', 'CAMGIRL', 'CAMSLUT', 'CARRUTH', 'CAWK',
+    'CAWKS', 'CAZZO', 'CERVIX', 'CHAV', 'CHINC', 'CHINCS', 'CHINGA', 'CHINK',
+    'CHINKS', 'CHINKY', 'CHOAD', 'CHODE', 'CHODES', 'CHONKY', 'CHONKYS', 'CHRAA',
+    'CHUG', 'CHUGS', 'CHUJ', 'CHUNGER', 'CHUNKYS', 'CHUTE', 'CIALIS', 'CIPA',
+    'CLAMPS', 'CLIT', 'CLITS', 'CLITTY', 'CLOGWOG', 'CNTS', 'CNTZ', 'CNUT',
+    'COCAIN', 'COCAINE', 'COCK', 'COCKASS', 'COCKNOB', 'COCKS', 'COCKY', 'COHEE',
+    'COITAL', 'COITUS', 'COK', 'COMMIE', 'CONDOM', 'COOCHIE', 'COOCHY', 'COOLIE',
+    'COOLIES', 'COOLY', 'COON', 'COONASS', 'COONDOG', 'COONS', 'COOTER', 'COX',
+    'CRABS', 'CRACKER', 'CRAP', 'CRAPOLA', 'CRAPPER', 'CRAPPY', 'CROTCH', 'CUCK',
+    'CUM', 'CUMFEST', 'CUMING', 'CUMM', 'CUMMER', 'CUMMIN', 'CUMMING', 'CUMQUAT',
+    'CUMS', 'CUMSHOT', 'CUMSLUT', 'CUMTART', 'CUNN', 'CUNNIE', 'CUNNTT', 'CUNNY',
+    'CUNT', 'CUNTASS', 'CUNTRAG', 'CUNTS', 'CUNTZ', 'CUSHI', 'CUSHIS', 'CYALIS',
+    'DAGO', 'DAGOS', 'DAHMER', 'DAMM', 'DAMMIT', 'DAMN', 'DAMNED', 'DAMNIT',
+    'DARKEY', 'DARKEYS', 'DARKIE', 'DARKIES', 'DARKY', 'DAYGO', 'DEGGO', 'DEGO',
+    'DEGOS', 'DEMON', 'DETH', 'DICK', 'DICKBAG', 'DICKISH', 'DICKMAN', 'DICKPIC',
+    'DICKS', 'DICKWAD', 'DICKWOD', 'DIDDLE', 'DIKE', 'DILDO', 'DILDOS', 'DILF',
+    'DILIGAF', 'DIMWIT', 'DINGLE', 'DINK', 'DINKS', 'DIPSHIP', 'DIPSHIT', 'DIRSA',
+    'DIX', 'DLCK', 'DOGGIE', 'DOGGIN', 'DOGGING', 'DOLCETT', 'DOMMES', 'DONG',
+    'DOODOO', 'DOOFUS', 'DOOKIE', 'DOOSH', 'DOTHEAD', 'DOUCHE', 'DOUCHEY', 'DRYHUMP',
+    'DUCHE', 'DUDETTE', 'DUMASS', 'DUMBASS', 'DUMSHIT', 'DUPA', 'DVDA', 'DYEFLY',
+    'DYKE', 'DYKES', 'DZIWKA', 'EATME', 'ECCHI', 'EKREM', 'EKTO', 'ENCULER',
+    'ENEMA', 'ERECT', 'ERO', 'EROTIC', 'EROTISM', 'ESCORT', 'ESQUA', 'EUNUCH',
+    'EVL', 'EXKWEW', 'EXTACY', 'EXTASY', 'FACK', 'FAECES', 'FAEN', 'FAG',
+    'FAGBAG', 'FAGET', 'FAGG', 'FAGGED', 'FAGGING', 'FAGGIT', 'FAGGITT', 'FAGGOT',
+    'FAGGS', 'FAGIT', 'FAGOT', 'FAGOTS', 'FAGS', 'FAGT', 'FAGTARD', 'FAGZ',
+    'FAIG', 'FAIGS', 'FAIGT', 'FANCULO', 'FANNY', 'FANYY', 'FART', 'FARTED',
+    'FARTING', 'FARTY', 'FATAH', 'FATASS', 'FATFUCK', 'FATSO', 'FCK', 'FCKCUM',
+    'FCKD', 'FCUK', 'FCUKER', 'FCUKING', 'FECAL', 'FECES', 'FECK', 'FECKER',
+    'FEG', 'FELATIO', 'FELCH', 'FELCHER', 'FELLATE', 'FELTCH', 'FEMDOM', 'FETISH',
+    'FICKEN', 'FIGGING', 'FISTED', 'FISTER', 'FISTING', 'FISTY', 'FITT', 'FLAMER',
+    'FLANGE', 'FLASHER', 'FLIKKER', 'FLOO', 'FLOOZY', 'FLYDIE', 'FLYDYE', 'FOAD',
+    'FOK', 'FONDLE', 'FOOBAR', 'FOOK', 'FOOKER', 'FOOTJOB', 'FORNI', 'FOTZE',
+    'FREEX', 'FRIGG', 'FRIGGA', 'FRIGGER', 'FUCCK', 'FUCHAH', 'FUCK', 'FUCKA',
+    'FUCKASS', 'FUCKBAG', 'FUCKBOY', 'FUCKD', 'FUCKED', 'FUCKER', 'FUCKERS', 'FUCKHER',
+    'FUCKIN', 'FUCKINA', 'FUCKING', 'FUCKIT', 'FUCKME', 'FUCKN', 'FUCKNUT', 'FUCKOFF',
+    'FUCKPIG', 'FUCKR', 'FUCKS', 'FUCKTOY', 'FUCKUP', 'FUCKWAD', 'FUCKWIT', 'FUCKYOU',
+    'FUGLY', 'FUK', 'FUKAH', 'FUKEN', 'FUKER', 'FUKIN', 'FUKING', 'FUKK',
+    'FUKKA', 'FUKKAH', 'FUKKEN', 'FUKKER', 'FUKKIN', 'FUKKING', 'FUKS', 'FUKTARD',
+    'FUKWHIT', 'FUKWIT', 'FUNFUCK', 'FUNGUS', 'FUUCK', 'FUX', 'FUXOR', 'FVCK',
+    'FVK', 'FXCK', 'GAE', 'GAI', 'GANGSTA', 'GANJA', 'GAY', 'GAYASS',
+    'GAYBOB', 'GAYBOR', 'GAYBOY', 'GAYDO', 'GAYFUCK', 'GAYGIRL', 'GAYLORD', 'GAYS',
+    'GAYSEX', 'GAYTARD', 'GAYWAD', 'GAYZ', 'GEEZER', 'GENI', 'GENITAL', 'GETITON',
+    'GEY', 'GFY', 'GHAY', 'GHEY', 'GIGOLO', 'GINZO', 'GINZOS', 'GIPP',
+    'GIPPO', 'GIPPOS', 'GIPPS', 'GLANS', 'GOATCX', 'GOATSE', 'GOB', 'GODAM',
+    'GODAMN', 'GODDAM', 'GODDAMM', 'GODDAMN', 'GOKKUN', 'GONAD', 'GONADS', 'GOOCH',
+    'GOOK', 'GOOKEYE', 'GOOKIES', 'GOOKS', 'GOOKY', 'GORA', 'GORAS', 'GOY',
+    'GOYIM', 'GRINGO', 'GROE', 'GROID', 'GROIDS', 'GROPE', 'GSPOT', 'GSTRING',
+    'GTFO', 'GUB', 'GUBBA', 'GUBBAS', 'GUBS', 'GUIDO', 'GUIENA', 'GUINEAS',
+    'GUIZI', 'GUMMER', 'GURO', 'GWAILO', 'GWAILOS', 'GWEILO', 'GWEILOS', 'GYOPO',
+    'GYOPOS', 'GYP', 'GYPED', 'GYPO', 'GYPOS', 'GYPP', 'GYPPED', 'GYPPIE',
+    'GYPPIES', 'GYPPO', 'GYPPOS', 'GYPPY', 'GYPPYS', 'GYPSYS', 'HADJI', 'HADJIS',
+    'HAJI', 'HAJIS', 'HAJJI', 'HAJJIS', 'HAMAS', 'HAMFLAP', 'HANDJOB', 'HAOLE',
+    'HAOLES', 'HAPA', 'HARDON', 'HAREM', 'HEBE', 'HEBES', 'HEEB', 'HEEBS',
+    'HELL', 'HELLS', 'HELVETE', 'HENTAI', 'HEROIN', 'HERP', 'HERPES', 'HERPY',
+    'HESHE', 'HINDOO', 'HISCOCK', 'HITLER', 'HO', 'HOAR', 'HOARE', 'HOBAG',
+    'HODGIE', 'HOE', 'HOER', 'HOES', 'HOMEY', 'HOMO', 'HOMOEY', 'HONGER',
+    'HONKERS', 'HONKEY', 'HONKEYS', 'HONKIE', 'HONKIES', 'HONKY', 'HOOCH', 'HOOKER',
+    'HOOKERS', 'HOOR', 'HOORE', 'HOOTCH', 'HOOTER', 'HOOTERS', 'HORE', 'HORI',
+    'HORIS', 'HORK', 'HORNDOG', 'HORNEY', 'HORNY', 'HOSEJOB', 'HOSER', 'HOTCARL',
+    'HOTDAMN', 'HOTSEX', 'HUEVON', 'HUGEFAT', 'HUI', 'HUMMER', 'HUMPED', 'HUMPER',
+    'HUMPHER', 'HUMPHIM', 'HUMPIN', 'HUMPING', 'HUSSY', 'HUSTLER', 'HYMEN', 'HYMIE',
+    'HYMIES', 'IBLOWU', 'IKE', 'IKES', 'IKEY', 'IKEYMO', 'IKEYMOS', 'IKWE',
+    'ILLEGAL', 'INBRED', 'INCEST', 'INDON', 'INDONS', 'INJUN', 'INJUNS', 'INSEST',
+    'ISRAELS', 'JACKASS', 'JACKOFF', 'JAGOFF', 'JAP', 'JAPCRAP', 'JAPIE', 'JAPIES',
+    'JAPS', 'JEBUS', 'JERK', 'JERKASS', 'JERKED', 'JERKOFF', 'JERRIES', 'JERRY',
+    'JEWBOY', 'JEWED', 'JEWESS', 'JIGA', 'JIGABOO', 'JIGG', 'JIGGA', 'JIGGABO',
+    'JIGGAS', 'JIGGER', 'JIGGERS', 'JIGGS', 'JIGGY', 'JIGS', 'JIHAD', 'JIMFISH',
+    'JISIM', 'JISM', 'JISS', 'JIZ', 'JIZIM', 'JIZIN', 'JIZM', 'JIZN',
+    'JIZZ', 'JIZZD', 'JIZZED', 'JIZZIM', 'JIZZIN', 'JIZZN', 'JIZZUM', 'JUGG',
+    'JUGGS', 'JUGS', 'JUNKIE', 'JUNKY', 'KACAP', 'KACAPAS', 'KACAPS', 'KAFFER',
+    'KAFFIR', 'KAFFRE', 'KAFIR', 'KANAKE', 'KANKER', 'KATSAP', 'KATSAPS', 'KAWK',
+    'KHOKHOL', 'KICKING', 'KIGGER', 'KIKE', 'KIKES', 'KIMCHIS', 'KINBAKU', 'KINK',
+    'KINKY', 'KISSASS', 'KIUNT', 'KKK', 'KLAN', 'KNOB', 'KNOBEAD', 'KNOBED',
+    'KNOBEND', 'KNOBS', 'KNOBZ', 'KNULLE', 'KOCK', 'KONDUM', 'KONDUMS', 'KOOCH',
+    'KOOCHES', 'KOON', 'KOOTCH', 'KRAP', 'KRAPPY', 'KRAUT', 'KRAUTS', 'KUFFAR',
+    'KUK', 'KUM', 'KUMER', 'KUMMER', 'KUMMING', 'KUMQUAT', 'KUMS', 'KUNT',
+    'KUNTS', 'KUNTZ', 'KURAC', 'KURWA', 'KUSHI', 'KUSHIS', 'KUSI', 'KWA',
+    'KWIF', 'KYKE', 'KYKES', 'KYOPO', 'KYOPOS', 'KYRPA', 'LABIA', 'LAMEASS',
+    'LARDASS', 'LEBOS', 'LECH', 'LEPER', 'LESBAIN', 'LESBAYN', 'LESBIAN', 'LESBIN',
+    'LESBO', 'LESBOS', 'LEZ', 'LEZBE', 'LEZBIAN', 'LEZBO', 'LEZBOS', 'LEZZ',
+    'LEZZIAN', 'LEZZIE', 'LEZZIES', 'LEZZO', 'LEZZY', 'LIBIDO', 'LICKER', 'LICKING',
+    'LICKME', 'LIMEY', 'LIMY', 'LIVESEX', 'LMFAO', 'LOIN', 'LOINS', 'LOLITA',
+    'LOVEGOO', 'LOVEGUN', 'LOWLIFE', 'LSD', 'LUBEJOB', 'LUBRA', 'LUCIFER', 'LUGAN',
+    'LUGANS', 'LUST', 'LUSTING', 'LUSTY', 'LYNCH', 'MABUNO', 'MABUNOS', 'MACACA',
+    'MACACAS', 'MAFUGLY', 'MAHBUNO', 'MAMHOON', 'MAMS', 'MARICON', 'MASSA', 'MAUMAU',
+    'MAUMAUS', 'MENAGE', 'MERD', 'MGGER', 'MGGOR', 'MIBUN', 'MICK', 'MIDEAST',
+    'MIERDA', 'MILF', 'MINGE', 'MINGER', 'MOCKEY', 'MOCKIE', 'MOCKY', 'MOFO',
+    'MOKY', 'MOLEST', 'MONG', 'MOOLIE', 'MORMON', 'MORON', 'MOSKAL', 'MOSKALS',
+    'MOSLEM', 'MOTHA', 'MRHANDS', 'MTRFCK', 'MTRFUCK', 'MUFF', 'MUIE', 'MULATTO',
+    'MULKKU', 'MUNCHER', 'MUNG', 'MUNGING', 'MUNT', 'MUNTER', 'MUSCHI', 'MUTHA',
+    'MUTHER', 'MZUNGU', 'MZUNGUS', 'NAD', 'NADS', 'NAKED', 'NAMBLA', 'NAPPY',
+    'NASTT', 'NASTY', 'NASTYHO', 'NAWASHI', 'NAZI', 'NAZIS', 'NAZISM', 'NECKED',
+    'NECRO', 'NEGRES', 'NEGRESS', 'NEGRO', 'NEGROES', 'NEGROID', 'NEGROS', 'NEONAZI',
+    'NIG', 'NIGA', 'NIGABOO', 'NIGAR', 'NIGARS', 'NIGAS', 'NIGERS', 'NIGETTE',
+    'NIGG', 'NIGGA', 'NIGGAH', 'NIGGAHS', 'NIGGAR', 'NIGGARD', 'NIGGARS', 'NIGGAS',
+    'NIGGAZ', 'NIGGER', 'NIGGERS', 'NIGGLE', 'NIGGLED', 'NIGGLES', 'NIGGOR', 'NIGGUH',
+    'NIGGUHS', 'NIGGUR', 'NIGGURS', 'NIGLET', 'NIGNOG', 'NIGOR', 'NIGORS', 'NIGR',
+    'NIGRA', 'NIGRAS', 'NIGRE', 'NIGRES', 'NIGRESS', 'NIGS', 'NIGUR', 'NIIGER',
+    'NIIGR', 'NIMROD', 'NINNY', 'NIP', 'NIPPLE', 'NIPPLES', 'NIPS', 'NITTIT',
+    'NLGGER', 'NLGGOR', 'NOB', 'NOBHEAD', 'NOG', 'NOOKEY', 'NOOKIE', 'NOOKY',
+    'NOONAN', 'NOONER', 'NSFW', 'NUDE', 'NUDGER', 'NUDIE', 'NUDIES', 'NUDITY',
+    'NUTSACK', 'NUTTEN', 'NYMPH', 'NYMPHO', 'ORAFIS', 'ORALLY', 'ORGA', 'ORGASIM',
+    'ORGASM', 'ORGASMS', 'ORGASUM', 'ORGIES', 'ORGY', 'ORIFACE', 'ORIFICE', 'ORIFISS',
+    'OROSPU', 'OSAMA', 'OVUM', 'OVUMS', 'PACKI', 'PACKIE', 'PACKY', 'PADDY',
+    'PAKI', 'PAKIE', 'PAKIS', 'PAKY', 'PANOOCH', 'PANSIES', 'PANSY', 'PANTI',
+    'PANTIE', 'PANTIES', 'PANTY', 'PASKA', 'PASTIE', 'PASTY', 'PAWN', 'PAYO',
+    'PCP', 'PECKER', 'PEDO', 'PEEENUS', 'PEEHOLE', 'PEENUS', 'PEEPEE', 'PEGGING',
+    'PEINUS', 'PENAS', 'PENDEJO', 'PENDY', 'PENIAL', 'PENILE', 'PENIS', 'PENISES',
+    'PENUS', 'PENUUS', 'PERSE', 'PERV', 'PEYOTE', 'PHALLI', 'PHALLIC', 'PHUC',
+    'PHUCK', 'PHUK', 'PHUKED', 'PHUKER', 'PHUKING', 'PHUKKED', 'PHUKKER', 'PHUKS',
+    'PHUNGKY', 'PHUQ', 'PICKA', 'PIEFKE', 'PIEFKES', 'PIERDOL', 'PIKER', 'PIKEY',
+    'PIKY', 'PILLU', 'PIMMEL', 'PIMP', 'PIMPED', 'PIMPER', 'PIMPIS', 'PINDICK',
+    'PINKO', 'PIS', 'PISES', 'PISIN', 'PISING', 'PISOF', 'PISS', 'PISSED',
+    'PISSER', 'PISSERS', 'PISSES', 'PISSIN', 'PISSING', 'PISSOFF', 'PISSPIG', 'PISTOL',
+    'PIZDA', 'PLAYBOY', 'POCHA', 'POCHAS', 'POCHO', 'POCHOS', 'POHM', 'POHMS',
+    'POLAC', 'POLACK', 'POLACKS', 'POLAK', 'POLLOCK', 'POMMY', 'POO', 'POOF',
+    'POON', 'POONANI', 'POONANY', 'POOP', 'POOPER', 'POOPING', 'POPIMP', 'PORN',
+    'PORNO', 'PORNOS', 'PRETEEN', 'PRIC', 'PRICK', 'PRICKS', 'PRIG', 'PRON',
+    'PTHC', 'PUBE', 'PUBES', 'PUBIC', 'PUBIS', 'PUD', 'PUDBOY', 'PUDD',
+    'PUDDBOY', 'PUKE', 'PULA', 'PULE', 'PUNANI', 'PUNANNY', 'PUNANY', 'PUNKASS',
+    'PUNKY', 'PUNTA', 'PUNTANG', 'PUSIES', 'PUSS', 'PUSSE', 'PUSSEE', 'PUSSI',
+    'PUSSIE', 'PUSSIES', 'PUSSY', 'PUSSYS', 'PUSY', 'PUTA', 'PUTO', 'PUUKE',
+    'PUUKER', 'QAHBEH', 'QUASHIE', 'QUEAF', 'QUEEF', 'QUEER', 'QUEERO', 'QUEERS',
+    'QUEERZ', 'QUICKIE', 'QUICKY', 'QUIFF', 'QUIM', 'QWEERS', 'QWEERZ', 'QWEIR',
+    'RAGHEAD', 'RAPE', 'RAPED', 'RAPER', 'RAPING', 'RAPIST', 'REAREND', 'RECKTUM',
+    'RECTAL', 'RECTUM', 'RECTUS', 'REDLEG', 'REDLEGS', 'REDNECK', 'REDSKIN', 'REEFER',
+    'REESTIE', 'REETARD', 'REICH', 'RENOB', 'RERE', 'RETARD', 'RETARDS', 'RETARDZ',
+    'RIGGER', 'RIMJAW', 'RIMJOB', 'RIMMING', 'RITARD', 'RTARD', 'RTARDS', 'RUSKI',
+    'RUSSKI', 'RUSSKIE', 'SAC', 'SADIS', 'SADISM', 'SADIST', 'SADOM', 'SAMBO',
+    'SAMBOS', 'SANCHEZ', 'SANDM', 'SCAG', 'SCANK', 'SCAT', 'SCHEISS', 'SCHIZO',
+    'SCHLONG', 'SCHMUCK', 'SCREW', 'SCREWED', 'SCROAT', 'SCROG', 'SCROTE', 'SCROTUM',
+    'SCRUD', 'SEDUCE', 'SEMEN', 'SEPPO', 'SEPPOS', 'SEPTICS', 'SEX', 'SEXCAM',
+    'SEXED', 'SEXFARM', 'SEXI', 'SEXING', 'SEXO', 'SEXPOT', 'SEXTOGO', 'SEXTOY',
+    'SEXTOYS', 'SEXUAL', 'SEXX', 'SEXXI', 'SEXXX', 'SEXXXI', 'SEXXXY', 'SEXXY',
+    'SEXY', 'SHAG', 'SHAGGER', 'SHAGGIN', 'SHAT', 'SHAV', 'SHEENEY', 'SHEMALE',
+    'SHHIT', 'SHIBARI', 'SHIBARY', 'SHINOLA', 'SHIPAL', 'SHIT', 'SHITASS', 'SHITBAG',
+    'SHITCAN', 'SHITE', 'SHITED', 'SHITEY', 'SHITFIT', 'SHITING', 'SHITOLA', 'SHITPOT',
+    'SHITS', 'SHITT', 'SHITTED', 'SHITTER', 'SHITTY', 'SHITY', 'SHITZ', 'SHIZ',
+    'SHIZNIT', 'SHOTA', 'SHYLOCK', 'SHYT', 'SHYTE', 'SHYTTY', 'SHYTY', 'SIMP',
+    'SISSY', 'SKAG', 'SKANCK', 'SKANK', 'SKANKEE', 'SKANKEY', 'SKANKS', 'SKANKY',
+    'SKEET', 'SKRIB', 'SKRIBZ', 'SKUM', 'SKUMBAG', 'SKWA', 'SKWE', 'SLAG',
+    'SLANTY', 'SLAPPER', 'SLOPER', 'SLOPERS', 'SLOPES', 'SLOPEY', 'SLOPEYS', 'SLOPIES',
+    'SLOPY', 'SLUT', 'SLUTBAG', 'SLUTS', 'SLUTT', 'SLUTTY', 'SLUTZ', 'SMACK',
+    'SMEG', 'SMEGMA', 'SMOKER', 'SMUT', 'SMUTTY', 'SNATCH', 'SNIGGER', 'SNUFF',
+    'SODOM', 'SODOMY', 'SOOTIES', 'SOOTY', 'SOUSE', 'SOUSED', 'SOYBOY', 'SPAC',
+    'SPADE', 'SPADES', 'SPANK', 'SPASTIC', 'SPERM', 'SPIC', 'SPICK', 'SPICKS',
+    'SPICS', 'SPIG', 'SPIK', 'SPIKS', 'SPITTER', 'SPLOOGE', 'SPLUDGE', 'SPOOGE',
+    'SPOOK', 'SPUNK', 'SPUNKY', 'SQEH', 'SQUA', 'SQUAW', 'SQUINTY', 'STAGG',
+    'STEAMY', 'STFU', 'STIFFY', 'STONED', 'STONER', 'STRAPON', 'STROKE', 'SUCK',
+    'SUCKASS', 'SUCKED', 'SUCKER', 'SUCKING', 'SUCKME', 'SUCKOFF', 'SUCKS', 'SUKA',
+    'SWALOW', 'SWINGER', 'SX', 'TABOO', 'TAFF', 'TARBABY', 'TARD', 'TASTEMY',
+    'TAWDRY', 'TEAT', 'TEETS', 'TEEZ', 'TERD', 'TERROR', 'TESTE', 'TESTEE',
+    'TESTES', 'TESTIS', 'TINKLE', 'TIT', 'TITFUCK', 'TITI', 'TITJOB', 'TITS',
+    'TITT', 'TITTIE', 'TITTIES', 'TITTIS', 'TITTY', 'TITTYS', 'TITWANK', 'TITY',
+    'TOKE', 'TOOTS', 'TOPLESS', 'TORTUR', 'TORTURE', 'TOSSER', 'TRAMP', 'TRANNIE',
+    'TRANNY', 'TRASHY', 'TRIPLEX', 'TROIS', 'TROJAN', 'TROTS', 'TUBGIRL', 'TURD',
+    'TURNON', 'TUSH', 'TUSHY', 'TWAT', 'TWATS', 'TWATTY', 'TWINK', 'TWINKIE',
+    'TWUNT', 'TWUNTER', 'UKROP', 'UPSKIRT', 'USAMA', 'USSYS', 'UZI', 'VAG',
+    'VAGIINA', 'VAGINA', 'VAJINA', 'VALIUM', 'VGRA', 'VIAGRA', 'VIBR', 'VIGRA',
+    'VIRGIN', 'VITTU', 'VIXEN', 'VJAYJAY', 'VODKA', 'VOMIT', 'VOYEUR', 'VOYUER',
+    'VULLVA', 'VULVA', 'WAB', 'WAD', 'WANG', 'WANK', 'WANKER', 'WANKING',
+    'WANKJOB', 'WANKY', 'WAYSTED', 'WAZOO', 'WEENIE', 'WEEWEE', 'WEINER', 'WELCHER',
+    'WENCH', 'WETB', 'WETBACK', 'WETSPOT', 'WHACKER', 'WHASH', 'WHIGGER', 'WHIT',
+    'WHITES', 'WHITEY', 'WHITEYS', 'WHITIES', 'WHOAR', 'WHOP', 'WHORE', 'WHORED',
+    'WHORES', 'WHORING', 'WICHSER', 'WIGGA', 'WIGGAS', 'WIGGER', 'WIGGERS', 'WILLIE',
+    'WILLIES', 'WILLY', 'WOG', 'WOGS', 'WOOSE', 'WOP', 'WORDS', 'WTF',
+    'WUSS', 'WUZZIE', 'XKWE', 'XRATED', 'XTC', 'XX', 'XXX', 'XXXXXX',
+    'YANK', 'YAOI', 'YARPIE', 'YARPIES', 'YEASTY', 'YED', 'YID', 'YIDS',
+    'YIFFY', 'YOBBO', 'YURY', 'ZIGABO', 'ZIGABOS'
+  ];
+  DECLARE normalised_candidate TEXT := UPPER(REGEXP_REPLACE(candidate, '[^A-Z0-9]', '', 'gi'));
+  -- Reverse common leetspeak substitutions so e.g. "5H1T" normalises to "SHIT" for matching.
+  DECLARE normalised_leet TEXT := TRANSLATE(normalised_candidate, '0123456789', 'OIZEASGTBG');
+  DECLARE blocked_word TEXT;
+  BEGIN
+    FOREACH blocked_word IN ARRAY blocked_words LOOP
+      IF POSITION(blocked_word IN normalised_candidate) > 0
+        OR POSITION(blocked_word IN normalised_leet) > 0 THEN
+        RETURN TRUE;
+      END IF;
+    END LOOP;
+    RETURN FALSE;
+  END
+$$;
+
+-- Update reference_number_trigger to also reject generated case IDs containing a vulgar word
+CREATE OR REPLACE FUNCTION reference_number_trigger() RETURNS TRIGGER
+LANGUAGE plpgsql
+AS
+$$
+  DECLARE reference_number_to_insert TEXT;
+  DECLARE generate_new_reference BOOLEAN := TRUE;
+  BEGIN
+    WHILE generate_new_reference LOOP
+      reference_number_to_insert = generate_reference_number();
+      generate_new_reference = EXISTS(SELECT 1 FROM applications WHERE case_id = reference_number_to_insert)
+        OR contains_vulgar_word(reference_number_to_insert);
+      new.case_id := reference_number_to_insert;
+    END LOOP;
+    return new;
+  END
+$$;

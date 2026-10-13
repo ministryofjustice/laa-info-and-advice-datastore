@@ -26,6 +26,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     log.warn("ETag mismatch: {}", exception.getMessage());
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    problemDetail.setProperty("reason", "APPLICATION_VERSION_CONFLICT");
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
@@ -43,6 +44,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT, "Conflict: resource was modified concurrently");
+    problemDetail.setProperty("reason", "APPLICATION_VERSION_CONFLICT");
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
@@ -88,6 +90,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     log.warn("Completed application edit rejected: {}", exception.getMessage());
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    problemDetail.setProperty("reason", "APPLICATION_COMPLETED");
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
@@ -122,6 +125,21 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage());
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
+  }
+
+  /**
+   * The handler for ApplicationDeletedException.
+   *
+   * @param exception the exception
+   * @return 410 Gone response
+   */
+  @ExceptionHandler(ApplicationDeletedException.class)
+  public ResponseEntity<ProblemDetail> handleApplicationDeletedException(
+      ApplicationDeletedException exception) {
+    log.warn("Attempting to access a deleted application: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.GONE, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.GONE).body(problemDetail);
   }
 
   /**

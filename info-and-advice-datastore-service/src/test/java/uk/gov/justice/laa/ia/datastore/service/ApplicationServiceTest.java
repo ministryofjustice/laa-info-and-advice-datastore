@@ -38,6 +38,7 @@ import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.exception.ApplicationDeletedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
@@ -81,7 +82,7 @@ public class ApplicationServiceTest {
   @Mock private ClientDetailsMapper clientDetailsMapper;
   @Mock private UserContext userContext;
   @Mock private ObjectMapper objectMapper;
-  @Mock private EventService eventService;
+  @Mock private UserDrivenEventService eventService;
   @Mock private EntityManager entityManager;
 
   @InjectMocks private ApplicationService sut;
@@ -135,7 +136,7 @@ public class ApplicationServiceTest {
     assertThrows(ProviderOfficeNotAuthorizedException.class, () -> sut.createApplication(cmd));
 
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(StartApplicationCommand.class), any());
+    verify(eventService, never()).record(any(StartApplicationCommand.class), any(), any());
   }
 
   @Test
@@ -156,7 +157,7 @@ public class ApplicationServiceTest {
 
     verify(mapper, never()).toApplicationEntity(any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(StartApplicationCommand.class), any());
+    verify(eventService, never()).record(any(StartApplicationCommand.class), any(), any());
   }
 
   @Test
@@ -275,6 +276,25 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void shouldThrowApplicationDeletedException_whenGettingDeletedApplication() {
+    // Arrange
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity entity =
+        ApplicationEntity.builder()
+            .id(UUID.randomUUID())
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
+
+    // Act + Assert
+    assertThrows(ApplicationDeletedException.class, () -> sut.getApplication(entity.getId()));
+    verify(mapper, never()).toApplication(any());
+  }
+
+  @Test
   void shouldUpdateMeansData() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -346,6 +366,30 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(
         ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
+    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateMeansData_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
     verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
@@ -540,9 +584,11 @@ public class ApplicationServiceTest {
   void shouldRecordEvent_whenApplicationCreated() {
     // Arrange
     final String officeCode = UUID.randomUUID().toString();
+    UUID applicationId = UUID.randomUUID();
     final StartApplicationCommand cmd =
         StartApplicationCommand.builder().providerOfficeCode(officeCode).build();
     final ApplicationEntity entity = new ApplicationEntity();
+    entity.setId(applicationId);
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
     when(repo.save(any(ApplicationEntity.class))).thenAnswer(i -> i.getArgument(0));
@@ -551,7 +597,7 @@ public class ApplicationServiceTest {
     sut.createApplication(cmd);
 
     // Assert
-    verify(eventService, times(1)).record(cmd, officeCode);
+    verify(eventService, times(1)).record(cmd, officeCode, applicationId);
   }
 
   @Test
@@ -587,7 +633,7 @@ public class ApplicationServiceTest {
     sut.updateMeansData(UUID.randomUUID(), UpdateMeansDataCommand.builder().eTag(0L).build());
 
     // Assert
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -611,7 +657,7 @@ public class ApplicationServiceTest {
     sut.updateClientDeclaration(applicationId, command);
 
     // Assert
-    verify(eventService, times(1)).record(command, officeCode);
+    verify(eventService, times(1)).record(command, officeCode, applicationId);
   }
 
   @Test
@@ -624,7 +670,7 @@ public class ApplicationServiceTest {
     sut.updateClientDeclaration(UUID.randomUUID(), (DeclarationCommand) null);
 
     // Assert
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -646,7 +692,8 @@ public class ApplicationServiceTest {
     sut.updateEvidence(application.getId(), command);
 
     // Assert
-    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+    verify(eventService, times(1))
+        .record(command, application.getProviderOfficeCode(), application.getId());
   }
 
   @Test
@@ -659,7 +706,7 @@ public class ApplicationServiceTest {
     sut.updateEvidence(UUID.randomUUID(), (UpdateEvidenceCommand) null);
 
     // Assert
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -724,6 +771,27 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateClientDeclaration_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application = new ApplicationEntity();
+    application.setProviderOfficeCode(officeCode);
+    application.setDeleted(true);
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
+        () ->
+            sut.updateClientDeclaration(
+                applicationId, DeclarationCommand.builder().eTag(0L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void updateEvidence_shouldThrowEtagMismatchException_whenVersionDoesNotMatch() {
     // Arrange
     final ApplicationEntity application =
@@ -761,6 +829,25 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void updateEvidence_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.evidence(null).deleted(true));
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(application.getProviderOfficeCode()));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
+        () ->
+            sut.updateEvidence(
+                application.getId(), UpdateEvidenceCommand.builder().eTag(0L).build()));
+    verify(evidenceRepository, never()).save(any(EvidenceEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void updateScopingData_shouldThrowException_whenProviderOfficeCodeNotAuthorized() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -773,6 +860,27 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(
         ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateScopingData(
+                applicationId, UpdateScopingDataCommand.builder().eTag(0L).build()));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateScopingData_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application = new ApplicationEntity();
+    application.setProviderOfficeCode(officeCode);
+    application.setDeleted(true);
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
         () ->
             sut.updateScopingData(
                 applicationId, UpdateScopingDataCommand.builder().eTag(0L).build()));
@@ -806,7 +914,8 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(mapper, times(1)).updateApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+    verify(eventService, times(1))
+        .record(command, application.getProviderOfficeCode(), applicationId);
   }
 
   @Test
@@ -824,7 +933,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(mapper, never()).updateApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -866,6 +975,31 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(
         ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateApplication(
+                applicationId, UpdateApplicationCommand.builder().eTag(0L).build()));
+    verify(mapper, never()).updateApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateApplication_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
         () ->
             sut.updateApplication(
                 applicationId, UpdateApplicationCommand.builder().eTag(0L).build()));
@@ -981,16 +1115,17 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(mapper, times(1)).editApplicationEntity(command, application);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+    verify(eventService, times(1))
+        .record(command, application.getProviderOfficeCode(), applicationId);
   }
 
   @Test
-  void editApplication_shouldPreserveRootReason_whenExplicitlyNull() {
+  void editApplication_shouldClearReapplicationReason_whenExplicitlyNull() {
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
     final ApplicationEntity application =
         ApplicationEntity.builder().id(applicationId).providerOfficeCode(officeCode).build();
-    application.setReasonForReapplication("Existing root reason");
+    application.setReasonForReapplication("Existing ReapplicationReason");
     final EditApplicationCommand command =
         EditApplicationCommand.builder()
             .eTag(0L)
@@ -1002,7 +1137,7 @@ public class ApplicationServiceTest {
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     assertTrue(sut.editApplication(applicationId, command).isPresent());
-    assertThat(application.getReasonForReapplication()).isEqualTo("Existing root reason");
+    assertThat(application.getReasonForReapplication()).isNull();
   }
 
   @Test
@@ -1126,7 +1261,7 @@ public class ApplicationServiceTest {
     assertTrue(sut.editApplication(applicationId, command).isPresent());
     assertThat(clientDetails.getAddress()).isSameAs(address);
     verify(repo).save(application);
-    verify(eventService).record(command, officeCode);
+    verify(eventService).record(command, officeCode, applicationId);
   }
 
   @Test
@@ -1351,7 +1486,7 @@ public class ApplicationServiceTest {
     assertThrows(DuplicateUfnException.class, () -> sut.editApplication(applicationId, command));
     verify(mapper, never()).editApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -1368,7 +1503,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(mapper, never()).editApplicationEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -1416,6 +1551,30 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void editApplication_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
+        () ->
+            sut.editApplication(applicationId, EditApplicationCommand.builder().eTag(0L).build()));
+    verify(mapper, never()).editApplicationEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
   void shouldUpdateClientDetails() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -1441,7 +1600,8 @@ public class ApplicationServiceTest {
     assertTrue(result.isPresent());
     verify(clientDetailsMapper, times(1)).updateClientDetailsEntity(command, clientDetails);
     verify(repo, times(1)).save(application);
-    verify(eventService, times(1)).record(command, application.getProviderOfficeCode());
+    verify(eventService, times(1))
+        .record(command, application.getProviderOfficeCode(), applicationId);
   }
 
   @Test
@@ -1459,7 +1619,7 @@ public class ApplicationServiceTest {
     assertTrue(result.isEmpty());
     verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
     verify(repo, never()).save(any(ApplicationEntity.class));
-    verify(eventService, never()).record(any(), any());
+    verify(eventService, never()).record(any(), any(), any());
   }
 
   @Test
@@ -1503,6 +1663,32 @@ public class ApplicationServiceTest {
     // Act + Assert
     assertThrows(
         ProviderOfficeNotAuthorizedException.class,
+        () ->
+            sut.updateClientDetails(
+                applicationId, UpdateClientDetailsCommand.builder().eTag(0L).build()));
+    verify(clientDetailsMapper, never()).updateClientDetailsEntity(any(), any());
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateClientDetails_shouldThrowApplicationDeletedException_whenApplicationIsDeleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .deleted(true)
+            .clientDetails(ClientDetailsEntity.builder().build())
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
         () ->
             sut.updateClientDetails(
                 applicationId, UpdateClientDetailsCommand.builder().eTag(0L).build()));

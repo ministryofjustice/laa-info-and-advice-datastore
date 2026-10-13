@@ -433,4 +433,26 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         .andExpect(jsonPath("$.content[0].id").value(savedIneligible.getId().toString()))
         .andExpect(jsonPath("$.content[0].eligibilityIndication").value("ineligible"));
   }
+
+  @Test
+  void shouldExcludeDeletedApplicationsFromResults() throws Exception {
+    // Arrange
+    setupApplications();
+    applicationRepository.save(
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                    .deleted(true)));
+    clearCache();
+
+    // Act & Assert
+    mockMvc
+        .perform(get("/api/v0/applications").withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content", hasSize(DEFAULT_NUMBER_OF_APPLICATIONS)))
+        .andExpect(jsonPath("$.totalElements").value(DEFAULT_NUMBER_OF_APPLICATIONS));
+  }
 }

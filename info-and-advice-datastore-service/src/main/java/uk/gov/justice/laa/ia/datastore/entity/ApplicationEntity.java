@@ -113,6 +113,12 @@ public class ApplicationEntity {
   @JoinColumn(name = "application_id", referencedColumnName = "id")
   private Set<EligibilityResultEntity> eligibilityResults;
 
+  @Column(name = "deleted", nullable = false)
+  private boolean deleted;
+
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
   /** Returns the most recent eligibility result for this application. */
   public EligibilityResultEntity getMostRecentEligibilityResult() {
     if (eligibilityResults == null || eligibilityResults.isEmpty()) {

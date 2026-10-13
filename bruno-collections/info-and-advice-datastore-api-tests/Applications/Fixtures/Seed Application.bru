@@ -13,7 +13,7 @@ patch {
 body:json {
   {
     "eTag": 0,
-    "reasonForReapplication": "Retained root reason",
+    "reasonForReapplication": "Retained ReapplicationReason",
     "ecfFlag": true,
     "scopingQuestions": {
       "priorLegalAid": "same_matter",
@@ -56,7 +56,7 @@ tests {
 
   await test("seed values are present", async function() {
     const application = (await bru.runRequest("Applications/Get Application")).data;
-    expect(application.reasonForReapplication).to.equal("Retained root reason");
+    expect(application.reasonForReapplication).to.equal("Retained ReapplicationReason");
     expect(application.ecfFlag).to.equal(true);
     expect(application.client.niNumber).to.equal("AB123456A");
     expect(application.client.address.addressLine2).to.equal("Old line 2");
