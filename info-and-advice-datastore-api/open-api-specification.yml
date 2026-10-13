@@ -33,6 +33,10 @@ components:
     XServiceNameHeader:
       $ref: './open-api-applications/components/parameters.yml#/components/parameters/XServiceNameHeader'
 
+  responses:
+    TooManyRequests:
+      $ref: './open-api-applications/components/responses.yml#/components/responses/TooManyRequests'
+
   schemas:
     ClientDetails:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ClientDetails'
