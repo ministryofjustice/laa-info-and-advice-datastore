@@ -9,6 +9,22 @@ laa:
     trusted-caller:
       issuer-uri: https://placeholder.issuer.uri/v2.0
       audience: api://placeholder-caller-audience
+    # This file entirely shadows the main application.yml on the classpath (Spring Boot only loads
+    # the first application.yml it finds), so properties read via @Value elsewhere in the app -
+    # even ones with a ${PLACEHOLDER:default} fallback in main's copy - must be repeated here or
+    # they fail to resolve. Read by DataDeletionTask/DataRetentionDateResolverTask, which get
+    # instantiated via component scanning regardless of active profile.
+    data-retention:
+      years-offset: 3
+    # Read by PiiRedactor, which is also unconditionally component-scanned; an empty/missing
+    # binding here throws an NPE in its constructor rather than defaulting to no fields.
+    events:
+      pii:
+        fields:
+          - firstName
+          - lastName
+          - dateOfBirth
+          - niNumber
 
 spring:
   autoconfigure:

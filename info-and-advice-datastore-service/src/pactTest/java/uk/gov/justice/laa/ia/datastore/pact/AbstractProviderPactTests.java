@@ -21,8 +21,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
-import uk.gov.justice.laa.ia.datastore.service.EventService;
+import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
+import uk.gov.justice.laa.ia.datastore.service.UserDrivenEventService;
 
 /**
  * Base for provider verification: boots the Spring app with NO database and the service layer
@@ -32,12 +35,17 @@ import uk.gov.justice.laa.ia.datastore.service.EventService;
  * controller in this service and depends on exactly one collaborator - {@link ApplicationService} -
  * so mocking it here replaces the real bean (and everything {@code ApplicationService} itself would
  * otherwise wire: repositories, mappers, {@code EntityManager}), meaning the context loads without
- * a real Postgres instance or Flyway migrations. {@code EventService} is also mocked below: it's an
- * independently component-scanned {@code @Service} (not a dependency reachable only via {@code
- * ApplicationService}), so it still gets instantiated - and needs its own {@code EventRepository} -
- * even when {@code ApplicationService} is mocked out. Default Spring Boot/Security
- * autoconfiguration and {@code UserContextInterceptor} (see field javadoc below) are also
- * neutralised so requests reach the controller without real JWTs.
+ * a real Postgres instance or Flyway migrations. {@code SystemDrivenEventService} and {@code
+ * UserDrivenEventService} are also mocked below: they're independently component-scanned
+ * {@code @Service}s (not dependencies reachable only via {@code ApplicationService}), so they still
+ * get instantiated - and need their own {@code EventRepository}/collaborators - even when {@code
+ * ApplicationService} is mocked out. {@code ApplicationRepository} and {@code EventRepository} are
+ * mocked directly too: {@code DataDeletionTask}/{@code DataRetentionDateResolverTask} (scheduled
+ * tasks) and {@code RetentionDateUpdateService}/{@code ApplicationDataDeletionService} are plain
+ * {@code @Component}/{@code @Service} beans reachable via component scanning regardless of profile,
+ * and need these repositories to construct even though nothing here exercises them. Default Spring
+ * Boot/Security autoconfiguration and {@code UserContextInterceptor} (see field javadoc below) are
+ * also neutralised so requests reach the controller without real JWTs.
  *
  * <p>{@code @State} handlers live here (as opposed to on {@link ApplicationProviderPactTests}
  * itself) so they're ready to be shared again if a local/offline verification path is reintroduced
@@ -54,7 +62,10 @@ import uk.gov.justice.laa.ia.datastore.service.EventService;
 public abstract class AbstractProviderPactTests {
 
   @MockitoBean protected ApplicationService applicationService;
-  @MockitoBean protected EventService eventService;
+  @MockitoBean protected SystemDrivenEventService systemDrivenEventService;
+  @MockitoBean protected UserDrivenEventService userDrivenEventService;
+  @MockitoBean protected ApplicationRepository applicationRepository;
+  @MockitoBean protected EventRepository eventRepository;
 
   // UserContextInterceptor independently requires a real, matching pair of JWTs (primary auth +
   // forwarded X-Authorization) that this harness has no way to manufacture, so it's mocked out and
