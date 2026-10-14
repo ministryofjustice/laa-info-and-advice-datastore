@@ -1,0 +1,9 @@
+version: v1.25.0
+ignore:
+  SNYK-JAVA-ORGGLASSFISHJAXB-20883142:
+    - '*':
+        reason: >-
+          XXE in jaxb-core 4.0.9, a transitive dependency of hibernate-core via jaxb-runtime. No
+          fixed version is available. The API is JSON-only and Hibernate only parses its own
+          mapping files, so untrusted XML is never processed. Remove once a fix is published.
+        expires: 2027-01-13T00:00:00.000Z

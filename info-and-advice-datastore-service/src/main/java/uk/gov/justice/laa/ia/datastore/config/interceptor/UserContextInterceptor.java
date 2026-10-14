@@ -111,6 +111,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
       throw new IllegalArgumentException("Missing or invalid LAA_ACCOUNTS claim in JWT");
     }
 
+    userContext.setCurrentUser(authenticatedJwt.getClaimAsString(OID_CLAIM));
     userContext.setProviderFirmCode(providerFirmCodeClaim);
     userContext.setOfficeCodes(officeCodesClaim);
     userContext.setCorrelationId(MDC.get("correlationId"));
