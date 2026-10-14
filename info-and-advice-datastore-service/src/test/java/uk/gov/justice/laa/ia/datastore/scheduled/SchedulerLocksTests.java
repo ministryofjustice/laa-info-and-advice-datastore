@@ -14,6 +14,7 @@ class SchedulerLocksTests {
     final var schedulers =
         List.of(
             LocalDataRetentionScheduler.class,
+            ProdDataDeletionScheduler.class,
             LocalDataDeletionScheduler.class,
             ProdDataRetentionScheduler.class);
 

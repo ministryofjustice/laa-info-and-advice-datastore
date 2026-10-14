@@ -8,6 +8,7 @@ replicaCount: 2
 
 env:
   SPRING_PROFILES_ACTIVE: staging
+  DATA_RETENTION_ENABLED: "true"
 
 image:
   repository: nginx
