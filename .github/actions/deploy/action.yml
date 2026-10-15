@@ -37,6 +37,9 @@ inputs:
   ecr-region:
     description: "ECR Region"
     required: true
+  github-token:
+    description: "Github token"
+    required: true
   github-sha:
     description: "Github sha"
     required: true
@@ -73,19 +76,16 @@ runs:
       shell: bash
       run: ./gradlew build
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
 
     - run: |
-        docker build --secret id=github_token,env=GITHUB_TOKEN \
-          --build-arg GITHUB_ACTOR \
-          -t "$REGISTRY/$REPOSITORY:$IMAGE_TAG" .
+        docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
         docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
       shell: bash
       env:
         REGISTRY: ${{ inputs.ecr-registry-url }}
         REPOSITORY: ${{ inputs.ecr-repository }}
         IMAGE_TAG: ${{ inputs.image-tag }}
-        GITHUB_TOKEN: ${{ github.token }}
 
     - name: Authenticate to the cluster
       uses: ministryofjustice/laa-reusable-github-actions/.github/actions/authenticate_to_cluster@2aa2676c3cd9876ec7037ee8b3d729d0306cb7c6

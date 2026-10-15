@@ -91,10 +91,6 @@ laa:
     trusted-caller:
       issuer-uri: ${LAA_OAUTH2_ISSUER_URI:https://placeholder.issuer.uri/v2.0}
       audience: ${TRUSTED_CALLER_AUDIENCE:api://placeholder-caller-audience}
-  security:
-    # Content-Security-Policy reporting endpoint - blank disables the header.
-    csp-report-uri: ${SENTRY_CSP_REPORT_URI:}
-    csp-security-token: ${SENTRY_SECURITY_TOKEN:}
     # Field names redacted out of recorded event payloads (see EventService/PiiRedactor) and
     # stashed in EventEntity.piiData instead, keyed by a generated UUID.
     events:
@@ -114,6 +110,10 @@ laa:
           - county
           - clientFirstName
           - clientLastName
+  security:
+    # Content-Security-Policy reporting endpoint - blank disables the header.
+    csp-report-uri: ${SENTRY_CSP_REPORT_URI:}
+    csp-security-token: ${SENTRY_SECURITY_TOKEN:}
   springboot.starter:
     oauth2:
       scopes-claim-path: scp

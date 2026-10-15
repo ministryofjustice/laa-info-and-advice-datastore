@@ -2,10 +2,10 @@ package uk.gov.justice.laa.ia.datastore.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.sentry.SentryId;
 import io.sentry.SentryLogEvent;
 import io.sentry.SentryLogEventAttributeValue;
 import io.sentry.SentryLogLevel;
+import io.sentry.protocol.SentryId;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
