@@ -143,26 +143,6 @@ spotless {
     }
 }
 
-// Bundles the integration-test classes and runtime jars so a single test class can be run from the
-// JUnit console launcher inside the cluster (see deploy/scripts/run-claims-api-test-in-cluster.sh).
-configurations {
-    podTestLauncher
-}
-
-dependencies {
-    // Keep in step with the JUnit version managed by Spring Boot.
-    podTestLauncher 'org.junit.platform:junit-platform-console-standalone:6.0.3'
-}
-
-tasks.register('claimsApiPodTestBundle', Sync) {
-    dependsOn 'integrationTestClasses'
-    into layout.buildDirectory.dir('claims-api-pod-test')
-    from(sourceSets.main.output) { into 'classes' }
-    from(sourceSets.integrationTest.output) { into 'classes' }
-    from(sourceSets.integrationTest.runtimeClasspath.filter { it.file }) { into 'lib' }
-    from(configurations.podTestLauncher) { into 'launcher' }
-}
-
 tasks.register('checkstyleAll') {
     group = 'verification'
     description = 'Runs checkstyleMain, checkstyleTest, and checkstyleIntegrationTest.'
