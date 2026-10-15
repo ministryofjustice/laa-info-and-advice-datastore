@@ -1,0 +1,49 @@
+# Runs on every PR/push to main (verifying against main/matching-branch consumer pacts), and can
+# also be triggered manually - either by hand or by the broker's webhook when a new/changed
+# consumer pact is published, passing the specific consumer/branch to verify.
+name: Pact Provider Verification
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      consumer:
+        required: false
+        description: "Consumer name (from broker webhook)"
+      consumerBranch:
+        required: false
+        description: "Consumer branch (from broker webhook)"
+
+permissions:
+  contents: read
+
+jobs:
+  pact-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v6
+        with:
+          java-version: 25
+          distribution: "corretto"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Verify pacts
+        run: ./gradlew :info-and-advice-datastore-service:pactTest
+        env:
+          PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+          GIT_SHA: ${{ github.sha }}
+          # github.ref_name is the PR merge ref (e.g. "123/merge") on pull_request events, not the
+          # actual branch name - head_ref gives the real branch name there instead.
+          GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+          PACT_CONSUMER: ${{ github.event.inputs.consumer }}
+          PACT_CONSUMER_BRANCH: ${{ github.event.inputs.consumerBranch }}

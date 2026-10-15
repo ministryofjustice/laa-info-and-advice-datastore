@@ -89,6 +89,8 @@ spec:
               value: "{{ .Values.env.RATE_WINDOW_MS }}"
             - name: NODE_ENV
               value: "{{ .Values.env.NODE_ENV }}"
+            - name: DATA_RETENTION_SCHEDULERS_ENABLED
+              value: {{ .Values.env.DATA_RETENTION_SCHEDULERS_ENABLED | default "false" | quote }}
             - name: LAA_OAUTH2_ISSUER_URI
               valueFrom:
                 secretKeyRef:

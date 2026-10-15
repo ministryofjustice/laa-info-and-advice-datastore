@@ -7,56 +7,65 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 
-/** Unit tests for {@link EventService}. */
+/** Unit tests for {@link SystemDrivenEventService}. */
 @ExtendWith(MockitoExtension.class)
-class EventServiceTest {
+class SystemDrivenEventServiceTest {
 
   @Mock private EventRepository repository;
-  @Mock private UserContext userContext;
-  @Mock private HttpServletRequest request;
   @Mock private ObjectMapper objectMapper;
 
-  @InjectMocks private EventService sut;
+  @InjectMocks private SystemDrivenEventService sut;
 
   @Test
   void shouldSaveEventWithCorrectFields() {
     // Arrange
     final Object payload = new Object();
     final JsonNode payloadNode = new ObjectMapper().createObjectNode();
-    when(userContext.getCurrentUser()).thenReturn("test-user");
-    when(userContext.getProviderFirmCode()).thenReturn("123456");
-    when(userContext.getCorrelationId()).thenReturn("test-correlation-id");
-    when(userContext.getServiceName()).thenReturn("test-service");
-    when(request.getMethod()).thenReturn("POST");
-    when(request.getRequestURI()).thenReturn("/api/v0/applications:start-application");
     when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
     when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
+    final UUID applicationId = UUID.randomUUID();
 
     // Act
-    sut.record(payload, "office-code-1");
+    sut.record(payload, "office-code-1", "firm-code-1", "DataRetentionDateResolver", applicationId);
 
     // Assert
     ArgumentCaptor<EventEntity> captor = ArgumentCaptor.forClass(EventEntity.class);
     verify(repository).save(captor.capture());
     EventEntity saved = captor.getValue();
-    assertThat(saved.getChangedBy()).isEqualTo("test-user");
-    assertThat(saved.getProviderFirmCode()).isEqualTo("123456");
+    assertThat(saved.getChangedBy()).isEqualTo("SYSTEM");
     assertThat(saved.getProviderOfficeCode()).isEqualTo("office-code-1");
-    assertThat(saved.getCorrelationId()).isEqualTo("test-correlation-id");
-    assertThat(saved.getServiceName()).isEqualTo("test-service");
-    assertThat(saved.getHttpMethod()).isEqualTo("POST");
-    assertThat(saved.getUrlPath()).isEqualTo("/api/v0/applications:start-application");
+    assertThat(saved.getProviderFirmCode()).isEqualTo("firm-code-1");
+    assertThat(saved.getApplicationId()).isEqualTo(applicationId);
+    assertThat(saved.getServiceName()).isEqualTo("SYSTEM");
+    assertThat(saved.getHttpMethod()).isEqualTo("SCHEDULED");
+    assertThat(saved.getUrlPath()).isEqualTo("DataRetentionDateResolver");
     assertThat(saved.getPayload()).isEqualTo(payloadNode);
+  }
+
+  @Test
+  void shouldFallBackToEmptyGuid_whenApplicationIdIsNull() {
+    // Arrange
+    final Object payload = new Object();
+    final JsonNode payloadNode = new ObjectMapper().createObjectNode();
+    when(objectMapper.valueToTree(payload)).thenReturn(payloadNode);
+    when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
+
+    // Act
+    sut.record(payload, "office-code-1", "firm-code-1", "DataRetentionDateResolver", null);
+
+    // Assert
+    ArgumentCaptor<EventEntity> captor = ArgumentCaptor.forClass(EventEntity.class);
+    verify(repository).save(captor.capture());
+    assertThat(captor.getValue().getApplicationId()).isEqualTo(new UUID(0L, 0L));
   }
 }

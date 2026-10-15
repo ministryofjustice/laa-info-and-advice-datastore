@@ -91,6 +91,8 @@ public abstract class ApplicationMapper {
   @Mapping(target = "determinationId", ignore = true)
   @Mapping(source = "client", target = "clientDetails")
   @Mapping(target = "eligibilityResults", ignore = true)
+  @Mapping(target = "deleted", ignore = true)
+  @Mapping(target = "deletedAt", ignore = true)
   public abstract ApplicationEntity toApplicationEntity(StartApplicationCommand cmd);
 
   /**
@@ -124,6 +126,8 @@ public abstract class ApplicationMapper {
   @Mapping(target = "applicationType", ignore = true)
   @Mapping(target = "determinationId", ignore = true)
   @Mapping(target = "eligibilityResults", ignore = true)
+  @Mapping(target = "deleted", ignore = true)
+  @Mapping(target = "deletedAt", ignore = true)
   public abstract void updateApplicationEntity(
       UpdateApplicationCommand cmd, @MappingTarget ApplicationEntity entity);
 
@@ -145,12 +149,16 @@ public abstract class ApplicationMapper {
   @Mapping(target = "clientDetails", ignore = true)
   @Mapping(target = "referenceNumber", ignore = true)
   @Mapping(target = "scopingQuestions", ignore = true)
+  @Mapping(target = "reasonForReapplication", ignore = true)
+  @Mapping(target = "ecfFlag", ignore = true)
   @Mapping(target = "isMeansTested", ignore = true)
   @Mapping(target = "dataRetentionEventUuid", ignore = true)
   @Mapping(target = "dataRetentionDate", ignore = true)
   @Mapping(target = "applicationState", ignore = true)
   @Mapping(target = "applicationType", ignore = true)
   @Mapping(target = "eligibilityResults", ignore = true)
+  @Mapping(target = "deleted", ignore = true)
+  @Mapping(target = "deletedAt", ignore = true)
   public abstract void editApplicationEntity(
       EditApplicationCommand cmd, @MappingTarget ApplicationEntity entity);
 }

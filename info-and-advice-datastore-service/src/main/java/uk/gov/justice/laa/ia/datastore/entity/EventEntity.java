@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,6 +40,9 @@ public class EventEntity {
   @Column(name = "provider_office_code")
   private String providerOfficeCode;
 
+  @Column(name = "application_id")
+  private UUID applicationId;
+
   @Column(name = "correlation_id")
   private String correlationId;
 
@@ -54,6 +58,10 @@ public class EventEntity {
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "payload", columnDefinition = "jsonb")
   private JsonNode payload;
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "pii_data", columnDefinition = "jsonb")
+  private JsonNode piiData;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   @CreationTimestamp

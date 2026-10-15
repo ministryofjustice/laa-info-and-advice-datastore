@@ -1,12 +1,14 @@
 package uk.gov.justice.laa.ia.datastore;
 
 import jakarta.persistence.EntityManager;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
@@ -27,6 +29,8 @@ class SpringBootMicroserviceApplicationTests {
   @MockitoBean private EligibilityResultRepository eligibilityResultRepository;
   @MockitoBean private EvidenceRepository evidenceRepository;
   @MockitoBean private EventRepository eventRepository;
+  @MockitoBean private ClaimsGateway claimsGateway;
+  @MockitoBean private LockProvider lockProvider;
 
   @Test
   void contextLoads() {

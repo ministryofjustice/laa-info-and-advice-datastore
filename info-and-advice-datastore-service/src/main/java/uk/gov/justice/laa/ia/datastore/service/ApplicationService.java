@@ -1,26 +1,32 @@
 package uk.gov.justice.laa.ia.datastore.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
+import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.exception.ApplicationDeletedException;
 import uk.gov.justice.laa.ia.datastore.exception.DeclarationAlreadySignedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
+import uk.gov.justice.laa.ia.datastore.exception.EditCompletedApplicationException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
+import uk.gov.justice.laa.ia.datastore.exception.InvalidClientDetailsPatchException;
 import uk.gov.justice.laa.ia.datastore.exception.ProviderOfficeNotAuthorizedException;
 import uk.gov.justice.laa.ia.datastore.mapper.ApplicationMapper;
 import uk.gov.justice.laa.ia.datastore.mapper.ClientDetailsMapper;
@@ -32,6 +38,8 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.PatchAddressData;
+import uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateClientDetailsCommand;
@@ -61,7 +69,7 @@ public class ApplicationService {
   private final ClientDetailsMapper clientDetailsMapper;
   private final UserContext userContext;
   private final ObjectMapper objectMapper;
-  private final EventService eventService;
+  private final UserDrivenEventService eventService;
 
   /**
    * Create an application.
@@ -89,7 +97,7 @@ public class ApplicationService {
     entity.setApplicationState(ApplicationState.DRAFT);
     ApplicationEntity saved = repository.save(entity);
     entityManager.refresh(saved);
-    eventService.record(startApplication, startApplication.getProviderOfficeCode());
+    eventService.record(startApplication, startApplication.getProviderOfficeCode(), saved.getId());
     return applicationMapper.toApplication(saved);
   }
 
@@ -111,7 +119,7 @@ public class ApplicationService {
     int resolvedSize = size != null ? size : DEFAULT_PAGE_SIZE;
 
     Specification<ApplicationEntity> specificationToApply =
-        ApplicationSpecification.filterByProviderContractInformation(
+        ApplicationSpecification.filterByDefaultConstraints(
             userContext.getProviderFirmCode(), userContext.getOfficeCodes());
     if (additionalFilteringSpecification != null) {
       specificationToApply = specificationToApply.and(additionalFilteringSpecification);
@@ -128,6 +136,8 @@ public class ApplicationService {
    * @return {@link ApplicationResponse}
    * @throws ProviderOfficeNotAuthorizedException if the application's provider office code is not
    *     one of the user's authorized office codes
+   * @throws ApplicationDeletedException if the application has been deleted due to retention
+   *     policies
    */
   public Optional<ApplicationResponse> getApplication(UUID applicationId) {
     var findApplicationByIdSpecification =
@@ -135,7 +145,10 @@ public class ApplicationService {
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(findApplicationByIdSpecification);
     applicationOpt.ifPresent(
-        application -> validateProviderOfficeCode(application.getProviderOfficeCode()));
+        application -> {
+          validateProviderOfficeCode(application.getProviderOfficeCode());
+          validateNotDeleted(application);
+        });
     return applicationOpt.map(applicationMapper::toApplication);
   }
 
@@ -160,6 +173,7 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateNotDeleted(application);
     validateEtag(application, command.geteTag());
 
     com.fasterxml.jackson.databind.JsonNode resultJson =
@@ -179,7 +193,7 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -221,6 +235,7 @@ public class ApplicationService {
 
     final ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateNotDeleted(application);
     validateEtag(application, command.geteTag());
 
     DeclarationEntity declarationEntity = declarationMapper.toDeclarationEntity(command);
@@ -235,7 +250,7 @@ public class ApplicationService {
     application.setDeclaration(declarationEntity);
 
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -258,6 +273,7 @@ public class ApplicationService {
     }
     final ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateNotDeleted(application);
     validateEtag(application, command.geteTag());
 
     EvidenceEntity evidenceEntity = evidenceMapper.toEvidenceEntity(command);
@@ -274,7 +290,7 @@ public class ApplicationService {
     application.setEvidence(savedEvidence);
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -287,6 +303,12 @@ public class ApplicationService {
   private void validateProviderOfficeCode(String providerOfficeCode) {
     if (!userContext.getOfficeCodes().contains(providerOfficeCode)) {
       throw new ProviderOfficeNotAuthorizedException(providerOfficeCode);
+    }
+  }
+
+  private void validateNotDeleted(ApplicationEntity application) {
+    if (application.isDeleted()) {
+      throw new ApplicationDeletedException(application.getId());
     }
   }
 
@@ -311,12 +333,13 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateNotDeleted(application);
     validateEtag(application, command.geteTag());
 
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -341,11 +364,12 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateNotDeleted(application);
     validateEtag(application, command.geteTag());
 
     applicationMapper.updateApplicationEntity(command, application);
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -378,6 +402,10 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateNotDeleted(application);
+    if (application.getApplicationState() == ApplicationState.COMPLETED) {
+      throw new EditCompletedApplicationException();
+    }
     validateEtag(application, command.geteTag());
 
     String ufn = command.getUfn();
@@ -388,15 +416,12 @@ public class ApplicationService {
       throw new DuplicateUfnException(ufn, application.getProviderOfficeCode());
     }
 
+    validateClientPatch(application.getClientDetails(), command.getClientDetails());
     applicationMapper.editApplicationEntity(command, application);
-
-    if (command.getScopingQuestions() != null) {
-      application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
-    }
+    applyApplicationPatch(command, application);
 
     if (command.getClientDetails() != null) {
-      clientDetailsMapper.patchClientDetailsEntity(
-          command.getClientDetails(), application.getClientDetails());
+      applyClientPatch(command.getClientDetails(), application.getClientDetails());
     }
 
     if (command.getDeclaration() != null) {
@@ -424,8 +449,113 @@ public class ApplicationService {
     }
 
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    repository.flush();
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
+  }
+
+  private void applyApplicationPatch(
+      EditApplicationCommand command, ApplicationEntity application) {
+    JsonNullable<String> reasonForReapplication = command.getReasonForReapplication();
+    if (isPresent(reasonForReapplication)) {
+      application.setReasonForReapplication(reasonForReapplication.get());
+    }
+    applyNullable(command.getEcfFlag(), application::setEcfFlag);
+    applyScopingQuestions(command.getScopingQuestions(), application);
+  }
+
+  private void applyClientPatch(PatchClientDetailsData command, ClientDetailsEntity clientDetails) {
+    clientDetailsMapper.patchClientDetailsEntity(command, clientDetails);
+    applyNullable(command.getNiNumber(), clientDetails::setNiNumber);
+    applyAddressPatch(command.getAddress(), clientDetails);
+  }
+
+  private void validateClientPatch(
+      ClientDetailsEntity clientDetails, PatchClientDetailsData command) {
+    if (clientDetails == null || command == null || !isPresent(command.getAddress())) {
+      return;
+    }
+
+    PatchAddressData addressCommand = command.getAddress().get();
+    if (addressCommand != null
+        && clientDetails.getAddress() == null
+        && (addressCommand.getAddressLine1() == null || addressCommand.getCountry() == null)) {
+      throw new InvalidClientDetailsPatchException(
+          "An address must have an addressLine1 and country when created");
+    }
+  }
+
+  private void applyAddressPatch(
+      JsonNullable<PatchAddressData> command, ClientDetailsEntity clientDetails) {
+    if (!isPresent(command)) {
+      return;
+    }
+    PatchAddressData addressCommand = command.get();
+    if (addressCommand == null) {
+      clientDetails.setAddress(null);
+      return;
+    }
+
+    AddressEntity address = clientDetails.getAddress();
+    if (address == null) {
+      address = new AddressEntity();
+      address.setCreatedBy(userContext.getCurrentUser());
+      clientDetails.setAddress(address);
+    }
+    address.setModifiedBy(userContext.getCurrentUser());
+    if (addressCommand.getAddressLine1() != null) {
+      address.setAddressLine1(addressCommand.getAddressLine1());
+    }
+    if (addressCommand.getCountry() != null) {
+      address.setCountry(addressCommand.getCountry());
+    }
+    applyAddressFields(addressCommand, address);
+  }
+
+  private void applyAddressFields(PatchAddressData command, AddressEntity address) {
+    applyNullable(command.getAddressLine2(), address::setAddressLine2);
+    applyNullable(command.getAddressLine3(), address::setAddressLine3);
+    applyNullable(command.getAddressLine4(), address::setAddressLine4);
+    applyNullable(command.getTownOrCity(), address::setTownOrCity);
+    applyNullable(command.getPostCode(), address::setPostCode);
+    applyNullable(command.getCounty(), address::setCounty);
+  }
+
+  private void applyScopingQuestions(
+      JsonNullable<java.util.Map<String, Object>> command, ApplicationEntity application) {
+    if (!isPresent(command)) {
+      return;
+    }
+    if (command.get() == null) {
+      application.setScopingQuestions(null);
+      return;
+    }
+
+    ObjectNode merged =
+        application.getScopingQuestions() != null && application.getScopingQuestions().isObject()
+            ? application.getScopingQuestions().deepCopy()
+            : objectMapper.createObjectNode();
+    command
+        .get()
+        .forEach(
+            (key, value) -> {
+              if (value == null) {
+                merged.remove(key);
+              } else {
+                merged.set(key, objectMapper.valueToTree(value));
+              }
+            });
+    application.setScopingQuestions(merged);
+  }
+
+  private <T> void applyNullable(JsonNullable<T> value, java.util.function.Consumer<T> setter) {
+    if (isPresent(value)) {
+      setter.accept(value.get());
+    }
+  }
+
+  private boolean isPresent(JsonNullable<?> value) {
+    return value != null && value.isPresent();
   }
 
   /**
@@ -449,6 +579,7 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
+    validateNotDeleted(application);
     validateEtag(application, command.geteTag());
 
     ClientDetailsEntity clientDetails = application.getClientDetails();
@@ -456,7 +587,7 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode());
+    eventService.record(command, application.getProviderOfficeCode(), applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 }

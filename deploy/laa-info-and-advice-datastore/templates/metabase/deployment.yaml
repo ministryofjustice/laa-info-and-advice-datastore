@@ -1,0 +1,73 @@
+{{- if .Values.metabase.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "your-repo-name.fullname" . }}-metabase
+  labels:
+    {{- include "your-repo-name.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metabase
+spec:
+  replicas: 1 # Metabase does not support horizontal scaling.
+  selector:
+    matchLabels:
+      {{- include "your-repo-name.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: metabase
+  template:
+    metadata:
+      labels:
+        {{- include "your-repo-name.labels" . | nindent 8 }}
+        app.kubernetes.io/component: metabase
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "your-repo-name.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.metabase.podSecurityContext | nindent 8 }}
+      containers:
+        - name: metabase
+          image: "{{ .Values.metabase.image.repository }}:{{ .Values.metabase.image.tag }}"
+          imagePullPolicy: {{ .Values.metabase.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.metabase.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 3000
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.metabase.resources | nindent 12 }}
+          env:
+            - name: MB_DB_CONNECTION_URI
+              valueFrom:
+                secretKeyRef:
+                  name: rds-postgresql-instance-metabase-output
+                  key: jdbc_url
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

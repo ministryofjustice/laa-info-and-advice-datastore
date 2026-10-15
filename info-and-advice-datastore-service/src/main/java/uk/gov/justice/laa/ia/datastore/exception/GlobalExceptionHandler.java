@@ -26,6 +26,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     log.warn("ETag mismatch: {}", exception.getMessage());
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    problemDetail.setProperty("reason", "APPLICATION_VERSION_CONFLICT");
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
@@ -43,6 +44,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT, "Conflict: resource was modified concurrently");
+    problemDetail.setProperty("reason", "APPLICATION_VERSION_CONFLICT");
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
@@ -77,6 +79,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
+   * The handler for EditCompletedApplicationException.
+   *
+   * @param exception the exception
+   * @return 409 Conflict response
+   */
+  @ExceptionHandler(EditCompletedApplicationException.class)
+  public ResponseEntity<ProblemDetail> handleCompletedApplicationException(
+      EditCompletedApplicationException exception) {
+    log.warn("Completed application edit rejected: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    problemDetail.setProperty("reason", "APPLICATION_COMPLETED");
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+  }
+
+  /**
    * The handler for DataIntegrityViolationException — a safety net for database-level constraint
    * violations (e.g. a concurrent request creating a duplicate UFN) that were not caught by
    * application-level validation.
@@ -107,6 +125,35 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage());
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
+  }
+
+  /**
+   * The handler for ApplicationDeletedException.
+   *
+   * @param exception the exception
+   * @return 410 Gone response
+   */
+  @ExceptionHandler(ApplicationDeletedException.class)
+  public ResponseEntity<ProblemDetail> handleApplicationDeletedException(
+      ApplicationDeletedException exception) {
+    log.warn("Attempting to access a deleted application: {}", exception.getMessage());
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.GONE, exception.getMessage());
+    return ResponseEntity.status(HttpStatus.GONE).body(problemDetail);
+  }
+
+  /**
+   * Handles invalid client details patches.
+   *
+   * @param exception the invalid patch exception
+   * @return 400 Bad Request response
+   */
+  @ExceptionHandler(InvalidClientDetailsPatchException.class)
+  public ResponseEntity<ProblemDetail> handleInvalidClientDetailsPatch(
+      InvalidClientDetailsPatchException exception) {
+    ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    return ResponseEntity.badRequest().body(problemDetail);
   }
 
   /**

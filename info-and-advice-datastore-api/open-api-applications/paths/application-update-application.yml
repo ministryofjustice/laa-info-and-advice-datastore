@@ -33,4 +33,7 @@ patch:
     '403': { description: Forbidden }
     '404': { description: Not found }
     '409': { description: Conflict - ETag mismatch }
+    '410': { description: Gone - application has been deleted due to retention policies }
+    '429':
+      $ref: '../components/responses.yml#/components/responses/TooManyRequests'
     '500': { description: Internal server error }

@@ -1,0 +1,53 @@
+meta {
+  name: Update Client Details Compatibility
+  type: http
+  seq: 25
+}
+
+patch {
+  url: {{baseUrl}}/api/v0/applications/{{applicationId}}:update-client-details
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eTag": 0,
+    "firstName": "Mary",
+    "lastName": "Client",
+    "dateOfBirth": "1991-02-03",
+    "niNumber": "AC123456D",
+    "noFixedAbode": false,
+    "address": {
+      "addressLine1": "20 Fleet Street",
+      "addressLine2": "Floor 2",
+      "townOrCity": "London",
+      "postCode": "EC4Y 1AA",
+      "country": "GB"
+    }
+  }
+}
+
+script:pre-request {
+  if (!bru.getEnvVar("token")) {
+    await bru.runRequest("Get Authentication Token");
+  }
+  const startApplicationRes = await bru.runRequest("Applications/Start Application");
+  bru.setVar("applicationId", startApplicationRes.data.id);
+}
+
+tests {
+  test("the original create-flow client-details endpoint still succeeds", function() {
+    expect(res.getStatus()).to.equal(204);
+    expect(res.getHeader("etag")).to.exist;
+  });
+
+  await test("the ordinary nested address request is persisted", async function() {
+    const application = (await bru.runRequest("Applications/Get Application")).data;
+    expect(application.client.firstName).to.equal("Mary");
+    expect(application.client.niNumber).to.equal("AC123456D");
+    expect(application.client.address.addressLine1).to.equal("20 Fleet Street");
+    expect(application.client.address.addressLine2).to.equal("Floor 2");
+    expect(application.client.address.country).to.equal("GB");
+  });
+}

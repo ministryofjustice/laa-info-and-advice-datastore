@@ -179,7 +179,7 @@ The `info-and-advice-datastore-api` module is published to GitHub Packages and c
 
 **Gradle:**
 ```gradle
-implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-api:0.1.0'
+implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-api:0.10.0'
 ```
 
 **Maven:**
@@ -187,7 +187,7 @@ implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-api:0.
 <dependency>
   <groupId>uk.gov.justice.laa.ia.datastore</groupId>
   <artifactId>info-and-advice-datastore-api</artifactId>
-  <version>0.1.0</version>
+  <version>0.10.0</version>
 </dependency>
 ```
 
@@ -226,7 +226,7 @@ With credentials in `~/.m2/settings.xml`:
 
 ### Versioning
 
-The API package is versioned independently of the service. The version is bumped manually in `info-and-advice-datastore-api/build.gradle` whenever the API contract changes. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
+The API and client packages share a single version, set by the root `version` property in `gradle.properties`. Bump it manually whenever the API contract or published client behavior changes; on merge to `main`, CI compares this value to the previous commit and publishes new API/client package versions only when it has changed. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
 
 ## Using the Client Package
 
@@ -242,7 +242,7 @@ The `info-and-advice-datastore-client` module is published to GitHub Packages an
 
 **Gradle:**
 ```gradle
-implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client:0.1.0'
+implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client:0.13.0'
 ```
 
 **Maven:**
@@ -250,7 +250,7 @@ implementation 'uk.gov.justice.laa.ia.datastore:info-and-advice-datastore-client
 <dependency>
   <groupId>uk.gov.justice.laa.ia.datastore</groupId>
   <artifactId>info-and-advice-datastore-client</artifactId>
-  <version>0.1.0</version>
+  <version>0.13.0</version>
 </dependency>
 ```
 
@@ -296,6 +296,20 @@ The autoconfigured client attaches two Bearer tokens to every request automatica
 
 The `X-Authorization` token is taken directly from the incoming request's security context, so it is propagated transparently as long as your service authenticates its own callers via Spring Security.
 
+### Rate limiting
+
+The datastore applies an in-memory rate limit per end user (default 100 requests per minute, per datastore container). When exceeded it returns `429 Too Many Requests` with a `Retry-After` header (seconds) and an `ApiError` problem body. The client surfaces this as a Spring `HttpClientErrorException.TooManyRequests`; read `Retry-After` from `getResponseHeaders()` if you want to back off. The generated `ApiClient` does not retry by default (`maxAttemptsForRetry = 1`), so callers should decide their own retry behaviour.
+
+### Response version deserialization
+
+`ApplicationResponse.eTag` accepts only JSON integer tokens within the signed 64-bit range. Missing, `null`, malformed, and out-of-range values deserialize as `null`; strings, decimals, booleans, and containers are not coerced. This JSON field is separate from an HTTP `ETag` header.
+
+The auto-configured `ApplicationApi` installs this response converter automatically. When using a custom `RestTemplate`, install it before the general Jackson converter:
+
+```java
+restTemplate.getMessageConverters().add(0, new ApplicationResponseHttpMessageConverter());
+```
+
 ### Usage
 
 Once the dependency and configuration are in place, inject `ApplicationApi` directly:
@@ -320,7 +334,7 @@ No auth boilerplate is required at the call site — both tokens are handled by 
 
 ### Versioning
 
-The client package is versioned independently of both the service and the API package. The version is bumped manually in `info-and-advice-datastore-client/build.gradle` whenever the API contract changes. The client and API packages should be kept in sync with each other. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
+The client package shares the same version as the API package — see [Versioning](#versioning) above. The client and API packages are always published together, so they stay in sync with each other. Check [GitHub Packages](https://github.com/ministryofjustice/laa-info-and-advice-datastore/packages) for the latest published version.
 
 
 

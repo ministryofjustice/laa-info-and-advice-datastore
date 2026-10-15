@@ -1,0 +1,104 @@
+package uk.gov.justice.laa.ia.datastore.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
+import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
+import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.scheduled.DataDeletionTask;
+import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolverTask;
+import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataDeletionScheduler;
+import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataRetentionScheduler;
+import uk.gov.justice.laa.ia.datastore.scheduled.ProdDataDeletionScheduler;
+import uk.gov.justice.laa.ia.datastore.scheduled.ProdDataRetentionScheduler;
+import uk.gov.justice.laa.ia.datastore.service.ApplicationDataDeletionService;
+import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
+
+/** Configuration class for scheduled tasks. */
+@Configuration
+@EnableScheduling
+@ExcludeFromCodeCoverage(reason = "Config")
+public class ScheduledTasksConfig {
+  @Bean
+  public DataRetentionDateResolverTask dataRetentionDateResolver(
+      ClaimsGateway claimsGateway,
+      @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
+      ApplicationRepository applicationRepository,
+      RetentionDateUpdateService retentionDateUpdateService) {
+    return new DataRetentionDateResolverTask(
+        claimsGateway, dataRetentionYearsOffset, applicationRepository, retentionDateUpdateService);
+  }
+
+  /**
+   * Bean local development configuration for the data deletion task, runs immediately on startup
+   * and then hourly.
+   */
+  @Bean
+  @Profile("local")
+  public DataDeletionTask dataDeletionTask(
+      ApplicationRepository applicationRepository,
+      ClaimsGateway claimsGateway,
+      @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
+      RetentionDateUpdateService retentionDateUpdateService,
+      ApplicationDataDeletionService applicationDataDeletionService) {
+    return new DataDeletionTask(
+        applicationRepository,
+        claimsGateway,
+        dataRetentionYearsOffset,
+        retentionDateUpdateService,
+        applicationDataDeletionService);
+  }
+
+  /**
+   * Nightly data retention scheduler for deployed environments, switched on per environment with
+   * {@code laa.datastore.data-retention.schedulers-enabled}.
+   */
+  @Bean
+  @Profile("!local")
+  @ConditionalOnProperty(
+      name = "laa.datastore.data-retention.schedulers-enabled",
+      havingValue = "true")
+  public ProdDataRetentionScheduler prodDataRetentionScheduler(
+      DataRetentionDateResolverTask dataRetentionDateResolver) {
+    return new ProdDataRetentionScheduler(dataRetentionDateResolver);
+  }
+
+  /**
+   * Nightly data deletion scheduler for deployed environments, switched on per environment with
+   * {@code laa.datastore.data-retention.schedulers-enabled}. Runs an hour after the retention date
+   * resolver.
+   */
+  @Bean
+  @Profile("!local")
+  @ConditionalOnProperty(
+      name = "laa.datastore.data-retention.schedulers-enabled",
+      havingValue = "true")
+  public ProdDataDeletionScheduler prodDataDeletionScheduler(DataDeletionTask dataDeletionTask) {
+    return new ProdDataDeletionScheduler(dataDeletionTask);
+  }
+
+  /**
+   * Bean for the local development data retention scheduler, runs immediately on startup and then
+   * each 10 minutes.
+   */
+  @Bean
+  @Profile("local")
+  public LocalDataRetentionScheduler localDataRetentionScheduler(
+      DataRetentionDateResolverTask dataRetentionDateResolver) {
+    return new LocalDataRetentionScheduler(dataRetentionDateResolver);
+  }
+
+  /**
+   * Bean for the local development data deletion scheduler, runs every 10 minutes starting 5
+   * minutes after startup, so it doesn't contend with the retention scheduler for the shared lock.
+   */
+  @Bean
+  @Profile("local")
+  public LocalDataDeletionScheduler localDataDeletionScheduler(DataDeletionTask dataDeletionTask) {
+    return new LocalDataDeletionScheduler(dataDeletionTask);
+  }
+}

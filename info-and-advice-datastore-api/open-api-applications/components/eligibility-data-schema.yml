@@ -1,0 +1,521 @@
+# Schema for the means-assessment "session data" persisted against an
+# eligibility result (EligibilityResult.data). Mirrors the CCQ (Check Client
+# Qualifies) session_data schema documented at:
+# https://github.com/ministryofjustice/laa-check-client-qualifies/blob/main/docs/session_data_schema.md
+# All fields are optional/nullable since they are populated incrementally as
+# the client progresses through the means-assessment journey.
+components:
+  schemas:
+    EligibilityData:
+      type: object
+      description: >-
+        The means assessment question and answer data, matching the CCQ
+        session_data schema.
+      properties:
+        additional_properties:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataProperty'
+        additional_property_owned:
+          type: string
+          nullable: true
+        adult_dependants:
+          type: boolean
+          nullable: true
+        adult_dependants_count:
+          type: integer
+          nullable: true
+        aggregated_means:
+          type: boolean
+          nullable: true
+        api_response:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Last CFE API response payload cached for result rendering/logging.
+        asylum_support:
+          type: boolean
+          nullable: true
+        bank_accounts:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataBankAccount'
+        benefits:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataBenefit'
+        child_dependants:
+          type: boolean
+          nullable: true
+        child_dependants_count:
+          type: integer
+          nullable: true
+        childcare_payments_conditional_value:
+          type: number
+          nullable: true
+        childcare_payments_frequency:
+          type: string
+          nullable: true
+        childcare_payments_relevant:
+          type: boolean
+          nullable: true
+        childcare_payments_value:
+          type: number
+          nullable: true
+        client_age:
+          type: string
+          nullable: true
+        combined_frequency:
+          type: string
+          nullable: true
+        controlled_legal_representation:
+          type: boolean
+          nullable: true
+        dependant_incomes:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataDependantIncome'
+        dependants_get_income:
+          type: boolean
+          nullable: true
+        domestic_abuse_applicant:
+          type: boolean
+          nullable: true
+        early_result:
+          type: object
+          nullable: true
+          description: Early gross-income check outcome cached before full result calculation.
+          properties:
+            result:
+              type: string
+              nullable: true
+            gross_income_excess:
+              type: number
+              nullable: true
+            type:
+              type: string
+              nullable: true
+        employment_status:
+          type: string
+          nullable: true
+        feature_flags:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: boolean
+          description: Feature-flag values snapshotted at journey start.
+        friends_or_family_conditional_value:
+          type: number
+          nullable: true
+        friends_or_family_frequency:
+          type: string
+          nullable: true
+        friends_or_family_relevant:
+          type: boolean
+          nullable: true
+        house_in_dispute:
+          type: boolean
+          nullable: true
+        house_value:
+          type: number
+          nullable: true
+        housing_benefit_frequency:
+          type: string
+          nullable: true
+        housing_benefit_relevant:
+          type: boolean
+          nullable: true
+        housing_benefit_value:
+          type: number
+          nullable: true
+        housing_loan_payments:
+          type: number
+          nullable: true
+        housing_payments:
+          type: number
+          nullable: true
+        housing_payments_frequency:
+          type: string
+          nullable: true
+        housing_payments_loan_frequency:
+          type: string
+          nullable: true
+        immigration_or_asylum:
+          type: boolean
+          nullable: true
+        immigration_or_asylum_type:
+          type: string
+          nullable: true
+        immigration_or_asylum_type_upper_tribunal:
+          type: string
+          nullable: true
+        incomes:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataIncome'
+        investments:
+          type: number
+          nullable: true
+        investments_in_dispute:
+          type: boolean
+          nullable: true
+        investments_relevant:
+          type: boolean
+          nullable: true
+        legal_aid_payments_conditional_value:
+          type: number
+          nullable: true
+        legal_aid_payments_frequency:
+          type: string
+          nullable: true
+        legal_aid_payments_relevant:
+          type: boolean
+          nullable: true
+        legal_aid_payments_value:
+          type: number
+          nullable: true
+        level_of_help:
+          type: string
+          nullable: true
+        maintenance_conditional_value:
+          type: number
+          nullable: true
+        maintenance_frequency:
+          type: string
+          nullable: true
+        maintenance_payments_conditional_value:
+          type: number
+          nullable: true
+        maintenance_payments_frequency:
+          type: string
+          nullable: true
+        maintenance_payments_relevant:
+          type: boolean
+          nullable: true
+        maintenance_payments_value:
+          type: number
+          nullable: true
+        maintenance_relevant:
+          type: boolean
+          nullable: true
+        mortgage:
+          type: number
+          nullable: true
+        other_conditional_value:
+          type: number
+          nullable: true
+        other_relevant:
+          type: boolean
+          nullable: true
+        partner:
+          type: boolean
+          nullable: true
+        partner_additional_properties:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataProperty'
+        partner_additional_property_owned:
+          type: string
+          nullable: true
+        partner_bank_accounts:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataBankAccount'
+        partner_benefits:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataBenefit'
+        partner_childcare_payments_conditional_value:
+          type: number
+          nullable: true
+        partner_childcare_payments_frequency:
+          type: string
+          nullable: true
+        partner_childcare_payments_relevant:
+          type: boolean
+          nullable: true
+        partner_childcare_payments_value:
+          type: number
+          nullable: true
+        partner_employment_status:
+          type: string
+          nullable: true
+        partner_friends_or_family_conditional_value:
+          type: number
+          nullable: true
+        partner_friends_or_family_frequency:
+          type: string
+          nullable: true
+        partner_friends_or_family_relevant:
+          type: boolean
+          nullable: true
+        partner_incomes:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataIncome'
+        partner_investments:
+          type: number
+          nullable: true
+        partner_investments_relevant:
+          type: boolean
+          nullable: true
+        partner_legal_aid_payments_conditional_value:
+          type: number
+          nullable: true
+        partner_legal_aid_payments_frequency:
+          type: string
+          nullable: true
+        partner_legal_aid_payments_relevant:
+          type: boolean
+          nullable: true
+        partner_legal_aid_payments_value:
+          type: number
+          nullable: true
+        partner_maintenance_conditional_value:
+          type: number
+          nullable: true
+        partner_maintenance_frequency:
+          type: string
+          nullable: true
+        partner_maintenance_payments_conditional_value:
+          type: number
+          nullable: true
+        partner_maintenance_payments_frequency:
+          type: string
+          nullable: true
+        partner_maintenance_payments_relevant:
+          type: boolean
+          nullable: true
+        partner_maintenance_payments_value:
+          type: number
+          nullable: true
+        partner_maintenance_relevant:
+          type: boolean
+          nullable: true
+        partner_other_conditional_value:
+          type: number
+          nullable: true
+        partner_other_relevant:
+          type: boolean
+          nullable: true
+        partner_over_60:
+          type: boolean
+          nullable: true
+        partner_pension_conditional_value:
+          type: number
+          nullable: true
+        partner_pension_frequency:
+          type: string
+          nullable: true
+        partner_pension_relevant:
+          type: boolean
+          nullable: true
+        partner_property_or_lodger_conditional_value:
+          type: number
+          nullable: true
+        partner_property_or_lodger_frequency:
+          type: string
+          nullable: true
+        partner_property_or_lodger_relevant:
+          type: boolean
+          nullable: true
+        partner_receives_benefits:
+          type: boolean
+          nullable: true
+        partner_student_finance_conditional_value:
+          type: number
+          nullable: true
+        partner_student_finance_relevant:
+          type: boolean
+          nullable: true
+        partner_valuables:
+          type: number
+          nullable: true
+        partner_valuables_relevant:
+          type: boolean
+          nullable: true
+        passporting:
+          type: boolean
+          nullable: true
+        pending:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Temporary working copy used during check-answers edit loops.
+        pension_conditional_value:
+          type: number
+          nullable: true
+        pension_frequency:
+          type: string
+          nullable: true
+        pension_relevant:
+          type: boolean
+          nullable: true
+        percentage_owned:
+          type: integer
+          nullable: true
+        property_landlord:
+          type: boolean
+          nullable: true
+        property_or_lodger_conditional_value:
+          type: number
+          nullable: true
+        property_or_lodger_frequency:
+          type: string
+          nullable: true
+        property_or_lodger_relevant:
+          type: boolean
+          nullable: true
+        property_owned:
+          type: string
+          nullable: true
+        receives_benefits:
+          type: boolean
+          nullable: true
+        regular_income:
+          type: boolean
+          nullable: true
+        rent:
+          type: number
+          nullable: true
+        shared_ownership_mortgage:
+          type: number
+          nullable: true
+        student_finance_conditional_value:
+          type: number
+          nullable: true
+        student_finance_relevant:
+          type: boolean
+          nullable: true
+        under_eighteen_assets:
+          type: boolean
+          nullable: true
+        valuables:
+          type: number
+          nullable: true
+        valuables_in_dispute:
+          type: boolean
+          nullable: true
+        valuables_relevant:
+          type: boolean
+          nullable: true
+        vehicle_owned:
+          type: boolean
+          nullable: true
+        vehicles:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EligibilityDataVehicle'
+    EligibilityDataBankAccount:
+      type: object
+      description: "Sources: assets (ClientAssetsForm) / partner_assets (PartnerAssetsForm)."
+      properties:
+        account_in_dispute:
+          type: boolean
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+
+    EligibilityDataBenefit:
+      type: object
+      description: >-
+        Sources: benefit_details (BenefitDetailsForm) / partner_benefit_details
+        (PartnerBenefitDetailsForm).
+      properties:
+        benefit_amount:
+          type: number
+          nullable: true
+        benefit_frequency:
+          type: string
+          nullable: true
+        benefit_type:
+          type: string
+          nullable: true
+
+    EligibilityDataIncome:
+      type: object
+      description: "Sources: income (IncomeForm) / partner_income (PartnerIncomeForm)."
+      properties:
+        gross_income:
+          type: number
+          nullable: true
+        income_frequency:
+          type: string
+          nullable: true
+        income_tax:
+          type: number
+          nullable: true
+        income_type:
+          type: string
+          nullable: true
+        national_insurance:
+          type: number
+          nullable: true
+
+    EligibilityDataDependantIncome:
+      type: object
+      description: "Sources: dependant_income_details (DependantIncomeDetailsForm)."
+      properties:
+        amount:
+          type: number
+          nullable: true
+        frequency:
+          type: string
+          nullable: true
+
+    EligibilityDataVehicle:
+      type: object
+      description: "Sources: vehicles_details (VehiclesDetailsForm)."
+      properties:
+        vehicle_finance:
+          type: number
+          nullable: true
+        vehicle_in_dispute:
+          type: boolean
+          nullable: true
+        vehicle_in_regular_use:
+          type: boolean
+          nullable: true
+        vehicle_over_3_years_ago:
+          type: boolean
+          nullable: true
+        vehicle_pcp:
+          type: boolean
+          nullable: true
+        vehicle_value:
+          type: number
+          nullable: true
+
+    EligibilityDataProperty:
+      type: object
+      description: >-
+        Sources: additional_property_details (AdditionalPropertyDetailsForm) /
+        partner_additional_property_details
+        (PartnerAdditionalPropertyDetailsForm).
+      properties:
+        house_in_dispute:
+          type: boolean
+          nullable: true
+        house_value:
+          type: number
+          nullable: true
+        inline_owned_with_mortgage:
+          type: boolean
+          nullable: true
+        mortgage:
+          type: number
+          nullable: true
+        percentage_owned:
+          type: integer
+          nullable: true

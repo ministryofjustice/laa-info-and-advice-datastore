@@ -79,7 +79,7 @@ public class ApplicationEntity {
   @Column(name = "is_means_tested")
   private Boolean isMeansTested;
 
-  @Column(name = "ufn", length = 9)
+  @Column(name = "ufn", length = 10)
   private String ufn;
 
   @Column(name = "data_retention_event_uuid")
@@ -112,6 +112,12 @@ public class ApplicationEntity {
   @OneToMany(cascade = CascadeType.ALL)
   @JoinColumn(name = "application_id", referencedColumnName = "id")
   private Set<EligibilityResultEntity> eligibilityResults;
+
+  @Column(name = "deleted", nullable = false)
+  private boolean deleted;
+
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
 
   /** Returns the most recent eligibility result for this application. */
   public EligibilityResultEntity getMostRecentEligibilityResult() {

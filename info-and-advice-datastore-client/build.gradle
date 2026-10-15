@@ -1,11 +1,9 @@
 plugins {
     id 'org.openapi.generator' version '7.25.0'
-    id 'io.freefair.lombok' version '9.5.0'
+    id 'io.freefair.lombok' version '9.8.0'
     id 'uk.gov.justice.service.laa.laa-spring-boot-gradle-plugin'
     id 'maven-publish'
 }
-
-
 
 repositories {
     mavenCentral()
@@ -16,18 +14,45 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-autoconfigure'
     implementation 'org.springframework.security:spring-security-oauth2-client'
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
-    implementation 'org.openapitools:jackson-databind-nullable:0.2.11'
-    implementation platform("com.fasterxml.jackson:jackson-bom:2.22.2")
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.12'
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.22.3")
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     implementation 'jakarta.validation:jakarta.validation-api'
     implementation 'io.swagger.core.v3:swagger-annotations:2.2.55'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 sourceSets.main.java.srcDirs += ['generated/src/main/java']
 
 checkstyleMain.exclude "*"
+test {
+    useJUnitPlatform()
+}
+
+def generatedClientClasses = [
+        '**/uk/gov/justice/laa/ia/datastore/client/api/**',
+        '**/uk/gov/justice/laa/ia/datastore/client/model/**',
+        '**/uk/gov/justice/laa/ia/datastore/client/invoker/**'
+]
+
+jacocoTestReport {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: generatedClientClasses)
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: generatedClientClasses)
+        }))
+    }
+}
 
 openApiGenerate {
     generatorName = "java"
@@ -43,6 +68,7 @@ openApiGenerate {
             useJakartaEe     : "true",
             useTags          : "true",
             dateLibrary      : "java8",
+            openApiNullable  : "true",
     ]
 }
 

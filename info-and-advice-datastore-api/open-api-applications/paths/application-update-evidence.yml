@@ -59,6 +59,14 @@ put:
         application/problem+json:
           schema:
             $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
+    '410':
+      description: Gone - application has been deleted due to retention policies
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
+    '429':
+      $ref: '../components/responses.yml#/components/responses/TooManyRequests'
     '500':
       description: Internal server error
       content:

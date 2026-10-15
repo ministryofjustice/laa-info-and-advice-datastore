@@ -88,8 +88,7 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
     // Assert: the raw JsonNode payloads must round-trip as plain JSON, not as
     // serialized JsonNode bean properties (e.g. "object", "nodeType", "containerNode").
     JsonNode eligibilityResult = objectMapper.readTree(responseBody).get("eligibilityResult");
-    assertThat(eligibilityResult.get("data"))
-        .isEqualTo(objectMapper.readTree("{\"question\":\"answer\"}"));
+    assertThat(eligibilityResult.get("data").get("client_age").asText()).isEqualTo("18-24");
     assertThat(eligibilityResult.get("result"))
         .isEqualTo(objectMapper.readTree("{\"status\":\"ELIGIBLE\",\"score\":100}"));
   }
@@ -119,5 +118,26 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
     mockMvc
         .perform(get("/api/v0/applications/{id}", savedEntity.getId()).withBearerReadToken())
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
+    // Arrange
+    ApplicationEntity entity =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                    .deleted(true));
+    ApplicationEntity savedEntity = applicationRepository.save(entity);
+    clearCache();
+
+    // Act & Assert
+    mockMvc
+        .perform(get("/api/v0/applications/{id}", savedEntity.getId()).withBearerReadToken())
+        .andExpect(status().isGone())
+        .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("retention")));
   }
 }

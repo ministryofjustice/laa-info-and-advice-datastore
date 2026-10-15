@@ -9,9 +9,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.generator.CreateClientCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
@@ -164,5 +167,29 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(second)))
         .andExpect(status().isConflict());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"BG123456C", "AO123456C", "js101010D", "AB123456s"})
+  void shouldReturnBadRequest_whenNiNumberInvalid(String invalidNiNumber) throws Exception {
+    // Arrange
+    StartApplicationCommand command =
+        StartApplicationCommandGenerator.create(
+            builder ->
+                builder
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                    .client(
+                        CreateClientCommandGenerator.create(
+                            clientBuilder ->
+                                clientBuilder.nationalInsuranceNumber(invalidNiNumber))));
+
+    // Act + Assert
+    mockMvc
+        .perform(
+            post("/api/v0/applications:start-application")
+                .withBearerWriteToken()
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(command)))
+        .andExpect(status().isBadRequest());
   }
 }

@@ -73,6 +73,18 @@ logging:
 
 laa:
   datastore:
+    # In-memory, per-caller rate limit (Resilience4j). Counters are per container instance, so the
+    # effective limit scales with the number of running containers.
+    rate-limit:
+      enabled: ${RATE_LIMIT_ENABLED:true}
+      limit-for-period: ${RATE_LIMIT_REQUESTS:100}
+      refresh-period: ${RATE_LIMIT_REFRESH_PERIOD:1m}
+    data-retention:
+      years-offset: ${DATA_RETENTION_YEARS_OFFSET:3}
+      # Nightly schedulers for deployed environments; off unless explicitly enabled per environment.
+      schedulers-enabled: ${DATA_RETENTION_SCHEDULERS_ENABLED:false}
+      cron: ${RETENTION_RESOLVER_CRON:0 0 0 * * *}
+      deletion-cron: ${RETENTION_DELETION_CRON:0 0 1 * * *}
     # Trusts the forwarded X-Authorization token (UserContextInterceptor) issued for the calling
     # service's own audience - deliberately separate from resourceserver.jwt tenants below so this
     # trust never extends to the primary Authorization header/endpoint authorization.
@@ -83,6 +95,25 @@ laa:
     # Content-Security-Policy reporting endpoint - blank disables the header.
     csp-report-uri: ${SENTRY_CSP_REPORT_URI:}
     csp-security-token: ${SENTRY_SECURITY_TOKEN:}
+    # Field names redacted out of recorded event payloads (see EventService/PiiRedactor) and
+    # stashed in EventEntity.piiData instead, keyed by a generated UUID.
+    events:
+      pii:
+        fields:
+          - firstName
+          - lastName
+          - dateOfBirth
+          - niNumber
+          - nationalInsuranceNumber
+          - addressLine1
+          - addressLine2
+          - addressLine3
+          - addressLine4
+          - townOrCity
+          - postCode
+          - county
+          - clientFirstName
+          - clientLastName
   springboot.starter:
     oauth2:
       scopes-claim-path: scp
