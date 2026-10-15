@@ -70,7 +70,7 @@ laa:
     data-retention:
       years-offset: ${DATA_RETENTION_YEARS_OFFSET:3}
       # Nightly schedulers for deployed environments; off unless explicitly enabled per environment.
-      enabled: ${DATA_RETENTION_ENABLED:false}
+      schedulers-enabled: ${DATA_RETENTION_SCHEDULERS_ENABLED:false}
       cron: ${RETENTION_RESOLVER_CRON:0 0 0 * * *}
       deletion-cron: ${RETENTION_DELETION_CRON:0 0 1 * * *}
     # Trusts the forwarded X-Authorization token (UserContextInterceptor) issued for the calling

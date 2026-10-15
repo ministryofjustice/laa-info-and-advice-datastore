@@ -55,11 +55,13 @@ public class ScheduledTasksConfig {
 
   /**
    * Nightly data retention scheduler for deployed environments, switched on per environment with
-   * {@code laa.datastore.data-retention.enabled}.
+   * {@code laa.datastore.data-retention.schedulers-enabled}.
    */
   @Bean
   @Profile("!local")
-  @ConditionalOnProperty(name = "laa.datastore.data-retention.enabled", havingValue = "true")
+  @ConditionalOnProperty(
+      name = "laa.datastore.data-retention.schedulers-enabled",
+      havingValue = "true")
   public ProdDataRetentionScheduler prodDataRetentionScheduler(
       DataRetentionDateResolverTask dataRetentionDateResolver) {
     return new ProdDataRetentionScheduler(dataRetentionDateResolver);
@@ -67,11 +69,14 @@ public class ScheduledTasksConfig {
 
   /**
    * Nightly data deletion scheduler for deployed environments, switched on per environment with
-   * {@code laa.datastore.data-retention.enabled}. Runs an hour after the retention date resolver.
+   * {@code laa.datastore.data-retention.schedulers-enabled}. Runs an hour after the retention date
+   * resolver.
    */
   @Bean
   @Profile("!local")
-  @ConditionalOnProperty(name = "laa.datastore.data-retention.enabled", havingValue = "true")
+  @ConditionalOnProperty(
+      name = "laa.datastore.data-retention.schedulers-enabled",
+      havingValue = "true")
   public ProdDataDeletionScheduler prodDataDeletionScheduler(DataDeletionTask dataDeletionTask) {
     return new ProdDataDeletionScheduler(dataDeletionTask);
   }
