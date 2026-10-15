@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore;
 
 import jakarta.persistence.EntityManager;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
@@ -29,6 +30,7 @@ class SpringBootMicroserviceApplicationTests {
   @MockitoBean private EvidenceRepository evidenceRepository;
   @MockitoBean private EventRepository eventRepository;
   @MockitoBean private ClaimsGateway claimsGateway;
+  @MockitoBean private LockProvider lockProvider;
 
   @Test
   void contextLoads() {
