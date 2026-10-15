@@ -11,6 +11,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      packages: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -29,7 +30,6 @@ jobs:
           ecr-registry-url: ${{ secrets.ECR_REGISTRY_URL }}
           ecr-role-to-assume: ${{ secrets.ECR_ROLE_TO_ASSUME }}
           ecr-region: ${{ vars.ECR_REGION }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           github-sha: ${{ github.sha }}
           github-ref-name: ${{ github.ref_name }}
           github-head-ref: ${{ github.head_ref }}

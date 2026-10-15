@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
+/** Redacts sensitive client data from Sentry log events before they are sent. */
 @Component
 public class SentryPiiRedactor implements SentryOptions.Logs.BeforeSendLogCallback {
 
@@ -35,7 +36,14 @@ public class SentryPiiRedactor implements SentryOptions.Logs.BeforeSendLogCallba
           "clientlastname");
   private static final Pattern LABELED_PII_PATTERN =
       Pattern.compile(
-          "(?i)(?<![\\p{L}\\p{N}_])([\\\"']?(?:first[_-]?name|last[_-]?name|date[_-]?of[_-]?birth|ni[_-]?number|national[_-]?insurance[_-]?number|address[_-]?line[_-]?[1-4]|town[_-]?or[_-]?city|post[_-]?code|county|client[_-]?first[_-]?name|client[_-]?last[_-]?name)[\\\"']?\\s*[:=]\\s*)(?:\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|[^,;\\s}\\]]+)");
+          "(?i)(?<![\\p{L}\\p{N}_])([\\\"']?(?:"
+              + "first[_-]?name|last[_-]?name|date[_-]?of[_-]?birth|"
+              + "ni[_-]?number|national[_-]?insurance[_-]?number|"
+              + "address[_-]?line[_-]?[1-4]|town[_-]?or[_-]?city|"
+              + "post[_-]?code|county|client[_-]?first[_-]?name|client[_-]?last[_-]?name)"
+              + "[\\\"']?\\s*[:=]\\s*)(?:"
+              + "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|"
+              + "[^,;\\s}\\]]+)");
 
   @Override
   public SentryLogEvent execute(SentryLogEvent event) {

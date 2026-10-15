@@ -13,8 +13,13 @@ COPY info-and-advice-datastore-api/ info-and-advice-datastore-api/
 COPY info-and-advice-datastore-client/ info-and-advice-datastore-client/
 COPY info-and-advice-datastore-service/ info-and-advice-datastore-service/
 
+ARG GITHUB_ACTOR
+
 RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
-    chmod +x gradlew && ./gradlew :info-and-advice-datastore-service:bootJar --no-daemon
+        --mount=type=secret,id=github_token \
+        chmod +x gradlew && \
+        GITHUB_TOKEN="$(cat /run/secrets/github_token)" \
+            ./gradlew :info-and-advice-datastore-service:bootJar --no-daemon
 
 # Runtime stage
 FROM amazoncorretto:25-alpine

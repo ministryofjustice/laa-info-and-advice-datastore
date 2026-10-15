@@ -7,6 +7,11 @@ services:
     build:
       context: ../..
       dockerfile: Dockerfile
+      args:
+        - GITHUB_ACTOR
+      secrets:
+        - source: datastore_github_token
+          target: github_token
     ports:
       - "8080:8080"
     depends_on:
@@ -34,3 +39,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+
+secrets:
+  datastore_github_token:
+    environment: GITHUB_TOKEN
