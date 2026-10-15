@@ -11,7 +11,9 @@ import uk.gov.justice.laa.ia.datastore.config.ClaimsApiProperties;
 
 /**
  * Calls the real claims API UAT environment. Only runs when CLAIMS_API_KEY is set, so it is skipped
- * in CI and for anyone without a key. CLAIMS_API_URL can override the default UAT URL.
+ * in the normal Gradle test runs. The UAT deploy workflow runs it inside the cluster (see
+ * deploy/scripts/run-claims-api-test-in-cluster.sh), because the public UAT ingress is only
+ * reachable from the VPN. CLAIMS_API_URL can override the default UAT URL.
  */
 @EnabledIfEnvironmentVariable(named = "CLAIMS_API_KEY", matches = ".+")
 class ClaimsApiGatewayUatIntegrationTest {
