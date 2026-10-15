@@ -7,6 +7,8 @@ replicaCount: 1
 env:
   SPRING_PROFILES_ACTIVE: uat
   DATA_RETENTION_SCHEDULERS_ENABLED: "true"
+  CLAIMS_API_MODE: "live"
+  CLAIMS_API_URL: "https://main-laa-data-claims-api-uat.cloud-platform.service.justice.gov.uk"
 
 image:
   repository: nginx

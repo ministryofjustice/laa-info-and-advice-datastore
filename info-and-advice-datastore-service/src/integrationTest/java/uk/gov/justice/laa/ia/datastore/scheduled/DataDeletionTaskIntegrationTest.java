@@ -111,7 +111,7 @@ public class DataDeletionTaskIntegrationTest extends BaseIntegrationTest {
                         ClaimsModel.builder()
                             .claimId(claimId)
                             .status("APPROVED")
-                            .createdOn(claimCreatedOn)
+                            .updatedOn(claimCreatedOn)
                             .build()))
                 .build());
 
@@ -162,7 +162,7 @@ public class DataDeletionTaskIntegrationTest extends BaseIntegrationTest {
                         ClaimsModel.builder()
                             .claimId(claimId)
                             .status("APPROVED")
-                            .createdOn(claimCreatedOn)
+                            .updatedOn(claimCreatedOn)
                             .build()))
                 .build());
 

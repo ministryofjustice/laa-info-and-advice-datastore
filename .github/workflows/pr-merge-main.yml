@@ -62,6 +62,8 @@ jobs:
 
       - name: Integration test
         run: ./gradlew integrationTest
+        env:
+          CLAIMS_API_KEY: ${{ secrets.CLAIMS_API_KEY }}
 
       - name: Upload test results
         uses: actions/upload-artifact@v7

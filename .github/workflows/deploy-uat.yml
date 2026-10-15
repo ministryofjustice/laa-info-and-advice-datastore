@@ -35,6 +35,8 @@ jobs:
 
       - name: Run integration tests
         run: ./gradlew integrationTest --tests '*IntegrationTest'
+        env:
+          CLAIMS_API_KEY: ${{ secrets.CLAIMS_API_KEY }}
 
       - name: Upload checkstyle report
         if: always()

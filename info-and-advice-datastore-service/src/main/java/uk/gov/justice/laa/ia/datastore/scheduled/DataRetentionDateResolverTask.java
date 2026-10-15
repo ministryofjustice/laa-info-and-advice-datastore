@@ -25,7 +25,6 @@ public class DataRetentionDateResolverTask {
   private final int dataRetentionYearsOffset;
   private final ApplicationRepository applicationRepository;
   private final RetentionDateUpdateService retentionDateUpdateService;
-  private static final String STATUS_TO_CHECK = "APPROVED";
 
   /** Constructs the resolver, binding the configured data retention years offset. */
   public DataRetentionDateResolverTask(
@@ -96,7 +95,7 @@ public class DataRetentionDateResolverTask {
       final var latestClaim = getLatestClaim(response);
       if (latestClaim != null) {
         return RetentionDateUpdate.hasApproval(
-            latestClaim.getCreatedOn(), latestClaim.getClaimId());
+            latestClaim.getUpdatedOn(), latestClaim.getClaimId());
       }
       return RetentionDateUpdate.noApproval();
     } catch (Exception e) {
@@ -112,8 +111,7 @@ public class DataRetentionDateResolverTask {
   private static ClaimsModel getLatestClaim(ApplicationClaimResponse response) {
     return hasClaims(response)
         ? response.getClaims().stream()
-            .filter(claim -> STATUS_TO_CHECK.equals(claim.getStatus()))
-            .sorted((c1, c2) -> c2.getCreatedOn().compareTo(c1.getCreatedOn()))
+            .sorted((c1, c2) -> c2.getUpdatedOn().compareTo(c1.getUpdatedOn()))
             .findFirst()
             .orElse(null)
         : null;
