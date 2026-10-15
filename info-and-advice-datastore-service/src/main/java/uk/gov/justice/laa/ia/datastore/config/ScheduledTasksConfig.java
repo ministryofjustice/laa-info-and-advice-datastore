@@ -93,8 +93,8 @@ public class ScheduledTasksConfig {
   }
 
   /**
-   * Bean for the local development data deletion scheduler, runs immediately on startup and then
-   * every 10 minutes.
+   * Bean for the local development data deletion scheduler, runs every 10 minutes starting 5
+   * minutes after startup, so it doesn't contend with the retention scheduler for the shared lock.
    */
   @Bean
   @Profile("local")

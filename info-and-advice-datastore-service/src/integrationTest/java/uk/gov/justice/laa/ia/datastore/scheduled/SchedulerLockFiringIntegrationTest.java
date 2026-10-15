@@ -21,8 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /**
- * Starts both real schedulers at the same moment, with tasks that block while running, and checks
- * only one task runs because they share a lock.
+ * Starts two instances of the real scheduler at the same moment, standing in for two pods, with
+ * tasks that block while running, and checks only one task runs because of the shared lock.
  */
 // Two scheduler threads stand in for two pods; with the default single thread the tasks would
 // queue.
@@ -43,7 +43,7 @@ class SchedulerLockFiringIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  void onlyOneOfTheRetentionTasksRunsWhenBothAreScheduledAtOnce() throws Exception {
+  void onlyOneInstanceRunsTheTaskWhenBothSchedulersFireAtOnce() throws Exception {
     assertTrue(FIRST_STARTED.await(10, TimeUnit.SECONDS), "a scheduled task should have started");
     TimeUnit.SECONDS.sleep(2);
 
@@ -53,17 +53,17 @@ class SchedulerLockFiringIntegrationTest extends BaseIntegrationTest {
   @TestConfiguration
   static class SchedulersConfig {
     @Bean
-    LocalDataRetentionScheduler testRetentionScheduler() {
+    LocalDataRetentionScheduler firstPodRetentionScheduler() {
       final var task = mock(DataRetentionDateResolverTask.class);
       doAnswer(invocation -> blockWhileRunning()).when(task).run();
       return new LocalDataRetentionScheduler(task);
     }
 
     @Bean
-    LocalDataDeletionScheduler testDeletionScheduler() {
-      final var task = mock(DataDeletionTask.class);
+    LocalDataRetentionScheduler secondPodRetentionScheduler() {
+      final var task = mock(DataRetentionDateResolverTask.class);
       doAnswer(invocation -> blockWhileRunning()).when(task).run();
-      return new LocalDataDeletionScheduler(task);
+      return new LocalDataRetentionScheduler(task);
     }
 
     private static Object blockWhileRunning() throws InterruptedException {
