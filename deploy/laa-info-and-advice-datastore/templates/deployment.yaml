@@ -55,6 +55,12 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
+            - name: SENTRY_ENABLED
+              value: "{{ .Values.env.SENTRY_ENABLED }}"
+            - name: SENTRY_LOGS_ENABLED
+              value: "{{ .Values.env.SENTRY_LOGS_ENABLED }}"
+            - name: SENTRY_TRACES_SAMPLE_RATE
+              value: "{{ .Values.env.SENTRY_TRACES_SAMPLE_RATE }}"
             - name: SERVICE_NAME
               value: "{{ .Values.env.SERVICE_NAME }}"
             - name: SERVICE_PHASE
