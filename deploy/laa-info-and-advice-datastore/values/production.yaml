@@ -8,6 +8,9 @@ replicaCount: 2
 
 env:
   SPRING_PROFILES_ACTIVE: prod
+  SENTRY_ENABLED: "true"
+  SENTRY_LOGS_ENABLED: "true"
+  SENTRY_TRACES_SAMPLE_RATE: "0.01"
 
 image:
   repository: nginx

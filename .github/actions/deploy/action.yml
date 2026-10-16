@@ -13,6 +13,15 @@ inputs:
   kube-namespace:
     description: "Kubernetes cluster namespace"
     required: true
+  sentry-dsn:
+    description: "Sentry DSN"
+    required: true
+  sentry-csp-report-uri:
+    description: "Sentry CSP report URI"
+    required: true
+  sentry-security-token:
+    description: "Sentry CSP security token"
+    required: true
   app-environment:
     description: "environment to which the app is being deployed [staging, production, etc]"
     required: true
@@ -85,6 +94,30 @@ runs:
         kube-token: ${{ inputs.kube-token }}
         kube-cluster: ${{ inputs.kube-cluster }}
         kube-namespace: ${{ inputs.kube-namespace }}
+
+    - name: Create or update Sentry Kubernetes Secret
+      shell: bash
+      env:
+        K8S_NAMESPACE: ${{ inputs.kube-namespace }}
+        SENTRY_DSN: ${{ inputs.sentry-dsn }}
+        SENTRY_CSP_REPORT_URI: ${{ inputs.sentry-csp-report-uri }}
+        SENTRY_SECURITY_TOKEN: ${{ inputs.sentry-security-token }}
+      run: |
+        set -euo pipefail
+        : "${SENTRY_DSN:?SENTRY_DSN is required}"
+        : "${SENTRY_CSP_REPORT_URI:?SENTRY_CSP_REPORT_URI is required}"
+        : "${SENTRY_SECURITY_TOKEN:?SENTRY_SECURITY_TOKEN is required}"
+
+        printf '%s\n' \
+          "SENTRY_DSN=$SENTRY_DSN" \
+          "SENTRY_CSP_REPORT_URI=$SENTRY_CSP_REPORT_URI" \
+          "SENTRY_SECURITY_TOKEN=$SENTRY_SECURITY_TOKEN" \
+          | kubectl create secret generic laa-info-and-advice-datastore-sentry \
+              --namespace "$K8S_NAMESPACE" \
+              --from-env-file=/dev/stdin \
+              --dry-run=client \
+              --output yaml \
+          | kubectl apply --namespace "$K8S_NAMESPACE" --filename -
 
     - name: Deploy using Helm
       shell: bash

@@ -55,6 +55,12 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
+            - name: SENTRY_ENABLED
+              value: "{{ .Values.env.SENTRY_ENABLED }}"
+            - name: SENTRY_LOGS_ENABLED
+              value: "{{ .Values.env.SENTRY_LOGS_ENABLED }}"
+            - name: SENTRY_TRACES_SAMPLE_RATE
+              value: "{{ .Values.env.SENTRY_TRACES_SAMPLE_RATE }}"
             - name: SERVICE_NAME
               value: "{{ .Values.env.SERVICE_NAME }}"
             - name: SERVICE_PHASE
@@ -110,6 +116,21 @@ spec:
                 secretKeyRef:
                   name: laa-info-and-advice-datastore-entra
                   key: TRUSTED_CALLER_AUDIENCE
+            - name: SENTRY_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: laa-info-and-advice-datastore-sentry
+                  key: SENTRY_DSN
+            - name: SENTRY_CSP_REPORT_URI
+              valueFrom:
+                secretKeyRef:
+                  name: laa-info-and-advice-datastore-sentry
+                  key: SENTRY_CSP_REPORT_URI
+            - name: SENTRY_SECURITY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: laa-info-and-advice-datastore-sentry
+                  key: SENTRY_SECURITY_TOKEN
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
