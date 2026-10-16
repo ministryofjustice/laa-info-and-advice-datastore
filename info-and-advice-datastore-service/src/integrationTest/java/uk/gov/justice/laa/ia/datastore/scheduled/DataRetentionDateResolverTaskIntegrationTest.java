@@ -3,6 +3,8 @@ package uk.gov.justice.laa.ia.datastore.scheduled;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -68,6 +70,29 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
     var savedApplication = applicationRepository.findById(application.getId()).orElseThrow();
     assertNull(savedApplication.getDataRetentionDate());
     verify(claimsGateway, times(1)).getClaims(officeCode, ufn);
+  }
+
+  @Test
+  void givenApplicationWithoutUfn_thenSkipApplicationWithoutCallingClaimsApi() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(null)
+                    .dataRetentionDate(null)
+                    .applicationState(ApplicationState.COMPLETED)
+                    .providerOfficeCode(officeCode));
+    applicationRepository.saveAndFlush(application);
+
+    // Act
+    sut.run();
+
+    // Assert
+    var savedApplication = applicationRepository.findById(application.getId()).orElseThrow();
+    assertNull(savedApplication.getDataRetentionDate());
+    verify(claimsGateway, never()).getClaims(any(), any());
   }
 
   @Test

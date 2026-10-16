@@ -89,6 +89,11 @@ public class DataRetentionDateResolverTask {
   }
 
   private RetentionDateUpdate shouldUpdateDataRetentionDate(ApplicationEntity application) {
+    if (application.getUfn() == null || application.getUfn().isBlank()) {
+      log.warn(
+          "Completed application with ID {} has no UFN, skipping application", application.getId());
+      return RetentionDateUpdate.noApproval();
+    }
     try {
       final var response =
           claimsGateway.getClaims(application.getProviderOfficeCode(), application.getUfn());
