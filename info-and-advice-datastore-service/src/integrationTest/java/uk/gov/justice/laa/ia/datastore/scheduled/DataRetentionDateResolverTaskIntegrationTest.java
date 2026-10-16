@@ -3,28 +3,23 @@ package uk.gov.justice.laa.ia.datastore.scheduled;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.List;
-import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
+import uk.gov.justice.laa.ia.datastore.gateway.stub.ClaimsGatewayStub;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
-import uk.gov.justice.laa.ia.datastore.models.ApplicationClaimResponse;
-import uk.gov.justice.laa.ia.datastore.models.ClaimsModel;
 import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
@@ -35,8 +30,8 @@ import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegrationTest {
 
   private DataRetentionDateResolverTask sut;
-  @Mock private ClaimsGateway claimsGateway;
-  static final String officeCode = "test-office-code-for-data-retention";
+  @Spy private ClaimsGatewayStub claimsGateway = new ClaimsGatewayStub();
+  static final String officeCode = ClaimsGatewayStub.FIXTURE_OFFICE_CODE;
   static final int DATA_RETENTION_YEARS_OFFSET = 3;
 
   @BeforeEach
@@ -55,9 +50,7 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
   void givenApplicationWithNoClaims_thenDoNotSetDataRetentionDate() {
     // Arrange
 
-    final String ufn = "111111/001";
-    when(claimsGateway.getClaims(officeCode, ufn))
-        .thenReturn(ApplicationClaimResponse.builder().claims(List.of()).build());
+    final String ufn = ClaimsGatewayStub.NO_CLAIMS_UFN;
 
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithoutId(
@@ -80,19 +73,14 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
   }
 
   @Test
-  void givenApplicationWithClaimButNotApproved_thenDoNotSetDataRetentionDate() {
+  void givenApplicationWithoutUfn_thenSkipApplicationWithoutCallingClaimsApi() {
     // Arrange
-    final ClaimsModel claim = ClaimsModel.builder().status("NOT_APPROVED").build();
-    final String ufn = "222222/1";
-    when(claimsGateway.getClaims(officeCode, ufn))
-        .thenReturn(ApplicationClaimResponse.builder().claims(List.of(claim)).build());
-
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithoutId(
             builder ->
                 builder
                     .withDefaultClientDetails()
-                    .ufn(ufn)
+                    .ufn(null)
                     .dataRetentionDate(null)
                     .applicationState(ApplicationState.COMPLETED)
                     .providerOfficeCode(officeCode));
@@ -104,26 +92,17 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
     // Assert
     var savedApplication = applicationRepository.findById(application.getId()).orElseThrow();
     assertNull(savedApplication.getDataRetentionDate());
-    verify(claimsGateway, times(1)).getClaims(officeCode, ufn);
+    verify(claimsGateway, never()).getClaims(any(), any());
   }
 
   @Test
-  void givenApplicationWithClaimThatIsApproved_thenSetDataRetentionDateToConfiguredOffset() {
+  void givenApplicationWithClaim_thenSetDataRetentionDateToConfiguredOffset() {
     // Arrange
-    final OffsetDateTime claimApprovedDate =
-        OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
     final Instant expectedDataRetentionDate =
-        OffsetDateTime.of(2029, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC).toInstant();
-    final ClaimsModel claim =
-        ClaimsModel.builder()
-            .claimId(UUID.randomUUID())
-            .status("APPROVED")
-            .createdOn(claimApprovedDate)
-            .updatedOn(claimApprovedDate)
-            .build();
-    final String ufn = "333333/001";
-    when(claimsGateway.getClaims(officeCode, ufn))
-        .thenReturn(ApplicationClaimResponse.builder().claims(List.of(claim)).build());
+        ClaimsGatewayStub.RECENT_CLAIM_UPDATED_ON
+            .plusYears(DATA_RETENTION_YEARS_OFFSET)
+            .toInstant();
+    final String ufn = ClaimsGatewayStub.RECENT_CLAIM_UFN;
 
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithoutId(
@@ -156,83 +135,13 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
   }
 
   @Test
-  void givenApplicationWithMultipleClaims_whenLatestClaimIsApproved_thenSetDataRetentionDate() {
+  void givenApplicationWithMultipleClaims_thenSetDataRetentionDateFromLatestClaim() {
     // Arrange
-    final OffsetDateTime claimApprovedDate =
-        OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
-    final OffsetDateTime earlierClaimDate =
-        OffsetDateTime.of(2026, 9, 1, 8, 30, 0, 0, ZoneOffset.UTC);
     final Instant expectedDataRetentionDate =
-        OffsetDateTime.of(2029, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC).toInstant();
-    final ClaimsModel claim =
-        ClaimsModel.builder()
-            .claimId(UUID.randomUUID())
-            .status("APPROVED")
-            .createdOn(claimApprovedDate)
-            .updatedOn(claimApprovedDate)
-            .build();
-    final ClaimsModel earlierClaim =
-        ClaimsModel.builder()
-            .status("NOT APPROVED")
-            .createdOn(earlierClaimDate)
-            .updatedOn(earlierClaimDate)
-            .build();
-    final String ufn = "444444/001";
-
-    when(claimsGateway.getClaims(officeCode, ufn))
-        .thenReturn(
-            ApplicationClaimResponse.builder().claims(List.of(claim, earlierClaim)).build());
-
-    final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
-    applicationRepository.saveAndFlush(application);
-
-    // Act
-    sut.run();
-
-    // Assert
-    var savedApplication = applicationRepository.findById(application.getId()).orElseThrow();
-    assertNotNull(savedApplication.getDataRetentionDate());
-    assertEquals(expectedDataRetentionDate, savedApplication.getDataRetentionDate());
-    verify(claimsGateway, times(1)).getClaims(officeCode, ufn);
-  }
-
-  @Test
-  void givenMultipleClaims_whenLatestNotApproved_thenSetRetentionDateFromApprovedClaim() {
-    // Arrange
-    final OffsetDateTime approvedClaimDate =
-        OffsetDateTime.of(2026, 9, 1, 8, 30, 0, 0, ZoneOffset.UTC);
-    final OffsetDateTime mostRecentClaimDate =
-        OffsetDateTime.of(2026, 10, 1, 8, 30, 0, 0, ZoneOffset.UTC);
-    final Instant expectedDataRetentionDate =
-        OffsetDateTime.of(2029, 9, 1, 8, 30, 0, 0, ZoneOffset.UTC).toInstant();
-    final ClaimsModel approvedClaim =
-        ClaimsModel.builder()
-            .claimId(UUID.randomUUID())
-            .status("APPROVED")
-            .createdOn(approvedClaimDate)
-            .updatedOn(approvedClaimDate)
-            .build();
-    final ClaimsModel mostRecentClaim =
-        ClaimsModel.builder()
-            .status("PENDING")
-            .createdOn(mostRecentClaimDate)
-            .updatedOn(mostRecentClaimDate)
-            .build();
-    final String ufn = "999999/001";
-
-    when(claimsGateway.getClaims(officeCode, ufn))
-        .thenReturn(
-            ApplicationClaimResponse.builder()
-                .claims(List.of(mostRecentClaim, approvedClaim))
-                .build());
+        ClaimsGatewayStub.RECENT_CLAIM_UPDATED_ON
+            .plusYears(DATA_RETENTION_YEARS_OFFSET)
+            .toInstant();
+    final String ufn = ClaimsGatewayStub.MULTIPLE_CLAIMS_UFN;
 
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithoutId(
@@ -259,8 +168,8 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
   void givenApplicationAlreadyHasRententionDate_thenDoNotTryToGetClaims() {
     // Arrange
     final Instant existingDataRetentionDate = Instant.now();
-    final String ufn = "555555/001";
-    final String ufnWithRetentionDate = "666666/1";
+    final String ufn = ClaimsGatewayStub.RECENT_CLAIM_UFN;
+    final String ufnWithRetentionDate = ClaimsGatewayStub.NO_CLAIMS_UFN;
     final ApplicationEntity applicationWithRetentionDate =
         ApplicationEntityGenerator.createWithoutId(
             builder ->
@@ -293,7 +202,7 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
   @Test
   void givenApplicationIsNotCompleted_thenDoNotResolveDataRetentionDate() {
     // Arrange
-    final String ufn = "777777/001";
+    final String ufn = ClaimsGatewayStub.RECENT_CLAIM_UFN;
     final ApplicationEntity draftApplication =
         ApplicationEntityGenerator.createWithoutId(
             builder ->

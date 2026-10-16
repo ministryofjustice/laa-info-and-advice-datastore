@@ -10,6 +10,8 @@ env:
   SENTRY_LOGS_ENABLED: "true"
   SENTRY_TRACES_SAMPLE_RATE: "1.0"
   DATA_RETENTION_SCHEDULERS_ENABLED: "true"
+  CLAIMS_API_MODE: "live"
+  CLAIMS_API_URL: "http://main-data-claims-api.laa-data-claims-api-uat.svc.cluster.local:8080"
 
 image:
   repository: nginx
@@ -100,6 +102,17 @@ networkPolicy:
                 cidr: 172.20.0.0/16
           ports:
             - port: 5432
+              protocol: TCP
+    - name: allow-egress-claims-api
+      policyTypes:
+        - Egress
+      egress:
+        - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: laa-data-claims-api-uat
+          ports:
+            - port: 8080
               protocol: TCP
 
 ingress:

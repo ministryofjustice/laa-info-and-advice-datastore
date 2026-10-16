@@ -90,7 +90,7 @@ public class DataDeletionTask {
     }
 
     Instant candidateRetentionDate =
-        latestClaim.getCreatedOn().plus(dataRetentionYearsOffset, ChronoUnit.YEARS).toInstant();
+        latestClaim.getUpdatedOn().plus(dataRetentionYearsOffset, ChronoUnit.YEARS).toInstant();
     if (candidateRetentionDate.isAfter(Instant.now())) {
       retentionDateUpdateService.saveAndRecord(
           application.getId(),
@@ -107,7 +107,7 @@ public class DataDeletionTask {
   private static ClaimsModel getLatestClaim(ApplicationClaimResponse response) {
     return hasClaims(response)
         ? response.getClaims().stream()
-            .sorted((c1, c2) -> c2.getCreatedOn().compareTo(c1.getCreatedOn()))
+            .sorted((c1, c2) -> c2.getUpdatedOn().compareTo(c1.getUpdatedOn()))
             .findFirst()
             .orElse(null)
         : null;
