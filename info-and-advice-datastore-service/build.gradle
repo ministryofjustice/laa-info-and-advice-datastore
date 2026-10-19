@@ -103,6 +103,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
     implementation 'io.sentry:sentry-spring-boot-4:8.57.0'
+    implementation 'io.sentry:sentry-logback:8.57.0'
     // In-memory rate limiting (core module only; the Spring Boot starters target Boot 3)
     implementation 'io.github.resilience4j:resilience4j-ratelimiter:2.4.0'
 

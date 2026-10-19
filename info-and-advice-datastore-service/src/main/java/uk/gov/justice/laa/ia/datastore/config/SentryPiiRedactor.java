@@ -82,6 +82,7 @@ public class SentryPiiRedactor implements SentryOptions.Logs.BeforeSendLogCallba
         redactedAttributes.replaceAll(
             (key, value) ->
                 key.toLowerCase(Locale.ROOT).startsWith("message.parameter.")
+                        || key.toLowerCase(Locale.ROOT).startsWith("sentry.message.parameter.")
                     ? redactedValue()
                     : value);
       }
