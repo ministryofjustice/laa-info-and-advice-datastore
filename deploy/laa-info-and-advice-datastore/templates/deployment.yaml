@@ -93,6 +93,16 @@ spec:
               value: "{{ .Values.env.NODE_ENV }}"
             - name: DATA_RETENTION_SCHEDULERS_ENABLED
               value: {{ .Values.env.DATA_RETENTION_SCHEDULERS_ENABLED | default "false" | quote }}
+            - name: CLAIMS_API_MODE
+              value: {{ .Values.env.CLAIMS_API_MODE | default "stub" | quote }}
+            - name: CLAIMS_API_URL
+              value: {{ .Values.env.CLAIMS_API_URL | default "" | quote }}
+            - name: CLAIMS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: laa-info-and-advice-datastore-claims-api
+                  key: CLAIMS_API_KEY
+                  optional: true
             - name: LAA_OAUTH2_ISSUER_URI
               valueFrom:
                 secretKeyRef:

@@ -112,7 +112,7 @@ class DataDeletionTaskTests {
                         ClaimsModel.builder()
                             .claimId(claimId)
                             .status("APPROVED")
-                            .createdOn(claimCreatedOn)
+                            .updatedOn(claimCreatedOn)
                             .build()))
                 .build());
 
@@ -143,7 +143,7 @@ class DataDeletionTaskTests {
                         ClaimsModel.builder()
                             .claimId(UUID.randomUUID())
                             .status("APPROVED")
-                            .createdOn(claimCreatedOn)
+                            .updatedOn(claimCreatedOn)
                             .build()))
                 .build());
 
@@ -172,7 +172,7 @@ class DataDeletionTaskTests {
                     List.of(
                         ClaimsModel.builder()
                             .status("REJECTED")
-                            .createdOn(OffsetDateTime.now().minusYears(5))
+                            .updatedOn(OffsetDateTime.now().minusYears(5))
                             .build()))
                 .build());
 
@@ -249,7 +249,7 @@ class DataDeletionTaskTests {
                     List.of(
                         ClaimsModel.builder()
                             .status("REJECTED")
-                            .createdOn(OffsetDateTime.now().minusYears(5))
+                            .updatedOn(OffsetDateTime.now().minusYears(5))
                             .build()))
                 .build());
     when(claimsGateway.getClaims(OFFICE_CODE, succeedingUfn))
@@ -259,7 +259,7 @@ class DataDeletionTaskTests {
                     List.of(
                         ClaimsModel.builder()
                             .status("REJECTED")
-                            .createdOn(OffsetDateTime.now().minusYears(5))
+                            .updatedOn(OffsetDateTime.now().minusYears(5))
                             .build()))
                 .build());
     doThrow(new RuntimeException("DB constraint violation"))

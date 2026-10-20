@@ -3,12 +3,17 @@ package uk.gov.justice.laa.ia.datastore;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import uk.gov.justice.laa.ia.datastore.config.ClaimsApiProperties;
 import uk.gov.justice.laa.ia.datastore.config.PiiRedactionProperties;
 import uk.gov.justice.laa.ia.datastore.config.RateLimitProperties;
 
 /** Entry point for the Spring Boot microservice application. */
 @SpringBootApplication
-@EnableConfigurationProperties({PiiRedactionProperties.class, RateLimitProperties.class})
+@EnableConfigurationProperties({
+  PiiRedactionProperties.class,
+  RateLimitProperties.class,
+  ClaimsApiProperties.class
+})
 public class SpringBootMicroserviceApplication {
 
   /**
