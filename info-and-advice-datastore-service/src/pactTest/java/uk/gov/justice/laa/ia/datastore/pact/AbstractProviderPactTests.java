@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import au.com.dius.pact.provider.junitsupport.State;
 import java.util.Optional;
 import java.util.UUID;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
@@ -66,6 +67,7 @@ public abstract class AbstractProviderPactTests {
   @MockitoBean protected UserDrivenEventService userDrivenEventService;
   @MockitoBean protected ApplicationRepository applicationRepository;
   @MockitoBean protected EventRepository eventRepository;
+  @MockitoBean protected LockProvider lockProvider;
 
   // UserContextInterceptor independently requires a real, matching pair of JWTs (primary auth +
   // forwarded X-Authorization) that this harness has no way to manufacture, so it's mocked out and

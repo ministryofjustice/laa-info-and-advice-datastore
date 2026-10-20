@@ -28,6 +28,18 @@ info:
     description: Datastore for information and advice
     version: 1.0.0
 
+sentry:
+  # Blank disables the SDK (no events are sent) - set SENTRY_DSN to enable.
+  enabled: ${SENTRY_ENABLED:true}
+  dsn: ${SENTRY_DSN:}
+  environment: ${SPRING_PROFILES_ACTIVE:local}
+  send-default-pii: false
+  exception-resolver-order: -2147483647
+  # Set to 0 to disable tracing; use a value from 0 to 1 to control sampling.
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.01}
+  logs:
+    enabled: ${SENTRY_LOGS_ENABLED:true}
+
 management:
   # specify actuator endpoints to enable
   endpoints:
@@ -69,7 +81,10 @@ laa:
       refresh-period: ${RATE_LIMIT_REFRESH_PERIOD:1m}
     data-retention:
       years-offset: ${DATA_RETENTION_YEARS_OFFSET:3}
+      # Nightly schedulers for deployed environments; off unless explicitly enabled per environment.
+      schedulers-enabled: ${DATA_RETENTION_SCHEDULERS_ENABLED:false}
       cron: ${RETENTION_RESOLVER_CRON:0 0 0 * * *}
+      deletion-cron: ${RETENTION_DELETION_CRON:0 0 1 * * *}
     # Trusts the forwarded X-Authorization token (UserContextInterceptor) issued for the calling
     # service's own audience - deliberately separate from resourceserver.jwt tenants below so this
     # trust never extends to the primary Authorization header/endpoint authorization.
@@ -95,6 +110,10 @@ laa:
           - county
           - clientFirstName
           - clientLastName
+  security:
+    # Content-Security-Policy reporting endpoint - blank disables the header.
+    csp-report-uri: ${SENTRY_CSP_REPORT_URI:}
+    csp-security-token: ${SENTRY_SECURITY_TOKEN:}
   springboot.starter:
     oauth2:
       scopes-claim-path: scp

@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.scheduled;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import uk.gov.justice.laa.ia.datastore.ExcludeFromCodeCoverage;
 
@@ -15,6 +16,10 @@ public class LocalDataRetentionScheduler {
   }
 
   @Scheduled(initialDelay = 0, fixedRate = 600000) // 600000 ms = 10 minutes
+  @SchedulerLock(
+      name = SchedulerLocks.DATA_RETENTION,
+      lockAtMostFor = SchedulerLocks.DATA_RETENTION_LOCK_AT_MOST_FOR,
+      lockAtLeastFor = SchedulerLocks.DATA_RETENTION_LOCK_AT_LEAST_FOR)
   public void run() {
     dataRetentionDateResolver.run();
   }

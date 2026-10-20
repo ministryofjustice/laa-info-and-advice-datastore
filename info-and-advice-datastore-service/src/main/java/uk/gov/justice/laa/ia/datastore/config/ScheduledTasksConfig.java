@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -12,6 +13,8 @@ import uk.gov.justice.laa.ia.datastore.scheduled.DataDeletionTask;
 import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolverTask;
 import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataDeletionScheduler;
 import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataRetentionScheduler;
+import uk.gov.justice.laa.ia.datastore.scheduled.ProdDataDeletionScheduler;
+import uk.gov.justice.laa.ia.datastore.scheduled.ProdDataRetentionScheduler;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationDataDeletionService;
 import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 
@@ -50,16 +53,33 @@ public class ScheduledTasksConfig {
         applicationDataDeletionService);
   }
 
-  //
-  // Bean for the production/staging/uat data retention scheduler, runs based on config defaulting
-  // to midnight.
-  //
-  // @Bean
-  // @Profile("!local")
-  // public ProdDataRetentionScheduler prodDataRetentionScheduler(
-  //     DataRetentionDateResolverTask dataRetentionDateResolver) {
-  //   return new ProdDataRetentionScheduler(dataRetentionDateResolver);
-  // }
+  /**
+   * Nightly data retention scheduler for deployed environments, switched on per environment with
+   * {@code laa.datastore.data-retention.schedulers-enabled}.
+   */
+  @Bean
+  @Profile("!local")
+  @ConditionalOnProperty(
+      name = "laa.datastore.data-retention.schedulers-enabled",
+      havingValue = "true")
+  public ProdDataRetentionScheduler prodDataRetentionScheduler(
+      DataRetentionDateResolverTask dataRetentionDateResolver) {
+    return new ProdDataRetentionScheduler(dataRetentionDateResolver);
+  }
+
+  /**
+   * Nightly data deletion scheduler for deployed environments, switched on per environment with
+   * {@code laa.datastore.data-retention.schedulers-enabled}. Runs an hour after the retention date
+   * resolver.
+   */
+  @Bean
+  @Profile("!local")
+  @ConditionalOnProperty(
+      name = "laa.datastore.data-retention.schedulers-enabled",
+      havingValue = "true")
+  public ProdDataDeletionScheduler prodDataDeletionScheduler(DataDeletionTask dataDeletionTask) {
+    return new ProdDataDeletionScheduler(dataDeletionTask);
+  }
 
   /**
    * Bean for the local development data retention scheduler, runs immediately on startup and then
@@ -73,8 +93,8 @@ public class ScheduledTasksConfig {
   }
 
   /**
-   * Bean for the local development data deletion scheduler, runs immediately on startup and then
-   * every 10 minutes.
+   * Bean for the local development data deletion scheduler, runs every 10 minutes starting 5
+   * minutes after startup, so it doesn't contend with the retention scheduler for the shared lock.
    */
   @Bean
   @Profile("local")
