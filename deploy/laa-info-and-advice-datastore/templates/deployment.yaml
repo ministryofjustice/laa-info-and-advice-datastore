@@ -57,6 +57,8 @@ spec:
               value: "{{ .Values.env.SPRING_PROFILES_ACTIVE }}"
             - name: SENTRY_ENABLED
               value: "{{ .Values.env.SENTRY_ENABLED }}"
+            - name: SENTRY_RELEASE
+              value: "{{ .Values.image.tag | default .Chart.AppVersion }}"
             - name: SENTRY_LOGS_ENABLED
               value: "{{ .Values.env.SENTRY_LOGS_ENABLED }}"
             - name: SENTRY_TRACES_SAMPLE_RATE
