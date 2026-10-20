@@ -127,6 +127,26 @@ Then export the variables and run:
 set -a && source .env.entra && set +a
 ./gradlew :info-and-advice-datastore-service:bootRun
 ```
+### Sentry telemetry
+
+Set `SENTRY_DSN` to enable delivery. `SENTRY_ENABLED=false` disables the SDK and
+`SENTRY_LOGS_ENABLED=false` disables the structured Logback integration. INFO and higher
+logs are forwarded; successful API requests log at INFO. Automatic Logback error events
+and breadcrumbs are disabled so they cannot bypass the structured-log PII callback.
+Unhandled exceptions captured by the Spring integration remain separate from these logs.
+
+Helm sets `SENTRY_RELEASE` to the image tag, which is the deployment commit SHA in CI
+(or the chart app version when no image tag is supplied). Local runs default to `laa-info-and-advice-datastore@local`; override
+`SENTRY_RELEASE` to test another release. This associates telemetry with a release; it
+does not upload source maps, associate commits, or create Sentry deployment records.
+
+Repository calls emit `db.query.duration` distributions in milliseconds, including
+inherited Spring Data CRUD methods. To verify after deployment, make an authenticated
+API request that queries the database, then check Logs, Application Metrics, and the
+release attribute in the matching Sentry project/environment. Check ingestion limits
+and temporarily enable `SENTRY_DEBUG=true` if SDK delivery still fails; diagnostic output
+can contain sensitive data and should not be shared without review.
+
 ## Run application locally using Bruno
 
 Install bruno.

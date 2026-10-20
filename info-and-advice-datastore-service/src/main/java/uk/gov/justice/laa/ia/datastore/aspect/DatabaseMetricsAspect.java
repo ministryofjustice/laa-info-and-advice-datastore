@@ -18,7 +18,7 @@ public class DatabaseMetricsAspect {
   private static final String METRIC_NAME = "db.query.duration";
 
   /** Records elapsed repository-call time while preserving the result or exception. */
-  @Around("execution(* uk.gov.justice.laa.ia.datastore.repository..*(..))")
+  @Around("this(org.springframework.data.repository.Repository)")
   public Object recordQueryDuration(ProceedingJoinPoint joinPoint) throws Throwable {
     long start = System.nanoTime();
     try {

@@ -33,12 +33,20 @@ sentry:
   enabled: ${SENTRY_ENABLED:true}
   dsn: ${SENTRY_DSN:}
   environment: ${SPRING_PROFILES_ACTIVE:local}
+  release: ${SENTRY_RELEASE:laa-info-and-advice-datastore@local}
   send-default-pii: false
   exception-resolver-order: -2147483647
   # Set to 0 to disable tracing; use a value from 0 to 1 to control sampling.
   traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.01}
+  ignored-transactions:
+    - '^(?:[A-Z]+ )?/metrics/?$'
+  # Enables structured log delivery through our custom SentryLoggingConfiguration appender.
   logs:
     enabled: ${SENTRY_LOGS_ENABLED:true}
+  # Disables Sentry's automatic Logback appender, not structured log delivery above.
+  # Our custom appender disables error events and breadcrumbs to avoid bypassing log redaction.
+  logging:
+    enabled: false
 
 management:
   # specify actuator endpoints to enable
@@ -79,6 +87,15 @@ laa:
       enabled: ${RATE_LIMIT_ENABLED:true}
       limit-for-period: ${RATE_LIMIT_REQUESTS:100}
       refresh-period: ${RATE_LIMIT_REFRESH_PERIOD:1m}
+    # Claims API used to decide data retention. Defaults to a stub; set mode to "live" with a base
+    # URL and API key to call the real API.
+    claims-api:
+      mode: ${CLAIMS_API_MODE:stub}
+      base-url: ${CLAIMS_API_URL:}
+      api-key: ${CLAIMS_API_KEY:}
+      page-size: ${CLAIMS_API_PAGE_SIZE:100}
+      connect-timeout: ${CLAIMS_API_CONNECT_TIMEOUT:5s}
+      read-timeout: ${CLAIMS_API_READ_TIMEOUT:30s}
     data-retention:
       years-offset: ${DATA_RETENTION_YEARS_OFFSET:3}
       # Nightly schedulers for deployed environments; off unless explicitly enabled per environment.
