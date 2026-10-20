@@ -26,6 +26,10 @@ services:
       - TRUSTED_CALLER_AUDIENCE=${TRUSTED_CALLER_AUDIENCE:-default}
       # Sentry error monitoring - set these in .env to enable (blank disables the SDK/header).
       - SENTRY_DSN=${SENTRY_DSN:-}
+      - SENTRY_ENABLED=${SENTRY_ENABLED:-true}
+      - SENTRY_LOGS_ENABLED=${SENTRY_LOGS_ENABLED:-true}
+      - SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE:-0.01}
+      - SENTRY_RELEASE=${SENTRY_RELEASE:-laa-info-and-advice-datastore@local}
       - SENTRY_CSP_REPORT_URI=${SENTRY_CSP_REPORT_URI:-}
       - SENTRY_SECURITY_TOKEN=${SENTRY_SECURITY_TOKEN:-}
     healthcheck:

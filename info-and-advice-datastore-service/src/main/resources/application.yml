@@ -33,12 +33,20 @@ sentry:
   enabled: ${SENTRY_ENABLED:true}
   dsn: ${SENTRY_DSN:}
   environment: ${SPRING_PROFILES_ACTIVE:local}
+  release: ${SENTRY_RELEASE:laa-info-and-advice-datastore@local}
   send-default-pii: false
   exception-resolver-order: -2147483647
   # Set to 0 to disable tracing; use a value from 0 to 1 to control sampling.
   traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.01}
+  ignored-transactions:
+    - '^(?:[A-Z]+ )?/metrics/?$'
+  # Enables structured log delivery through our custom SentryLoggingConfiguration appender.
   logs:
     enabled: ${SENTRY_LOGS_ENABLED:true}
+  # Disables Sentry's automatic Logback appender, not structured log delivery above.
+  # Our custom appender disables error events and breadcrumbs to avoid bypassing log redaction.
+  logging:
+    enabled: false
 
 management:
   # specify actuator endpoints to enable

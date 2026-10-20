@@ -17,6 +17,9 @@ import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
+import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 
 class DatabaseMetricsAspectTest {
 
@@ -24,6 +27,28 @@ class DatabaseMetricsAspectTest {
   private final ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
   private final Signature signature = mock(Signature.class);
   private final IMetricsApi metrics = mock(IMetricsApi.class);
+
+  @Test
+  void recordsInheritedSpringDataRepositoryCallsThroughProxy() {
+    SimpleJpaRepository<?, ?> repository = mock(SimpleJpaRepository.class);
+    when(repository.count()).thenReturn(3L);
+    AspectJProxyFactory factory = new AspectJProxyFactory(repository);
+    factory.setInterfaces(ApplicationRepository.class);
+    factory.addAspect(sut);
+    ApplicationRepository proxy = factory.getProxy();
+
+    try (MockedStatic<Sentry> sentry = mockStatic(Sentry.class)) {
+      sentry.when(Sentry::metrics).thenReturn(metrics);
+      assertThat(proxy.count()).isEqualTo(3L);
+    }
+
+    verify(metrics)
+        .distribution(
+            eq("db.query.duration"),
+            org.mockito.ArgumentMatchers.anyDouble(),
+            eq(MetricsUnit.Duration.MILLISECOND),
+            org.mockito.ArgumentMatchers.any(SentryMetricsParameters.class));
+  }
 
   @Test
   void recordsRepositoryDurationAndReturnsResult() throws Throwable {
