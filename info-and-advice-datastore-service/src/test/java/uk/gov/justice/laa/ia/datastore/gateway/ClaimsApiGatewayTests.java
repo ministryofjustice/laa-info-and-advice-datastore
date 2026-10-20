@@ -29,6 +29,8 @@ class ClaimsApiGatewayTests {
   private final List<String> requestUris = new ArrayList<>();
   private final List<String> authHeaders = new ArrayList<>();
   private int errorStatus = 0;
+  private String page0Override;
+  private String page1Override;
 
   @BeforeEach
   void startServer() throws IOException {
@@ -39,7 +41,9 @@ class ClaimsApiGatewayTests {
           requestUris.add(exchange.getRequestURI().toString());
           authHeaders.add(exchange.getRequestHeaders().getFirst("Authorization"));
           final var query = exchange.getRequestURI().getQuery();
-          final var body = errorStatus != 0 ? "{}" : pageBody(query.contains("page=1") ? 1 : 0);
+          final var page = query.contains("page=1") ? 1 : 0;
+          final var override = page == 1 ? page1Override : page0Override;
+          final var body = errorStatus != 0 ? "{}" : override != null ? override : pageBody(page);
           final var bytes = body.getBytes(StandardCharsets.UTF_8);
           exchange.getResponseHeaders().add("Content-Type", "application/json");
           exchange.sendResponseHeaders(errorStatus != 0 ? errorStatus : 200, bytes.length);
@@ -86,6 +90,31 @@ class ClaimsApiGatewayTests {
     errorStatus = 500;
 
     assertThrows(HttpServerErrorException.class, () -> gateway().getClaims("0R695K", "230493/001"));
+  }
+
+  @Test
+  void failsWhenLaterPageHasNoBodySoDeletionIsNotBasedOnIncompleteClaims() {
+    page1Override = "";
+
+    assertThrows(IllegalStateException.class, () -> gateway().getClaims("0R695K", "230493/001"));
+  }
+
+  @Test
+  void failsWhenClaimHasNoUpdatedOn() {
+    page0Override =
+        """
+        {"content":[{"claim_id":"%s","status":"VALID","created_on":"2024-01-02T03:04:05Z"}],\
+        "total_pages":1}"""
+            .formatted(CLAIM_1);
+
+    assertThrows(IllegalStateException.class, () -> gateway().getClaims("0R695K", "230493/001"));
+  }
+
+  @Test
+  void returnsNoClaimsWhenTheLookupHasNoResults() {
+    page0Override = "{\"content\":[],\"total_pages\":0}";
+
+    assertTrue(gateway().getClaims("0R695K", "230493/001").getClaims().isEmpty());
   }
 
   private ClaimsApiGateway gateway() {

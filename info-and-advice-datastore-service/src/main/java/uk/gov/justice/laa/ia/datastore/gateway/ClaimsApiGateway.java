@@ -53,7 +53,9 @@ public class ClaimsApiGateway implements ClaimsGateway {
     do {
       final var result = fetchPage(officeCode, ufn, page);
       if (result == null || result.content() == null) {
-        break;
+        throw new IllegalStateException(
+            "Claims API returned no content for page %d, so the claims are incomplete"
+                .formatted(page));
       }
       result.content().stream().map(ClaimsApiGateway::toModel).forEach(claims::add);
       totalPages = result.totalPages();
@@ -79,6 +81,10 @@ public class ClaimsApiGateway implements ClaimsGateway {
   }
 
   private static ClaimsModel toModel(RetentionLookupClaim claim) {
+    if (claim.updatedOn() == null) {
+      throw new IllegalStateException(
+          "Claims API returned claim %s without updated_on".formatted(claim.claimId()));
+    }
     return ClaimsModel.builder()
         .claimId(claim.claimId())
         .status(claim.status())
