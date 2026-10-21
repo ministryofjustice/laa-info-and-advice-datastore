@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.exception;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -9,11 +10,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 
 /** The global exception handler for all exceptions. */
 @RestControllerAdvice
 @Slf4j
+@RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+  private final AuditLogger auditLogger;
+  private final UserContext userContext;
+
   /**
    * The handler for EtagMismatchException.
    *
@@ -122,6 +130,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<ProblemDetail> handleProviderOfficeNotAuthorizedException(
       ProviderOfficeNotAuthorizedException exception) {
     log.warn("Provider office not authorized: {}", exception.getMessage());
+    auditLogger.security(
+        AuditAction.CLAIMS_AUTHORISATION_FAILED,
+        AuditLogger.currentActor(),
+        "provider_office",
+        exception.getProviderOfficeCode(),
+        "Provider office not in caller's authorised offices",
+        userContext.getProviderFirmCode(),
+        exception.getProviderOfficeCode());
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage());
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);

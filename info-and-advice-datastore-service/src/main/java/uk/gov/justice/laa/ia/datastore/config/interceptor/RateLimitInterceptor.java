@@ -16,6 +16,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.config.RateLimitProperties;
 
 /**
@@ -33,14 +35,17 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
   private final RateLimitProperties properties;
   private final RateLimiterRegistry registry;
+  private final AuditLogger auditLogger;
 
   /**
    * Creates the interceptor.
    *
    * @param properties rate limit settings
+   * @param auditLogger audit sink for rate limit breaches
    */
-  public RateLimitInterceptor(RateLimitProperties properties) {
+  public RateLimitInterceptor(RateLimitProperties properties, AuditLogger auditLogger) {
     this.properties = properties;
+    this.auditLogger = auditLogger;
     this.registry =
         RateLimiterRegistry.of(
             RateLimiterConfig.custom()
@@ -64,6 +69,12 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     final long retryAfterSeconds =
         Math.max(1, (long) Math.ceil(properties.refreshPeriod().toMillis() / 1000.0));
     log.warn("Rate limit exceeded for caller {}", key);
+    auditLogger.security(
+        AuditAction.RATE_LIMIT_EXCEEDED,
+        key,
+        "endpoint",
+        request.getMethod() + " " + request.getRequestURI(),
+        "Rate limit exceeded");
     response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
     response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
     response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);

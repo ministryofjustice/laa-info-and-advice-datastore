@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.web.client.RestClient;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.config.ClaimsApiProperties;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.gateway.ClaimsApiGateway;
@@ -55,7 +56,7 @@ class DataRetentionDateResolverTaskUatIntegrationTest extends BaseIntegrationTes
             applicationRepository,
             new RetentionDateUpdateService(
                 applicationRepository,
-                new SystemDrivenEventService(eventRepository, objectMapper)));
+                new SystemDrivenEventService(eventRepository, objectMapper, new AuditLogger())));
   }
 
   private ApplicationEntity saveCompletedApplication(String officeCode, String ufn) {

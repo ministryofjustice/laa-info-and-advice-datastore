@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
@@ -87,6 +88,7 @@ class ApplicationDataDeletionServiceTests {
 
     verify(systemDrivenEventService)
         .record(
+            eq(AuditAction.APPLICATION_DATA_DELETED),
             any(),
             eq(application.getProviderOfficeCode()),
             eq(application.getProviderFirmCode()),
@@ -108,7 +110,7 @@ class ApplicationDataDeletionServiceTests {
     // Assert
     verify(applicationRepository, never()).save(any());
     verify(eventRepository, never()).findByApplicationId(any());
-    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any());
+    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -121,7 +123,7 @@ class ApplicationDataDeletionServiceTests {
     assertThatThrownBy(() -> sut.deleteAndRecord(applicationId, 1L))
         .isInstanceOf(EntityNotFoundException.class);
     verify(applicationRepository, never()).save(any());
-    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any());
+    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any(), any());
   }
 
   @Test

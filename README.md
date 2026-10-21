@@ -127,6 +127,7 @@ Then export the variables and run:
 set -a && source .env.entra && set +a
 ./gradlew :info-and-advice-datastore-service:bootRun
 ```
+
 ### Sentry telemetry
 
 Set `SENTRY_DSN` to enable delivery. `SENTRY_ENABLED=false` disables the SDK and
@@ -146,6 +147,45 @@ API request that queries the database, then check Logs, Application Metrics, and
 release attribute in the matching Sentry project/environment. Check ingestion limits
 and temporarily enable `SENTRY_DEBUG=true` if SDK delivery still fails; diagnostic output
 can contain sensitive data and should not be shared without review.
+
+## Audit logging
+
+Audit events are structured (ECS JSON) log lines written to the `audit` logger at `INFO`, collected from container stdout by EKS into OpenSearch. OpenSearch keeps 30 days; the SOC integration exports to a separate system with 3 months retention, so that is the longest audit history available from logs. The `events` table remains the durable record of case mutations.
+
+| Field | Meaning |
+|---|---|
+| `event.category` | `domain` or `security` |
+| `event.action` | See taxonomy below |
+| `event.outcome` | `success` or `failure` |
+| `user.id` | Actor: Entra `oid`, `SYSTEM` for scheduled jobs, or `anonymous` if unknown |
+| `resource.type` / `resource.id` | Affected resource (`application`, `provider_office`, `endpoint`) |
+| `event.reason` | Short PII-free reason (security events only) |
+| `correlationId` | From `X-Correlation-ID` (generated if absent); scheduled jobs get one per run |
+| `labels.providerFirmCode` / `labels.providerOfficeCode` | Firm and office the application belongs to (domain events; office-authorisation failures), when known |
+| `labels.tenantId` | Entra tenant (`tid` claim) of the caller, when authenticated |
+| `trace.id` / `span.id` | From the W3C `traceparent` header, when the caller sends one |
+
+| Action | Raised when |
+|---|---|
+| `application.started` | An application is created in draft |
+| `application.updated` | Application metadata (or linked client, declaration, evidence via edit) is changed |
+| `application.clientDetailsUpdated` | Client details are updated |
+| `application.meansUpdated` | Means data is updated |
+| `application.scopingUpdated` | Scoping data is updated |
+| `application.declarationUpdated` | The client declaration is updated |
+| `application.evidenceUpdated` | Evidence is updated |
+| `application.submitted` | An application moves from `DRAFT` to `COMPLETED` (instead of `application.updated`) |
+| `application.viewed` | A single application is read (200) |
+| `application.listed` | A list request is served; carries `labels.page`, `labels.size`, `labels.resultCount` (no filters or per-row IDs) |
+| `application.retentionDateSet` | The retention resolver sets a data retention date (actor `SYSTEM`) |
+| `application.dataDeleted` | The deletion task removes an application's PII (actor `SYSTEM`) |
+| `security.rateLimitExceeded` | A caller is rate limited (429) |
+| `security.tokenVerificationFailed` | Primary or forwarded token is missing/invalid (401) |
+| `security.claimsAuthorisationFailed` | Missing/mismatched claims, insufficient scope, or unauthorised provider office (401/403) |
+
+Domain outcomes reflect commit (`success`) or rollback (`failure`).
+
+Only IDs go in audit entries - never client PII. Action names are consumed downstream; add new ones rather than renaming.
 
 ## Run application locally using Bruno
 

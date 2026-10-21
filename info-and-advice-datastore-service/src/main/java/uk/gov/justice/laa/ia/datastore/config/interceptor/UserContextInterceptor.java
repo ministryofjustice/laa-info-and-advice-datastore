@@ -16,6 +16,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.config.TrustedCallerJwtDecoder;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 
@@ -33,6 +35,7 @@ public class UserContextInterceptor implements HandlerInterceptor {
   private final UserContext userContext;
   private final TrustedCallerJwtDecoder trustedCallerJwtDecoder;
   private final ObjectMapper objectMapper;
+  private final AuditLogger auditLogger;
 
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -41,12 +44,14 @@ public class UserContextInterceptor implements HandlerInterceptor {
     try {
       authenticatedJwt = authenticateJwt(request);
     } catch (Exception e) {
+      auditFailure(request, AuditAction.TOKEN_VERIFICATION_FAILED, "Forwarded token invalid");
       writeUnauthorized(response, "Invalid or missing authentication token");
       return false;
     }
     try {
       verifyIdentityMatchesPrimaryToken(authenticatedJwt);
     } catch (IllegalArgumentException e) {
+      auditFailure(request, AuditAction.CLAIMS_AUTHORISATION_FAILED, e.getMessage());
       writeUnauthorized(response, e.getMessage());
       return false;
     }
@@ -54,9 +59,19 @@ public class UserContextInterceptor implements HandlerInterceptor {
       populateUserContext(authenticatedJwt);
       return true;
     } catch (IllegalArgumentException e) {
+      auditFailure(request, AuditAction.CLAIMS_AUTHORISATION_FAILED, e.getMessage());
       writeUnauthorized(response, e.getMessage());
       return false;
     }
+  }
+
+  private void auditFailure(HttpServletRequest request, String action, String reason) {
+    auditLogger.security(
+        action,
+        AuditLogger.currentActor(),
+        "endpoint",
+        request.getMethod() + " " + request.getRequestURI(),
+        reason);
   }
 
   private void writeUnauthorized(HttpServletResponse response, String detail) throws IOException {

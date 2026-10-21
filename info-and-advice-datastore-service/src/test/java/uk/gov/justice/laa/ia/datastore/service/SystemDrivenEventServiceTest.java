@@ -14,6 +14,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 
@@ -23,6 +25,7 @@ class SystemDrivenEventServiceTest {
 
   @Mock private EventRepository repository;
   @Mock private ObjectMapper objectMapper;
+  @Mock private AuditLogger auditLogger;
 
   @InjectMocks private SystemDrivenEventService sut;
 
@@ -36,9 +39,23 @@ class SystemDrivenEventServiceTest {
     final UUID applicationId = UUID.randomUUID();
 
     // Act
-    sut.record(payload, "office-code-1", "firm-code-1", "DataRetentionDateResolver", applicationId);
+    sut.record(
+        AuditAction.APPLICATION_RETENTION_DATE_SET,
+        payload,
+        "office-code-1",
+        "firm-code-1",
+        "DataRetentionDateResolver",
+        applicationId);
 
     // Assert
+    verify(auditLogger)
+        .domain(
+            AuditAction.APPLICATION_RETENTION_DATE_SET,
+            "SYSTEM",
+            "application",
+            applicationId.toString(),
+            "firm-code-1",
+            "office-code-1");
     ArgumentCaptor<EventEntity> captor = ArgumentCaptor.forClass(EventEntity.class);
     verify(repository).save(captor.capture());
     EventEntity saved = captor.getValue();
@@ -61,7 +78,13 @@ class SystemDrivenEventServiceTest {
     when(repository.save(any(EventEntity.class))).thenAnswer(i -> i.getArgument(0));
 
     // Act
-    sut.record(payload, "office-code-1", "firm-code-1", "DataRetentionDateResolver", null);
+    sut.record(
+        AuditAction.APPLICATION_RETENTION_DATE_SET,
+        payload,
+        "office-code-1",
+        "firm-code-1",
+        "DataRetentionDateResolver",
+        null);
 
     // Assert
     ArgumentCaptor<EventEntity> captor = ArgumentCaptor.forClass(EventEntity.class);

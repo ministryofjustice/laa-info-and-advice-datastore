@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
@@ -15,6 +16,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -71,6 +74,7 @@ public class ApplicationService {
   private final UserContext userContext;
   private final ObjectMapper objectMapper;
   private final UserDrivenEventService eventService;
+  private final AuditLogger auditLogger;
 
   /**
    * Create an application.
@@ -98,7 +102,11 @@ public class ApplicationService {
     entity.setApplicationState(ApplicationState.DRAFT);
     ApplicationEntity saved = repository.save(entity);
     entityManager.refresh(saved);
-    eventService.record(startApplication, startApplication.getProviderOfficeCode(), saved.getId());
+    recordEvent(
+        AuditAction.APPLICATION_STARTED,
+        startApplication,
+        startApplication.getProviderOfficeCode(),
+        saved.getId());
     return applicationMapper.toApplication(saved);
   }
 
@@ -126,9 +134,22 @@ public class ApplicationService {
       specificationToApply = specificationToApply.and(additionalFilteringSpecification);
     }
     final Sort defaultSort = Sort.by(Sort.Direction.DESC, "modifiedAt");
-    return repository
-        .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize, defaultSort))
-        .map(applicationMapper::toApplicationSummary);
+    final Page<ApplicationSummary> result =
+        repository
+            .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize, defaultSort))
+            .map(applicationMapper::toApplicationSummary);
+    auditLogger.read(
+        AuditAction.APPLICATION_LISTED,
+        userContext.getCurrentUser(),
+        "application",
+        null,
+        userContext.getProviderFirmCode(),
+        null,
+        Map.of(
+            "page", result.getNumber(),
+            "size", result.getSize(),
+            "resultCount", result.getNumberOfElements()));
+    return result;
   }
 
   /**
@@ -149,6 +170,14 @@ public class ApplicationService {
         application -> {
           validateProviderOfficeCode(application.getProviderOfficeCode());
           validateNotDeletedOrExpired(application);
+          auditLogger.read(
+              AuditAction.APPLICATION_VIEWED,
+              userContext.getCurrentUser(),
+              "application",
+              String.valueOf(application.getId()),
+              userContext.getProviderFirmCode(),
+              application.getProviderOfficeCode(),
+              Map.of());
         });
     return applicationOpt.map(applicationMapper::toApplication);
   }
@@ -194,7 +223,11 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode(), applicationId);
+    recordEvent(
+        AuditAction.APPLICATION_MEANS_UPDATED,
+        command,
+        application.getProviderOfficeCode(),
+        applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -251,7 +284,11 @@ public class ApplicationService {
     application.setDeclaration(declarationEntity);
 
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode(), applicationId);
+    recordEvent(
+        AuditAction.APPLICATION_DECLARATION_UPDATED,
+        command,
+        application.getProviderOfficeCode(),
+        applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -291,8 +328,24 @@ public class ApplicationService {
     application.setEvidence(savedEvidence);
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode(), applicationId);
+    recordEvent(
+        AuditAction.APPLICATION_EVIDENCE_UPDATED,
+        command,
+        application.getProviderOfficeCode(),
+        applicationId);
     return OptionalLong.of(saved.getEtag());
+  }
+
+  private void recordEvent(
+      String auditAction, Object payload, String providerOfficeCode, UUID applicationId) {
+    eventService.record(payload, providerOfficeCode, applicationId);
+    auditLogger.domain(
+        auditAction,
+        userContext.getCurrentUser(),
+        "application",
+        String.valueOf(applicationId),
+        userContext.getProviderFirmCode(),
+        providerOfficeCode);
   }
 
   private void validateEtag(ApplicationEntity application, Long providedEtag) {
@@ -342,7 +395,11 @@ public class ApplicationService {
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode(), applicationId);
+    recordEvent(
+        AuditAction.APPLICATION_SCOPING_UPDATED,
+        command,
+        application.getProviderOfficeCode(),
+        applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -370,9 +427,15 @@ public class ApplicationService {
     validateNotDeletedOrExpired(application);
     validateEtag(application, command.geteTag());
 
+    boolean wasCompleted = application.getApplicationState() == ApplicationState.COMPLETED;
     applicationMapper.updateApplicationEntity(command, application);
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode(), applicationId);
+    boolean submitted = !wasCompleted && saved.getApplicationState() == ApplicationState.COMPLETED;
+    recordEvent(
+        submitted ? AuditAction.APPLICATION_SUBMITTED : AuditAction.APPLICATION_UPDATED,
+        command,
+        application.getProviderOfficeCode(),
+        applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -453,7 +516,11 @@ public class ApplicationService {
 
     ApplicationEntity saved = repository.save(application);
     repository.flush();
-    eventService.record(command, application.getProviderOfficeCode(), applicationId);
+    recordEvent(
+        AuditAction.APPLICATION_UPDATED,
+        command,
+        application.getProviderOfficeCode(),
+        applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 
@@ -590,7 +657,11 @@ public class ApplicationService {
 
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = repository.save(application);
-    eventService.record(command, application.getProviderOfficeCode(), applicationId);
+    recordEvent(
+        AuditAction.APPLICATION_CLIENT_DETAILS_UPDATED,
+        command,
+        application.getProviderOfficeCode(),
+        applicationId);
     return OptionalLong.of(saved.getEtag());
   }
 }

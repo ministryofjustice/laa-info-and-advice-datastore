@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 
@@ -18,12 +20,14 @@ public class SystemDrivenEventService {
 
   private final EventRepository repository;
   private final ObjectMapper objectMapper;
+  private final AuditLogger auditLogger;
 
   /**
    * Records a mutation event raised by a system process. Must be called within an active
    * transaction so that the event and the mutation it describes are committed or rolled back
    * together.
    *
+   * @param action the audit action describing the change, see {@link AuditAction}.
    * @param payload the data describing the mutation, e.g. a before/after diff.
    * @param providerOfficeCode the provider office code of the application the mutation relates to.
    * @param providerFirmCode the provider firm code of the application the mutation relates to.
@@ -32,6 +36,7 @@ public class SystemDrivenEventService {
    *     known.
    */
   public void record(
+      String action,
       Object payload,
       String providerOfficeCode,
       String providerFirmCode,
@@ -49,5 +54,12 @@ public class SystemDrivenEventService {
             .payload(objectMapper.valueToTree(payload))
             .build();
     repository.save(event);
+    auditLogger.domain(
+        action,
+        SYSTEM_USER,
+        "application",
+        event.getApplicationId().toString(),
+        providerFirmCode,
+        providerOfficeCode);
   }
 }

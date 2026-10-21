@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.gateway.stub.ClaimsGatewayStub;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
@@ -43,7 +44,7 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
             applicationRepository,
             new RetentionDateUpdateService(
                 applicationRepository,
-                new SystemDrivenEventService(eventRepository, objectMapper)));
+                new SystemDrivenEventService(eventRepository, objectMapper, new AuditLogger())));
   }
 
   @Test
