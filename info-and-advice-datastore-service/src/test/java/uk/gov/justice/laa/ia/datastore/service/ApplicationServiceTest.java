@@ -295,6 +295,25 @@ public class ApplicationServiceTest {
   }
 
   @Test
+  void shouldThrowApplicationDeletedException_whenGettingExpiredApplication() {
+    // Arrange
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity entity =
+        ApplicationEntity.builder()
+            .id(UUID.randomUUID())
+            .providerOfficeCode(officeCode)
+            .dataRetentionDate(Instant.now().minusSeconds(1))
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
+
+    // Act + Assert
+    assertThrows(ApplicationDeletedException.class, () -> sut.getApplication(entity.getId()));
+    verify(mapper, never()).toApplication(any());
+  }
+
+  @Test
   void shouldUpdateMeansData() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();
@@ -382,6 +401,30 @@ public class ApplicationServiceTest {
             .id(applicationId)
             .providerOfficeCode(officeCode)
             .deleted(true)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+
+    // Act + Assert
+    assertThrows(
+        ApplicationDeletedException.class,
+        () ->
+            sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
+    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(repo, never()).save(any(ApplicationEntity.class));
+  }
+
+  @Test
+  void updateMeansData_shouldThrowApplicationDeletedException_whenApplicationIsExpired() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .dataRetentionDate(Instant.now().minusSeconds(1))
             .build();
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));

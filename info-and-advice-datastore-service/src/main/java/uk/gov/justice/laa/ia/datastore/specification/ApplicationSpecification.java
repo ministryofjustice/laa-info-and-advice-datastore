@@ -49,21 +49,30 @@ public class ApplicationSpecification {
   /**
    * Setups a specification for the default constraints applied to every application listing: must
    * match the providerFirmCode, must have an officeCode in the user's authorized officeCodes, and
-   * must not have been deleted.
+   * must not have been deleted or expired.
    */
   public static Specification<ApplicationEntity> filterByDefaultConstraints(
       String providerFirmCode, List<String> officeCodes) {
     return filterByProviderFirmCode(providerFirmCode)
         .and(filterByProviderOfficesCodes(officeCodes))
+        .and(notDeleted())
         .and(notExpired());
   }
 
+  /** Sets up a specification for filtering out deleted ApplicationEntity records. */
+  public static Specification<ApplicationEntity> notDeleted() {
+    return (root, query, criteriaBuilder) -> criteriaBuilder.isFalse(root.get("deleted"));
+  }
+
   /**
-   * Setups a specification for filtering out ApplicationEntity that have expired data retention
-   * dates.
+   * Sets up a specification for filtering out ApplicationEntity records with expired data retention
+   * dates. Applications without a retention date are not considered expired.
    */
   public static Specification<ApplicationEntity> notExpired() {
-    return (root, query, criteriaBuilder) -> criteriaBuilder.isFalse(root.get("deleted"));
+    return (root, query, criteriaBuilder) ->
+        criteriaBuilder.or(
+            criteriaBuilder.isNull(root.get("dataRetentionDate")),
+            criteriaBuilder.greaterThan(root.get("dataRetentionDate"), Instant.now()));
   }
 
   /** Setups a specification for filtering ApplicationEntity by providerFirmCode. */
