@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -168,7 +169,7 @@ public class ApplicationService {
     applicationOpt.ifPresent(
         application -> {
           validateProviderOfficeCode(application.getProviderOfficeCode());
-          validateNotDeleted(application);
+          validateNotDeletedOrExpired(application);
           auditLogger.read(
               AuditAction.APPLICATION_VIEWED,
               userContext.getCurrentUser(),
@@ -202,7 +203,7 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
-    validateNotDeleted(application);
+    validateNotDeletedOrExpired(application);
     validateEtag(application, command.geteTag());
 
     com.fasterxml.jackson.databind.JsonNode resultJson =
@@ -268,7 +269,7 @@ public class ApplicationService {
 
     final ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
-    validateNotDeleted(application);
+    validateNotDeletedOrExpired(application);
     validateEtag(application, command.geteTag());
 
     DeclarationEntity declarationEntity = declarationMapper.toDeclarationEntity(command);
@@ -310,7 +311,7 @@ public class ApplicationService {
     }
     final ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
-    validateNotDeleted(application);
+    validateNotDeletedOrExpired(application);
     validateEtag(application, command.geteTag());
 
     EvidenceEntity evidenceEntity = evidenceMapper.toEvidenceEntity(command);
@@ -359,8 +360,10 @@ public class ApplicationService {
     }
   }
 
-  private void validateNotDeleted(ApplicationEntity application) {
-    if (application.isDeleted()) {
+  private void validateNotDeletedOrExpired(ApplicationEntity application) {
+    if (application.isDeleted()
+        || (application.getDataRetentionDate() != null
+            && !application.getDataRetentionDate().isAfter(Instant.now()))) {
       throw new ApplicationDeletedException(application.getId());
     }
   }
@@ -386,7 +389,7 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
-    validateNotDeleted(application);
+    validateNotDeletedOrExpired(application);
     validateEtag(application, command.geteTag());
 
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
@@ -421,7 +424,7 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
-    validateNotDeleted(application);
+    validateNotDeletedOrExpired(application);
     validateEtag(application, command.geteTag());
 
     boolean wasCompleted = application.getApplicationState() == ApplicationState.COMPLETED;
@@ -465,7 +468,7 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
-    validateNotDeleted(application);
+    validateNotDeletedOrExpired(application);
     if (application.getApplicationState() == ApplicationState.COMPLETED) {
       throw new EditCompletedApplicationException();
     }
@@ -646,7 +649,7 @@ public class ApplicationService {
 
     ApplicationEntity application = applicationOpt.get();
     validateProviderOfficeCode(application.getProviderOfficeCode());
-    validateNotDeleted(application);
+    validateNotDeletedOrExpired(application);
     validateEtag(application, command.geteTag());
 
     ClientDetailsEntity clientDetails = application.getClientDetails();
