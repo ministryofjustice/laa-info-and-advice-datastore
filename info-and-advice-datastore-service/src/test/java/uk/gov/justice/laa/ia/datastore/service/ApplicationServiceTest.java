@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,6 +32,8 @@ import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -84,6 +87,7 @@ public class ApplicationServiceTest {
   @Mock private ObjectMapper objectMapper;
   @Mock private UserDrivenEventService eventService;
   @Mock private EntityManager entityManager;
+  @Mock private AuditLogger auditLogger;
 
   @InjectMocks private ApplicationService sut;
 
@@ -916,6 +920,86 @@ public class ApplicationServiceTest {
     verify(repo, times(1)).save(application);
     verify(eventService, times(1))
         .record(command, application.getProviderOfficeCode(), applicationId);
+  }
+
+  @Test
+  void shouldAuditApplicationSubmitted_whenUpdateApplicationCompletesDraft() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .applicationState(ApplicationState.DRAFT)
+            .build();
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(userContext.getCurrentUser()).thenReturn("user-oid");
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+    doAnswer(
+            i -> {
+              application.setApplicationState(ApplicationState.COMPLETED);
+              return null;
+            })
+        .when(mapper)
+        .updateApplicationEntity(command, application);
+
+    // Act
+    sut.updateApplication(applicationId, command);
+
+    // Assert
+    verify(auditLogger)
+        .domain(
+            AuditAction.APPLICATION_SUBMITTED,
+            "user-oid",
+            "application",
+            applicationId.toString(),
+            "123456",
+            officeCode);
+  }
+
+  @Test
+  void shouldAuditApplicationUpdated_whenApplicationAlreadyCompleted() {
+    // Arrange
+    final UUID applicationId = UUID.randomUUID();
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity application =
+        ApplicationEntity.builder()
+            .id(applicationId)
+            .providerOfficeCode(officeCode)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
+    when(userContext.getProviderFirmCode()).thenReturn("123456");
+    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
+    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
+    when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
+
+    // Act
+    sut.updateApplication(applicationId, command);
+
+    // Assert
+    verify(auditLogger)
+        .domain(
+            AuditAction.APPLICATION_UPDATED,
+            null,
+            "application",
+            applicationId.toString(),
+            "123456",
+            officeCode);
+    verify(auditLogger, never())
+        .domain(eq(AuditAction.APPLICATION_SUBMITTED), any(), any(), any(), any(), any());
   }
 
   @Test

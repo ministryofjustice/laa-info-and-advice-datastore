@@ -1,6 +1,10 @@
 package uk.gov.justice.laa.ia.datastore.config.interceptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
@@ -11,6 +15,8 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.config.RateLimitProperties;
 
 /** Tests for the in-memory rate limit interceptor. */
@@ -18,8 +24,11 @@ class RateLimitInterceptorTests {
 
   private final MockHttpServletRequest request = new MockHttpServletRequest();
 
+  private final AuditLogger auditLogger = mock(AuditLogger.class);
+
   private RateLimitInterceptor interceptor(boolean enabled, int limit) {
-    return new RateLimitInterceptor(new RateLimitProperties(enabled, limit, Duration.ofMinutes(1)));
+    return new RateLimitInterceptor(
+        new RateLimitProperties(enabled, limit, Duration.ofMinutes(1)), auditLogger);
   }
 
   private void authenticateAs(String name) {
@@ -50,6 +59,13 @@ class RateLimitInterceptorTests {
     assertThat(blocked.getHeader("Retry-After")).isEqualTo("60");
     assertThat(blocked.getContentType()).startsWith("application/problem+json");
     assertThat(blocked.getContentAsString()).contains("Rate limit exceeded");
+    verify(auditLogger)
+        .security(
+            eq(AuditAction.RATE_LIMIT_EXCEEDED),
+            eq("caller-a"),
+            eq("endpoint"),
+            any(),
+            eq("Rate limit exceeded"));
   }
 
   @Test

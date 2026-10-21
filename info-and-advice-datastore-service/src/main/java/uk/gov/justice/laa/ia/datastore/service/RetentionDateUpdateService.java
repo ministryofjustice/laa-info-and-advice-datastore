@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolverTask;
@@ -64,6 +65,7 @@ public class RetentionDateUpdateService {
     application.setDataRetentionDate(newRetentionDate);
     applicationRepository.save(application);
     systemDrivenEventService.record(
+        AuditAction.APPLICATION_RETENTION_DATE_SET,
         dataRetentionDate,
         application.getProviderOfficeCode(),
         application.getProviderFirmCode(),

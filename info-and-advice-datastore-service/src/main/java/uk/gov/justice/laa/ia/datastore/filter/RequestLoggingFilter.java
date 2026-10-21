@@ -6,12 +6,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 
 /**
  * Filter to log incoming HTTP requests with structured MDC context. Successful (2xx) requests are
@@ -24,7 +27,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
 @Slf4j
+@RequiredArgsConstructor
 public class RequestLoggingFilter extends OncePerRequestFilter {
+
+  private final AuditLogger auditLogger;
 
   private static final List<String> REQUEST_MDC_KEYS =
       List.of("method", "path", "statusCode", "durationMs", "clientIp");
@@ -49,6 +55,33 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
     } finally {
       long durationMs = System.currentTimeMillis() - startTime;
       logRequest(method, path, ipAddress, response.getStatus(), durationMs);
+      auditSecurityRejection(request, method, path, response.getStatus());
+    }
+  }
+
+  /**
+   * Audits 401/403 responses produced by Spring Security's filter chain (bad primary token, missing
+   * scope), which never reach the interceptors that audit the other security failures.
+   */
+  private void auditSecurityRejection(
+      HttpServletRequest request, String method, String path, int status) {
+    if (AuditLogger.isSecurityAudited(request)) {
+      return;
+    }
+    if (status == 401) {
+      auditLogger.security(
+          AuditAction.TOKEN_VERIFICATION_FAILED,
+          AuditLogger.currentActor(),
+          "endpoint",
+          method + " " + path,
+          "Request rejected: missing or invalid token");
+    } else if (status == 403) {
+      auditLogger.security(
+          AuditAction.CLAIMS_AUTHORISATION_FAILED,
+          AuditLogger.currentActor(),
+          "endpoint",
+          method + " " + path,
+          "Request rejected: insufficient scope or claims");
     }
   }
 

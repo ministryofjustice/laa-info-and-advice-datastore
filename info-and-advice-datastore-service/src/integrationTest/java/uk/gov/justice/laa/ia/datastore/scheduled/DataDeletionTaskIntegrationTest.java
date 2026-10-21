@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.gateway.stub.ClaimsGatewayStub;
@@ -38,7 +39,7 @@ public class DataDeletionTaskIntegrationTest extends BaseIntegrationTest {
   @BeforeEach
   void setUpTask() {
     final SystemDrivenEventService systemDrivenEventService =
-        new SystemDrivenEventService(eventRepository, objectMapper);
+        new SystemDrivenEventService(eventRepository, objectMapper, new AuditLogger());
     this.sut =
         new DataDeletionTask(
             applicationRepository,

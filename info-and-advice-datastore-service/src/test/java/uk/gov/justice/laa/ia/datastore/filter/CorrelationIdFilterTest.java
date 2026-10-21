@@ -38,6 +38,39 @@ class CorrelationIdFilterTest {
   }
 
   @Test
+  void shouldExposeTraceAndSpanIdsFromTraceparentDuringRequest()
+      throws ServletException, IOException {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(
+        CorrelationIdFilter.TRACEPARENT_HEADER,
+        "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01");
+    String[] seen = new String[2];
+    FilterChain chain =
+        (req, res) -> {
+          seen[0] = MDC.get("trace.id");
+          seen[1] = MDC.get("span.id");
+        };
+
+    filter.doFilterInternal(request, new MockHttpServletResponse(), chain);
+
+    assertThat(seen).containsExactly("4bf92f3577b34da6a3ce929d0e0e4736", "00f067aa0ba902b7");
+    assertThat(MDC.get("trace.id")).isNull();
+    assertThat(MDC.get("span.id")).isNull();
+  }
+
+  @Test
+  void shouldIgnoreMalformedTraceparent() throws ServletException, IOException {
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.addHeader(CorrelationIdFilter.TRACEPARENT_HEADER, "garbage");
+    String[] seen = new String[1];
+    FilterChain chain = (req, res) -> seen[0] = MDC.get("trace.id");
+
+    filter.doFilterInternal(request, new MockHttpServletResponse(), chain);
+
+    assertThat(seen[0]).isNull();
+  }
+
+  @Test
   void shouldGenerateCorrelationIdWhenHeaderAbsent() throws ServletException, IOException {
     MockHttpServletRequest request = new MockHttpServletRequest();
     MockHttpServletResponse response = new MockHttpServletResponse();

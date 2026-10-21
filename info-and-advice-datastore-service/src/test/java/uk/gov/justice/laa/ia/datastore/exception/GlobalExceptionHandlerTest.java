@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.GONE;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -10,10 +11,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 
 class GlobalExceptionHandlerTest {
 
-  GlobalExceptionHandler globalExceptionHandler = new GlobalExceptionHandler();
+  GlobalExceptionHandler globalExceptionHandler =
+      new GlobalExceptionHandler(mock(AuditLogger.class), mock(UserContext.class));
 
   @Test
   void handleGenericException_returnsInternalServerErrorStatusAndErrorMessage() throws Exception {

@@ -23,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.config.TrustedCallerJwtDecoder;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 
@@ -30,12 +31,14 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 @ExtendWith(MockitoExtension.class)
 public class UserContextInterceptorTests {
 
+  private final AuditLogger auditLogger = mock(AuditLogger.class);
   private final UserContext userContext = new UserContext();
   private final TrustedCallerJwtDecoder mockTrustedCallerJwtDecoder =
       mock(TrustedCallerJwtDecoder.class);
   private final Jwt mockJwt = mock(Jwt.class);
   private final UserContextInterceptor interceptor =
-      new UserContextInterceptor(userContext, mockTrustedCallerJwtDecoder, new ObjectMapper());
+      new UserContextInterceptor(
+          userContext, mockTrustedCallerJwtDecoder, new ObjectMapper(), auditLogger);
   private final MockHttpServletRequest request;
   private final MockHttpServletResponse response;
 

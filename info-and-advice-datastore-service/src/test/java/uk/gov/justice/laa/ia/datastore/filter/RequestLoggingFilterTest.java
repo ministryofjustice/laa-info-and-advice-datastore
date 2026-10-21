@@ -1,7 +1,10 @@
 package uk.gov.justice.laa.ia.datastore.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import jakarta.servlet.FilterChain;
@@ -9,11 +12,14 @@ import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 
 /** Unit tests for {@link RequestLoggingFilter}. */
 class RequestLoggingFilterTest {
 
-  private final RequestLoggingFilter filter = new RequestLoggingFilter();
+  private final AuditLogger auditLogger = mock(AuditLogger.class);
+  private final RequestLoggingFilter filter = new RequestLoggingFilter(auditLogger);
 
   @Test
   void shouldNotFilter_shouldReturnTrue_forExcludePaths() {
@@ -70,5 +76,37 @@ class RequestLoggingFilterTest {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setRequestURI(uri);
     return request;
+  }
+
+  @Test
+  void doFilterInternal_shouldAuditUnauditedUnauthorizedResponse() throws Exception {
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v0/applications");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    filter.doFilterInternal(request, response, (req, res) -> response.setStatus(401));
+
+    verify(auditLogger)
+        .security(
+            eq(AuditAction.TOKEN_VERIFICATION_FAILED),
+            any(),
+            eq("endpoint"),
+            eq("GET /api/v0/applications"),
+            any());
+  }
+
+  @Test
+  void doFilterInternal_shouldNotDoubleAuditWhenAlreadyAudited() throws Exception {
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v0/applications");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    filter.doFilterInternal(
+        request,
+        response,
+        (req, res) -> {
+          req.setAttribute(AuditLogger.SECURITY_AUDITED_ATTRIBUTE, Boolean.TRUE);
+          response.setStatus(403);
+        });
+
+    verify(auditLogger, never()).security(any(), any(), any(), any(), any());
   }
 }

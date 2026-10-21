@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
@@ -55,6 +56,7 @@ class RetentionDateUpdateServiceTests {
     assertThat(savedCaptor.getValue().getDataRetentionDate()).isEqualTo(newRetentionDate);
     verify(systemDrivenEventService)
         .record(
+            eq(AuditAction.APPLICATION_RETENTION_DATE_SET),
             any(),
             eq(application.getProviderOfficeCode()),
             eq(application.getProviderFirmCode()),
@@ -74,7 +76,7 @@ class RetentionDateUpdateServiceTests {
 
     // Assert
     verify(applicationRepository, never()).save(any());
-    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any());
+    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any(), any());
   }
 
   @Test
@@ -88,6 +90,6 @@ class RetentionDateUpdateServiceTests {
             () -> sut.saveAndRecord(applicationId, 1L, null, Instant.now(), UUID.randomUUID()))
         .isInstanceOf(EntityNotFoundException.class);
     verify(applicationRepository, never()).save(any());
-    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any());
+    verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any(), any());
   }
 }

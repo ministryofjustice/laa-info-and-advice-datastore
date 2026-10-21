@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import uk.gov.justice.laa.ia.datastore.audit.AuditAction;
 import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
@@ -83,6 +84,7 @@ public class ApplicationDataDeletionService {
             .put("deleted", true)
             .put("deletedAt", deletedAt.toString());
     systemDrivenEventService.record(
+        AuditAction.APPLICATION_DATA_DELETED,
         payload,
         application.getProviderOfficeCode(),
         application.getProviderFirmCode(),

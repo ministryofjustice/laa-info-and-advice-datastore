@@ -36,6 +36,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -76,6 +77,7 @@ public class ApplicationControllerTest {
           .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   @MockitoBean private ApplicationService applicationService;
+  @MockitoBean private AuditLogger auditLogger;
 
   @BeforeEach
   void setUp() throws Exception {

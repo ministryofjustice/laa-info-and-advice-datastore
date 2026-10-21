@@ -60,6 +60,8 @@ management:
 logging:
   level:
     root: ${ROOT_LOGGING_LEVEL:info}
+    # Audit trail must never be silenced by tuning the root/app levels.
+    audit: info
     org.springframework: ${SPRING_LOGGING_LEVEL:info}
     org.springframework.security: ${SPRING_SECURITY_LOGGING_LEVEL:debug}
     org.springframework.security.oauth2: ${SPRING_SECURITY_OAUTH2_LOGGING_LEVEL:debug}
