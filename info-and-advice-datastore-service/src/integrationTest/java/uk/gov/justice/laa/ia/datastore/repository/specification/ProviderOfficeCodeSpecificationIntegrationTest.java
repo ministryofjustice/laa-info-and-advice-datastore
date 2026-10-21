@@ -2,6 +2,8 @@ package uk.gov.justice.laa.ia.datastore.repository.specification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
@@ -126,5 +128,61 @@ public class ProviderOfficeCodeSpecificationIntegrationTest extends BaseIntegrat
     assertThat(applications).hasSize(1);
     assertThat(applications.getFirst().getProviderFirmCode()).isEqualTo(providerFirmCode);
     assertThat(applications.getFirst().getProviderOfficeCode()).isEqualTo(officeCode);
+  }
+
+  @Test
+  void defaultConstraintsIncludeMissingAndFutureRetentionDatesButExcludeExpiredAndDeleted() {
+    // Arrange
+    final String providerFirmCode = "123456";
+    final String officeCode = UUID.randomUUID().toString();
+    final ApplicationEntity withoutRetentionDate =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(providerFirmCode)
+                    .providerOfficeCode(officeCode)
+                    .dataRetentionDate(null));
+    final ApplicationEntity withFutureRetentionDate =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(providerFirmCode)
+                    .providerOfficeCode(officeCode)
+                    .dataRetentionDate(Instant.now().plus(1, ChronoUnit.DAYS)));
+    final ApplicationEntity withExpiredRetentionDate =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(providerFirmCode)
+                    .providerOfficeCode(officeCode)
+                    .dataRetentionDate(Instant.now().minus(1, ChronoUnit.DAYS)));
+    final ApplicationEntity deletedApplication =
+        ApplicationEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .providerFirmCode(providerFirmCode)
+                    .providerOfficeCode(officeCode)
+                    .dataRetentionDate(Instant.now().plus(1, ChronoUnit.DAYS))
+                    .deleted(true));
+    applicationRepository.saveAndFlush(withoutRetentionDate);
+    applicationRepository.saveAndFlush(withFutureRetentionDate);
+    applicationRepository.saveAndFlush(withExpiredRetentionDate);
+    applicationRepository.saveAndFlush(deletedApplication);
+    clearCache();
+
+    final Specification<ApplicationEntity> specification =
+        ApplicationSpecification.filterByDefaultConstraints(providerFirmCode, List.of(officeCode));
+
+    // Act
+    final List<ApplicationEntity> applications = applicationRepository.findAll(specification);
+
+    // Assert
+    assertThat(applications)
+        .extracting(ApplicationEntity::getId)
+        .containsExactlyInAnyOrder(withoutRetentionDate.getId(), withFutureRetentionDate.getId());
   }
 }
