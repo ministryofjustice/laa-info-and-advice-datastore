@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.audit;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -78,7 +79,8 @@ public class AuditLogger {
                   null,
                   providerFirmCode,
                   providerOfficeCode,
-                  tenantId);
+                  tenantId,
+                  Map.of());
             }
           });
     } else {
@@ -92,8 +94,43 @@ public class AuditLogger {
           null,
           providerFirmCode,
           providerOfficeCode,
-          tenantId);
+          tenantId,
+          Map.of());
     }
+  }
+
+  /**
+   * Audits a successful read. Reads aren't transactional writes, so the entry is written
+   * immediately.
+   *
+   * @param action one of {@link AuditAction}
+   * @param actorId ID of the user who read the data
+   * @param resourceType type of the resource read
+   * @param resourceId ID of the resource read, or null when reading a collection
+   * @param providerFirmCode firm of the reader
+   * @param providerOfficeCode office of the resource read, or null
+   * @param details extra PII-free context, written as {@code labels.<key>}
+   */
+  public void read(
+      String action,
+      String actorId,
+      String resourceType,
+      String resourceId,
+      String providerFirmCode,
+      String providerOfficeCode,
+      Map<String, ?> details) {
+    write(
+        "domain",
+        action,
+        Outcome.SUCCESS,
+        actorId,
+        resourceType,
+        resourceId,
+        null,
+        providerFirmCode,
+        providerOfficeCode,
+        currentTenant(),
+        details);
   }
 
   /**
@@ -142,7 +179,8 @@ public class AuditLogger {
         reason,
         providerFirmCode,
         providerOfficeCode,
-        currentTenant());
+        currentTenant(),
+        Map.of());
   }
 
   /**
@@ -194,7 +232,8 @@ public class AuditLogger {
       String reason,
       String providerFirmCode,
       String providerOfficeCode,
-      String tenantId) {
+      String tenantId,
+      Map<String, ?> details) {
     var event =
         AUDIT
             .atInfo()
@@ -202,8 +241,10 @@ public class AuditLogger {
             .addKeyValue("event.action", action)
             .addKeyValue("event.outcome", outcome.name().toLowerCase())
             .addKeyValue("user.id", actorId == null ? ANONYMOUS_ACTOR : actorId)
-            .addKeyValue("resource.type", resourceType)
-            .addKeyValue("resource.id", resourceId);
+            .addKeyValue("resource.type", resourceType);
+    if (resourceId != null) {
+      event = event.addKeyValue("resource.id", resourceId);
+    }
     if (reason != null) {
       event = event.addKeyValue("event.reason", reason);
     }
@@ -215,6 +256,9 @@ public class AuditLogger {
     }
     if (tenantId != null) {
       event = event.addKeyValue("labels.tenantId", tenantId);
+    }
+    for (var detail : details.entrySet()) {
+      event = event.addKeyValue("labels." + detail.getKey(), detail.getValue());
     }
     event.log("audit.{}", action);
   }

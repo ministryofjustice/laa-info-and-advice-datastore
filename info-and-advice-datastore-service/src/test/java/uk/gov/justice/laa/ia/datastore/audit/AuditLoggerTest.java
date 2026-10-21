@@ -47,6 +47,24 @@ class AuditLoggerTest {
   }
 
   @Test
+  void read_shouldLogDetailsAndOmitNullResourceId() {
+    auditLogger.read(
+        AuditAction.APPLICATION_LISTED,
+        "actor-1",
+        "application",
+        null,
+        "firm-1",
+        null,
+        Map.of("page", 2));
+
+    assertThat(onlyEvent())
+        .containsEntry("event.category", "domain")
+        .containsEntry("event.action", "application.listed")
+        .containsEntry("labels.page", 2)
+        .doesNotContainKey("resource.id");
+  }
+
+  @Test
   void domain_shouldLogImmediately_whenNoTransaction() {
     auditLogger.domain(
         AuditAction.APPLICATION_STARTED, "actor-1", "application", "app-1", "firm-1", "office-1");

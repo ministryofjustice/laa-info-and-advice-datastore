@@ -28,6 +28,12 @@ public final class AuditAction {
   /** An application moved from draft to completed. */
   public static final String APPLICATION_SUBMITTED = "application.submitted";
 
+  /** A single application was read. */
+  public static final String APPLICATION_VIEWED = "application.viewed";
+
+  /** A list of applications was read. */
+  public static final String APPLICATION_LISTED = "application.listed";
+
   /** The scheduled retention resolver set an application's data retention date. */
   public static final String APPLICATION_RETENTION_DATE_SET = "application.retentionDateSet";
 

@@ -246,6 +246,15 @@ public class ApplicationServiceTest {
     assertThat(result).isEqualTo(application);
     verify(repo, times(1)).findOne(any(Specification.class));
     verify(mapper, times(1)).toApplication(entity);
+    verify(auditLogger)
+        .read(
+            eq(AuditAction.APPLICATION_VIEWED),
+            any(),
+            eq("application"),
+            eq(entity.getId().toString()),
+            eq("123456"),
+            eq(officeCode),
+            any());
   }
 
   @Test

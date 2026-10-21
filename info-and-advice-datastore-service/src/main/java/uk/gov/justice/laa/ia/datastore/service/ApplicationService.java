@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
@@ -132,9 +133,22 @@ public class ApplicationService {
       specificationToApply = specificationToApply.and(additionalFilteringSpecification);
     }
     final Sort defaultSort = Sort.by(Sort.Direction.DESC, "modifiedAt");
-    return repository
-        .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize, defaultSort))
-        .map(applicationMapper::toApplicationSummary);
+    final Page<ApplicationSummary> result =
+        repository
+            .findAll(specificationToApply, PageRequest.of(resolvedPage, resolvedSize, defaultSort))
+            .map(applicationMapper::toApplicationSummary);
+    auditLogger.read(
+        AuditAction.APPLICATION_LISTED,
+        userContext.getCurrentUser(),
+        "application",
+        null,
+        userContext.getProviderFirmCode(),
+        null,
+        Map.of(
+            "page", result.getNumber(),
+            "size", result.getSize(),
+            "resultCount", result.getNumberOfElements()));
+    return result;
   }
 
   /**
@@ -155,6 +169,14 @@ public class ApplicationService {
         application -> {
           validateProviderOfficeCode(application.getProviderOfficeCode());
           validateNotDeleted(application);
+          auditLogger.read(
+              AuditAction.APPLICATION_VIEWED,
+              userContext.getCurrentUser(),
+              "application",
+              String.valueOf(application.getId()),
+              userContext.getProviderFirmCode(),
+              application.getProviderOfficeCode(),
+              Map.of());
         });
     return applicationOpt.map(applicationMapper::toApplication);
   }

@@ -3,7 +3,9 @@ package uk.gov.justice.laa.ia.datastore.scheduled;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -49,6 +51,12 @@ public class DataDeletionTask {
    * the collection from being processed.
    */
   public void run() {
+    try (var ignored = MDC.putCloseable("correlationId", UUID.randomUUID().toString())) {
+      runInternal();
+    }
+  }
+
+  private void runInternal() {
     final var applications =
         applicationRepository.findAll(
             ApplicationSpecification.findByExpiredDataRetentionDateAndStatus());

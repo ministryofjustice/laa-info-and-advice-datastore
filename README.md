@@ -160,7 +160,7 @@ Audit events are structured (ECS JSON) log lines written to the `audit` logger a
 | `user.id` | Actor: Entra `oid`, `SYSTEM` for scheduled jobs, or `anonymous` if unknown |
 | `resource.type` / `resource.id` | Affected resource (`application`, `provider_office`, `endpoint`) |
 | `event.reason` | Short PII-free reason (security events only) |
-| `correlationId` | From `X-Correlation-ID` (generated if absent) |
+| `correlationId` | From `X-Correlation-ID` (generated if absent); scheduled jobs get one per run |
 | `labels.providerFirmCode` / `labels.providerOfficeCode` | Firm and office the application belongs to (domain events; office-authorisation failures), when known |
 | `labels.tenantId` | Entra tenant (`tid` claim) of the caller, when authenticated |
 | `trace.id` / `span.id` | From the W3C `traceparent` header, when the caller sends one |
@@ -175,6 +175,8 @@ Audit events are structured (ECS JSON) log lines written to the `audit` logger a
 | `application.declarationUpdated` | The client declaration is updated |
 | `application.evidenceUpdated` | Evidence is updated |
 | `application.submitted` | An application moves from `DRAFT` to `COMPLETED` (instead of `application.updated`) |
+| `application.viewed` | A single application is read (200) |
+| `application.listed` | A list request is served; carries `labels.page`, `labels.size`, `labels.resultCount` (no filters or per-row IDs) |
 | `application.retentionDateSet` | The retention resolver sets a data retention date (actor `SYSTEM`) |
 | `application.dataDeleted` | The deletion task removes an application's PII (actor `SYSTEM`) |
 | `security.rateLimitExceeded` | A caller is rate limited (429) |
