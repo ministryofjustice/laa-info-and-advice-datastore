@@ -100,10 +100,13 @@ laa:
       read-timeout: ${CLAIMS_API_READ_TIMEOUT:30s}
     data-retention:
       years-offset: ${DATA_RETENTION_YEARS_OFFSET:3}
+      # Drafts are deleted this many years after they were last modified.
+      draft-years-offset: ${DRAFT_RETENTION_YEARS_OFFSET:2}
       # Nightly schedulers for deployed environments; off unless explicitly enabled per environment.
       schedulers-enabled: ${DATA_RETENTION_SCHEDULERS_ENABLED:false}
       cron: ${RETENTION_RESOLVER_CRON:0 0 0 * * *}
       deletion-cron: ${RETENTION_DELETION_CRON:0 0 1 * * *}
+      draft-deletion-cron: ${DRAFT_DELETION_CRON:0 0 2 * * *}
     # Trusts the forwarded X-Authorization token (UserContextInterceptor) issued for the calling
     # service's own audience - deliberately separate from resourceserver.jwt tenants below so this
     # trust never extends to the primary Authorization header/endpoint authorization.

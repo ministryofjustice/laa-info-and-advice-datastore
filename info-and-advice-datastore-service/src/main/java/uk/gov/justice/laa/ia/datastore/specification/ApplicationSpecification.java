@@ -37,6 +37,18 @@ public class ApplicationSpecification {
   }
 
   /**
+   * Setups a specification for finding not-yet-deleted draft applications that were last modified
+   * before the given cutoff.
+   */
+  public static Specification<ApplicationEntity> findByExpiredDraft(Instant cutoff) {
+    return (root, query, criteriaBuilder) ->
+        criteriaBuilder.and(
+            criteriaBuilder.equal(root.get("applicationState"), ApplicationState.DRAFT),
+            criteriaBuilder.isFalse(root.get("deleted")),
+            criteriaBuilder.lessThan(root.get("modifiedAt"), cutoff));
+  }
+
+  /**
    * Setups a specification for filtering ApplicationEntity by applicationId and providerFirmCode.
    */
   public static Specification<ApplicationEntity> findById(

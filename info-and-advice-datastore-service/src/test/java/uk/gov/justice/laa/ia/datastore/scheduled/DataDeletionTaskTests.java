@@ -36,6 +36,7 @@ class DataDeletionTaskTests {
 
   private static final int DATA_RETENTION_YEARS_OFFSET = 3;
   private static final String OFFICE_CODE = "test-office-code";
+  private static final String SOURCE = DataDeletionTask.class.getSimpleName();
 
   @Mock private ApplicationRepository applicationRepository;
   @Mock private ClaimsGateway claimsGateway;
@@ -71,7 +72,7 @@ class DataDeletionTaskTests {
     // Assert
     verify(retentionDateUpdateService, never())
         .saveAndRecord(any(), anyLong(), any(), any(), any());
-    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong());
+    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong(), any());
   }
 
   @Test
@@ -91,7 +92,7 @@ class DataDeletionTaskTests {
     // Assert
     verify(retentionDateUpdateService, never())
         .saveAndRecord(any(), anyLong(), any(), any(), any());
-    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong());
+    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong(), any());
   }
 
   @Test
@@ -123,7 +124,7 @@ class DataDeletionTaskTests {
     verify(retentionDateUpdateService, times(1))
         .saveAndRecord(
             eq(application.getId()), eq(application.getEtag()), any(), any(), eq(claimId));
-    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong());
+    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong(), any());
   }
 
   @Test
@@ -152,7 +153,7 @@ class DataDeletionTaskTests {
 
     // Assert
     verify(applicationDataDeletionService, times(1))
-        .deleteAndRecord(application.getId(), application.getEtag());
+        .deleteAndRecord(application.getId(), application.getEtag(), SOURCE);
     verify(retentionDateUpdateService, never())
         .saveAndRecord(any(), anyLong(), any(), any(), any());
   }
@@ -181,7 +182,7 @@ class DataDeletionTaskTests {
 
     // Assert
     verify(applicationDataDeletionService, times(1))
-        .deleteAndRecord(application.getId(), application.getEtag());
+        .deleteAndRecord(application.getId(), application.getEtag(), SOURCE);
   }
 
   @Test
@@ -201,7 +202,7 @@ class DataDeletionTaskTests {
     // Assert
     verify(retentionDateUpdateService, never())
         .saveAndRecord(any(), anyLong(), any(), any(), any());
-    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong());
+    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong(), any());
   }
 
   @Test
@@ -221,7 +222,7 @@ class DataDeletionTaskTests {
     // Assert
     verify(retentionDateUpdateService, never())
         .saveAndRecord(any(), anyLong(), any(), any(), any());
-    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong());
+    verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong(), any());
   }
 
   @Test
@@ -264,15 +265,15 @@ class DataDeletionTaskTests {
                 .build());
     doThrow(new RuntimeException("DB constraint violation"))
         .when(applicationDataDeletionService)
-        .deleteAndRecord(eq(failingApplication.getId()), anyLong());
+        .deleteAndRecord(eq(failingApplication.getId()), anyLong(), any());
 
     // Act
     sut.run();
 
     // Assert
     verify(applicationDataDeletionService, times(1))
-        .deleteAndRecord(failingApplication.getId(), failingApplication.getEtag());
+        .deleteAndRecord(failingApplication.getId(), failingApplication.getEtag(), SOURCE);
     verify(applicationDataDeletionService, times(1))
-        .deleteAndRecord(succeedingApplication.getId(), succeedingApplication.getEtag());
+        .deleteAndRecord(succeedingApplication.getId(), succeedingApplication.getEtag(), SOURCE);
   }
 }

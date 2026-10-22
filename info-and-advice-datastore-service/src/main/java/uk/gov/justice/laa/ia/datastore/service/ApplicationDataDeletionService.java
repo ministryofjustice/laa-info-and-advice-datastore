@@ -14,7 +14,6 @@ import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
-import uk.gov.justice.laa.ia.datastore.scheduled.DataDeletionTask;
 
 /**
  * Deletes PII associated with an application whose data retention period has expired and marks it
@@ -49,9 +48,13 @@ public class ApplicationDataDeletionService {
    * event history), and marks it as soft-deleted. Committed independently of the caller's
    * transaction (if any). If the application's eTag has changed since it was read by the caller,
    * the deletion is skipped rather than overwriting a concurrent change.
+   *
+   * @param applicationId the application to delete data for
+   * @param expectedEtag the eTag the caller read the application with
+   * @param source the name of the task recorded as the source of the audit event
    */
   @Transactional(Transactional.TxType.REQUIRES_NEW)
-  public void deleteAndRecord(UUID applicationId, long expectedEtag) {
+  public void deleteAndRecord(UUID applicationId, long expectedEtag, String source) {
     ApplicationEntity application =
         applicationRepository
             .findById(applicationId)
@@ -88,7 +91,7 @@ public class ApplicationDataDeletionService {
         payload,
         application.getProviderOfficeCode(),
         application.getProviderFirmCode(),
-        DataDeletionTask.class.getSimpleName(),
+        source,
         applicationId);
   }
 

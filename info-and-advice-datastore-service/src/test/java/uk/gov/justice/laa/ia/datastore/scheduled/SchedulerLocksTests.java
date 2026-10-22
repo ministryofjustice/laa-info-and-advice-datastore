@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.scheduled;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.util.List;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -29,5 +30,24 @@ class SchedulerLocksTests {
           run.getAnnotation(SchedulerLock.class).name(),
           scheduler.getSimpleName());
     }
+  }
+
+  @Test
+  void draftDeletionSchedulersUseTheirOwnLockSoTheyDoNotBlockTheOtherJobs() throws Exception {
+    final var schedulers =
+        List.of(ProdDraftDataDeletionScheduler.class, LocalDraftDataDeletionScheduler.class);
+
+    for (var scheduler : schedulers) {
+      final var run = scheduler.getMethod("run");
+      assertEquals(
+          true,
+          run.isAnnotationPresent(Scheduled.class),
+          scheduler.getSimpleName() + " @Scheduled");
+      assertEquals(
+          SchedulerLocks.DRAFT_DATA_DELETION,
+          run.getAnnotation(SchedulerLock.class).name(),
+          scheduler.getSimpleName());
+    }
+    assertNotEquals(SchedulerLocks.DATA_RETENTION, SchedulerLocks.DRAFT_DATA_DELETION);
   }
 }
