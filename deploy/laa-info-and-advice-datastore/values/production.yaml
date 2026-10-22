@@ -117,7 +117,9 @@ ingress:
     nginx.ingress.kubernetes.io/modsecurity-snippet: |
       SecRuleEngine On
       SecDefaultAction "phase:2,pass,log,tag:github_team=info-advice-datastore"
-      SecRule REMOTE_ADDR "!@ipMatch 128.77.75.64/26" "id:1001,deny,status:403,tag:github_team=info-advice-datastore"
+      # Global Protect alpha VPN firewall ranges
+      # Prisma VPN egress range: 128.77.75.64/26
+      SecRule REMOTE_ADDR "!@ipMatch 35.176.93.186/32,18.169.147.172/32,18.130.148.126/32,35.176.148.126/32,128.77.75.64/26" "id:1001,deny,status:403,tag:github_team=info-advice-datastore"
 
 
 service:
@@ -215,4 +217,6 @@ metabase:
       nginx.ingress.kubernetes.io/modsecurity-snippet: |
         SecRuleEngine On
         SecDefaultAction "phase:2,pass,log,tag:github_team=info-advice-datastore"
-        SecRule REMOTE_ADDR "!@ipMatch 128.77.75.64/26" "id:1001,deny,status:403,tag:github_team=info-advice-datastore"
+        # Global Protect alpha VPN firewall ranges
+        # Prisma VPN egress range: 128.77.75.64/26
+        SecRule REMOTE_ADDR "!@ipMatch 35.176.93.186/32,18.169.147.172/32,18.130.148.126/32,35.176.148.126/32,128.77.75.64/26" "id:1001,deny,status:403,tag:github_team=info-advice-datastore"
