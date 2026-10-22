@@ -1,11 +1,5 @@
 components:
   schemas:
-    ClientDetails:
-      $ref: '../client-details-components.yml#/components/schemas/ClientDetails'
-
-    Address:
-      $ref: '../client-details-components.yml#/components/schemas/Address'
-
     ApplicationResponse:
       type: object
       required:
@@ -29,7 +23,7 @@ components:
           example:
           description:
         client:
-          $ref: '#/components/schemas/ClientDetails'
+          $ref: '../client-details-components.yml#/components/schemas/ClientDetails'
         providerFirmCode:
           type: string
           example:
