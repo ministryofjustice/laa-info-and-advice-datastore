@@ -148,6 +148,15 @@ release attribute in the matching Sentry project/environment. Check ingestion li
 and temporarily enable `SENTRY_DEBUG=true` if SDK delivery still fails; diagnostic output
 can contain sensitive data and should not be shared without review.
 
+## Data deletion of draft applications
+
+A scheduled job (`DraftDataDeletionTask`) deletes the data of `DRAFT` applications that have not been modified for 2 years. It nulls the PII, soft-deletes the application and records an audit event. Applications already deleted are skipped. Other states are unaffected. The job takes its own ShedLock lock (`draft-data-deletion`), so it can run alongside the completed-application retention jobs, but only one pod runs it at a time. It runs when `schedulers-enabled` is true.
+
+| Variable | Default | Description |
+|---|---|---|
+| `DRAFT_RETENTION_YEARS_OFFSET` | `2` | Years since a draft was last modified before it is deleted |
+| `DRAFT_DELETION_CRON` | `0 0 2 * * *` | Cron schedule for the job (daily at 02:00) |
+
 ## Audit logging
 
 Audit events are structured (ECS JSON) log lines written to the `audit` logger at `INFO`, collected from container stdout by EKS into OpenSearch. OpenSearch keeps 30 days; the SOC integration exports to a separate system with 3 months retention, so that is the longest audit history available from logs. The `events` table remains the durable record of case mutations.
@@ -178,7 +187,7 @@ Audit events are structured (ECS JSON) log lines written to the `audit` logger a
 | `application.viewed` | A single application is read (200) |
 | `application.listed` | A list request is served; carries `labels.page`, `labels.size`, `labels.resultCount` (no filters or per-row IDs) |
 | `application.retentionDateSet` | The retention resolver sets a data retention date (actor `SYSTEM`) |
-| `application.dataDeleted` | The deletion task removes an application's PII (actor `SYSTEM`) |
+| `application.dataDeleted` | A deletion task removes an application's PII (actor `SYSTEM`); the event source is `DataDeletionTask` for completed applications or `DraftDataDeletionTask` for drafts |
 | `security.rateLimitExceeded` | A caller is rate limited (429) |
 | `security.tokenVerificationFailed` | Primary or forwarded token is missing/invalid (401) |
 | `security.claimsAuthorisationFailed` | Missing/mismatched claims, insufficient scope, or unauthorised provider office (401/403) |

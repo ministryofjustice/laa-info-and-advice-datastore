@@ -36,6 +36,8 @@ import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 @ExtendWith(MockitoExtension.class)
 class ApplicationDataDeletionServiceTests {
 
+  private static final String SOURCE = "TestSource";
+
   @Mock private ApplicationRepository applicationRepository;
   @Mock private EventRepository eventRepository;
   @Mock private SystemDrivenEventService systemDrivenEventService;
@@ -65,7 +67,7 @@ class ApplicationDataDeletionServiceTests {
         .thenReturn(List.of(existingEvent));
 
     // Act
-    sut.deleteAndRecord(application.getId(), 1L);
+    sut.deleteAndRecord(application.getId(), 1L, SOURCE);
 
     // Assert
     final ArgumentCaptor<ApplicationEntity> savedCaptor =
@@ -92,7 +94,7 @@ class ApplicationDataDeletionServiceTests {
             any(),
             eq(application.getProviderOfficeCode()),
             eq(application.getProviderFirmCode()),
-            any(),
+            eq(SOURCE),
             eq(application.getId()));
   }
 
@@ -105,7 +107,7 @@ class ApplicationDataDeletionServiceTests {
     when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
 
     // Act
-    sut.deleteAndRecord(application.getId(), 1L);
+    sut.deleteAndRecord(application.getId(), 1L, SOURCE);
 
     // Assert
     verify(applicationRepository, never()).save(any());
@@ -120,7 +122,7 @@ class ApplicationDataDeletionServiceTests {
     when(applicationRepository.findById(applicationId)).thenReturn(Optional.empty());
 
     // Act & Assert
-    assertThatThrownBy(() -> sut.deleteAndRecord(applicationId, 1L))
+    assertThatThrownBy(() -> sut.deleteAndRecord(applicationId, 1L, SOURCE))
         .isInstanceOf(EntityNotFoundException.class);
     verify(applicationRepository, never()).save(any());
     verify(systemDrivenEventService, never()).record(any(), any(), any(), any(), any(), any());
@@ -141,7 +143,7 @@ class ApplicationDataDeletionServiceTests {
     when(eventRepository.findByApplicationId(application.getId())).thenReturn(List.of());
 
     // Act
-    sut.deleteAndRecord(application.getId(), 1L);
+    sut.deleteAndRecord(application.getId(), 1L, SOURCE);
 
     // Assert
     final ArgumentCaptor<ApplicationEntity> savedCaptor =
@@ -168,7 +170,7 @@ class ApplicationDataDeletionServiceTests {
     when(eventRepository.findByApplicationId(application.getId())).thenReturn(List.of());
 
     // Act
-    sut.deleteAndRecord(application.getId(), 1L);
+    sut.deleteAndRecord(application.getId(), 1L, SOURCE);
 
     // Assert
     verify(eventRepository, never()).save(any());

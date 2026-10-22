@@ -109,7 +109,8 @@ public class DataDeletionTask {
       return;
     }
 
-    applicationDataDeletionService.deleteAndRecord(application.getId(), application.getEtag());
+    applicationDataDeletionService.deleteAndRecord(
+        application.getId(), application.getEtag(), DataDeletionTask.class.getSimpleName());
   }
 
   private static ClaimsModel getLatestClaim(ApplicationClaimResponse response) {

@@ -8,6 +8,13 @@ public final class SchedulerLocks {
    */
   public static final String DATA_RETENTION = "data-retention";
 
+  /**
+   * Used only by the draft deletion task. Deliberately separate from {@link #DATA_RETENTION}: it
+   * stops multiple instances running the draft job at once, but lets it run alongside the
+   * completed-application jobs because they act on disjoint applications.
+   */
+  public static final String DRAFT_DATA_DELETION = "draft-data-deletion";
+
   /** Must exceed the longest realistic run, otherwise another instance can start mid-run. */
   public static final String DATA_RETENTION_LOCK_AT_MOST_FOR = "PT2H";
 

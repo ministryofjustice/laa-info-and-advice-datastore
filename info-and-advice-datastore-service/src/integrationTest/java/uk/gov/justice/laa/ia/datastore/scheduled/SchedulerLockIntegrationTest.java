@@ -44,4 +44,21 @@ class SchedulerLockIntegrationTest extends BaseIntegrationTest {
     first.get().unlock();
     assertEquals(1, jdbcTemplate.queryForObject("SELECT count(*) FROM shedlock", Integer.class));
   }
+
+  @Test
+  void draftDeletionLockIsExclusiveWhileHeld() {
+    final var config =
+        new LockConfiguration(
+            Instant.now(),
+            SchedulerLocks.DRAFT_DATA_DELETION,
+            Duration.ofMinutes(5),
+            Duration.ofMinutes(1));
+
+    final var first = lockProvider.lock(config);
+    final var second = lockProvider.lock(config);
+
+    assertTrue(first.isPresent());
+    assertTrue(second.isEmpty());
+    first.get().unlock();
+  }
 }
