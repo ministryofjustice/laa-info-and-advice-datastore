@@ -11,10 +11,13 @@ import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.scheduled.DataDeletionTask;
 import uk.gov.justice.laa.ia.datastore.scheduled.DataRetentionDateResolverTask;
+import uk.gov.justice.laa.ia.datastore.scheduled.DraftDataDeletionTask;
 import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataDeletionScheduler;
 import uk.gov.justice.laa.ia.datastore.scheduled.LocalDataRetentionScheduler;
+import uk.gov.justice.laa.ia.datastore.scheduled.LocalDraftDataDeletionScheduler;
 import uk.gov.justice.laa.ia.datastore.scheduled.ProdDataDeletionScheduler;
 import uk.gov.justice.laa.ia.datastore.scheduled.ProdDataRetentionScheduler;
+import uk.gov.justice.laa.ia.datastore.scheduled.ProdDraftDataDeletionScheduler;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationDataDeletionService;
 import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 
@@ -100,5 +103,31 @@ public class ScheduledTasksConfig {
   @Profile("local")
   public LocalDataDeletionScheduler localDataDeletionScheduler(DataDeletionTask dataDeletionTask) {
     return new LocalDataDeletionScheduler(dataDeletionTask);
+  }
+
+  /**
+   * Nightly draft deletion scheduler for deployed environments, switched on per environment with
+   * {@code laa.datastore.data-retention.schedulers-enabled}. Runs an hour after the data deletion
+   * scheduler.
+   */
+  @Bean
+  @Profile("!local")
+  @ConditionalOnProperty(
+      name = "laa.datastore.data-retention.schedulers-enabled",
+      havingValue = "true")
+  public ProdDraftDataDeletionScheduler prodDraftDataDeletionScheduler(
+      DraftDataDeletionTask draftDataDeletionTask) {
+    return new ProdDraftDataDeletionScheduler(draftDataDeletionTask);
+  }
+
+  /**
+   * Bean for the local development draft deletion scheduler, runs every 10 minutes starting 2
+   * minutes after startup.
+   */
+  @Bean
+  @Profile("local")
+  public LocalDraftDataDeletionScheduler localDraftDataDeletionScheduler(
+      DraftDataDeletionTask draftDataDeletionTask) {
+    return new LocalDraftDataDeletionScheduler(draftDataDeletionTask);
   }
 }
