@@ -97,7 +97,7 @@ public class DataRetentionDateResolverTask {
   }
 
   private RetentionDateUpdate shouldUpdateDataRetentionDate(ApplicationEntity application) {
-    if (isIneligible(application)) {
+    if (application.hasIneligibleMostRecentResult()) {
       // Ineligible applications never lead to a claim, so their date is based on the last
       // modification and the claims API isn't consulted.
       return RetentionDateUpdate.hasApproval(
@@ -132,11 +132,6 @@ public class DataRetentionDateResolverTask {
 
   private static Instant addYears(OffsetDateTime from, int years) {
     return from.plus(years, ChronoUnit.YEARS).toInstant();
-  }
-
-  private static boolean isIneligible(ApplicationEntity application) {
-    final var latestResult = application.getMostRecentEligibilityResult();
-    return latestResult != null && Boolean.FALSE.equals(latestResult.getIndication());
   }
 
   private static ClaimsModel getLatestClaim(ApplicationClaimResponse response) {

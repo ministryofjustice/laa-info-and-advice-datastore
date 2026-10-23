@@ -75,6 +75,13 @@ public class DataDeletionTask {
 
   @Transactional
   private void processApplication(ApplicationEntity application) {
+    if (application.hasIneligibleMostRecentResult()) {
+      // Ineligible applications never lead to a claim, so there is nothing to extend the date for.
+      applicationDataDeletionService.deleteAndRecord(
+          application.getId(), application.getEtag(), DataDeletionTask.class.getSimpleName());
+      return;
+    }
+
     final ClaimsModel latestClaim;
     try {
       final var response =
