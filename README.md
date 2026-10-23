@@ -157,6 +157,16 @@ A scheduled job (`DraftDataDeletionTask`) deletes the data of `DRAFT` applicatio
 | `DRAFT_RETENTION_YEARS_OFFSET` | `2` | Years since a draft was last modified before it is deleted |
 | `DRAFT_DELETION_CRON` | `0 0 2 * * *` | Cron schedule for the job (daily at 02:00) |
 
+## Data retention of ineligible applications
+
+`DataRetentionDateResolverTask` sets a retention date on `COMPLETED` applications that don't have one. If the application's most recent eligibility result is ineligible (`indication` is `false`), the date is the application's last modified time plus 3 years. The claims API isn't called and no UFN is needed. A null indication, or no eligibility result, doesn't count as ineligible, so those applications follow the claim-based rule. An existing date is never overwritten, and it isn't recalculated if the application changes later.
+
+`DataDeletionTask` then deletes an ineligible application once its date has passed, without a claims lookup. Both jobs run when `schedulers-enabled` is true.
+
+| Variable | Default | Description |
+|---|---|---|
+| `INELIGIBLE_RETENTION_YEARS_OFFSET` | `3` | Years after an ineligible completed application was last modified before it is deleted |
+
 ## Audit logging
 
 Audit events are structured (ECS JSON) log lines written to the `audit` logger at `INFO`, collected from container stdout by EKS into OpenSearch. OpenSearch keeps 30 days; the SOC integration exports to a separate system with 3 months retention, so that is the longest audit history available from logs. The `events` table remains the durable record of case mutations.
@@ -186,7 +196,7 @@ Audit events are structured (ECS JSON) log lines written to the `audit` logger a
 | `application.submitted` | An application moves from `DRAFT` to `COMPLETED` (instead of `application.updated`) |
 | `application.viewed` | A single application is read (200) |
 | `application.listed` | A list request is served; carries `labels.page`, `labels.size`, `labels.resultCount` (no filters or per-row IDs) |
-| `application.retentionDateSet` | The retention resolver sets a data retention date (actor `SYSTEM`) |
+| `application.retentionDateSet` | The retention resolver sets a data retention date (actor `SYSTEM`). The payload has the date and, for claim-based dates, the `claimsId`. It is omitted for ineligible applications |
 | `application.dataDeleted` | A deletion task removes an application's PII (actor `SYSTEM`); the event source is `DataDeletionTask` for completed applications or `DraftDataDeletionTask` for drafts |
 | `security.rateLimitExceeded` | A caller is rate limited (429) |
 | `security.tokenVerificationFailed` | Primary or forwarded token is missing/invalid (401) |

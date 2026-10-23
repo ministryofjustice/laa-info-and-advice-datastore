@@ -33,6 +33,7 @@ class DataRetentionDateResolverTaskUatIntegrationTest extends BaseIntegrationTes
   private static final String DEFAULT_URL =
       "https://main-laa-data-claims-api-uat.cloud-platform.service.justice.gov.uk";
   private static final int DATA_RETENTION_YEARS_OFFSET = 3;
+  private static final int INELIGIBLE_RETENTION_YEARS_OFFSET = 3;
 
   private DataRetentionDateResolverTask sut;
 
@@ -53,6 +54,7 @@ class DataRetentionDateResolverTaskUatIntegrationTest extends BaseIntegrationTes
         new DataRetentionDateResolverTask(
             gateway,
             DATA_RETENTION_YEARS_OFFSET,
+            INELIGIBLE_RETENTION_YEARS_OFFSET,
             applicationRepository,
             new RetentionDateUpdateService(
                 applicationRepository,

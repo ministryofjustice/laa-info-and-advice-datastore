@@ -7,10 +7,13 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
@@ -73,6 +77,33 @@ class DataDeletionTaskTests {
     verify(retentionDateUpdateService, never())
         .saveAndRecord(any(), anyLong(), any(), any(), any());
     verify(applicationDataDeletionService, never()).deleteAndRecord(any(), anyLong(), any());
+  }
+
+  @Test
+  void givenIneligibleApplication_thenDeleteWithoutCheckingClaims() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn("101010/1")
+                    .providerOfficeCode(OFFICE_CODE)
+                    .eligibilityResults(
+                        Set.of(
+                            EligibilityResultEntity.builder()
+                                .indication(false)
+                                .createdAt(Instant.now())
+                                .build())));
+    when(applicationRepository.findAll(anySpecification())).thenReturn(List.of(application));
+
+    // Act
+    sut.run();
+
+    // Assert
+    verify(applicationDataDeletionService)
+        .deleteAndRecord(application.getId(), application.getEtag(), SOURCE);
+    verifyNoInteractions(claimsGateway);
   }
 
   @Test
