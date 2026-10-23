@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.util.Optional;
@@ -62,6 +63,46 @@ class RetentionDateUpdateServiceTests {
             eq(application.getProviderFirmCode()),
             any(),
             eq(application.getId()));
+  }
+
+  @Test
+  void givenClaimsId_thenEventPayloadContainsClaimsId() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.etag(1L));
+    final Instant newRetentionDate = Instant.now();
+    final UUID claimsId = UUID.randomUUID();
+    when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
+
+    // Act
+    sut.saveAndRecord(application.getId(), 1L, null, newRetentionDate, claimsId);
+
+    // Assert
+    final ArgumentCaptor<JsonNode> payload = ArgumentCaptor.forClass(JsonNode.class);
+    verify(systemDrivenEventService).record(any(), payload.capture(), any(), any(), any(), any());
+    assertThat(payload.getValue().get("dataRetentionDate").asText())
+        .isEqualTo(newRetentionDate.toString());
+    assertThat(payload.getValue().get("claimsId").asText()).isEqualTo(claimsId.toString());
+  }
+
+  @Test
+  void givenNoClaimsId_thenSavesAndEventPayloadOmitsClaimsId() {
+    // Arrange
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(builder -> builder.etag(1L));
+    final Instant newRetentionDate = Instant.now();
+    when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
+
+    // Act
+    sut.saveAndRecord(application.getId(), 1L, null, newRetentionDate, null);
+
+    // Assert
+    verify(applicationRepository).save(application);
+    final ArgumentCaptor<JsonNode> payload = ArgumentCaptor.forClass(JsonNode.class);
+    verify(systemDrivenEventService).record(any(), payload.capture(), any(), any(), any(), any());
+    assertThat(payload.getValue().get("dataRetentionDate").asText())
+        .isEqualTo(newRetentionDate.toString());
+    assertThat(payload.getValue().has("claimsId")).isFalse();
   }
 
   @Test
