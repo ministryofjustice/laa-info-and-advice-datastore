@@ -102,6 +102,9 @@ laa:
       years-offset: ${DATA_RETENTION_YEARS_OFFSET:3}
       # Drafts are deleted this many years after they were last modified.
       draft-years-offset: ${DRAFT_RETENTION_YEARS_OFFSET:2}
+      # Completed applications with an ineligible latest result are retained this many years after
+      # they were last modified.
+      ineligible-years-offset: ${INELIGIBLE_RETENTION_YEARS_OFFSET:3}
       # Nightly schedulers for deployed environments; off unless explicitly enabled per environment.
       schedulers-enabled: ${DATA_RETENTION_SCHEDULERS_ENABLED:false}
       cron: ${RETENTION_RESOLVER_CRON:0 0 0 * * *}
