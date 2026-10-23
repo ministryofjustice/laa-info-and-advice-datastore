@@ -34,6 +34,7 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
   @Spy private ClaimsGatewayStub claimsGateway = new ClaimsGatewayStub();
   static final String officeCode = ClaimsGatewayStub.FIXTURE_OFFICE_CODE;
   static final int DATA_RETENTION_YEARS_OFFSET = 3;
+  static final int INELIGIBLE_RETENTION_YEARS_OFFSET = 3;
 
   @BeforeEach
   void setUpResolver() {
@@ -41,6 +42,7 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
         new DataRetentionDateResolverTask(
             claimsGateway,
             DATA_RETENTION_YEARS_OFFSET,
+            INELIGIBLE_RETENTION_YEARS_OFFSET,
             applicationRepository,
             new RetentionDateUpdateService(
                 applicationRepository,
