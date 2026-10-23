@@ -222,7 +222,7 @@ public class ApplicationService {
     eligibilityResultRepository.save(resultEntity);
 
     application.setModifiedBy(userContext.getCurrentUser());
-    ApplicationEntity saved = repository.save(application);
+    ApplicationEntity saved = saveAsModified(application);
     recordEvent(
         AuditAction.APPLICATION_MEANS_UPDATED,
         command,
@@ -283,7 +283,7 @@ public class ApplicationService {
     }
     application.setDeclaration(declarationEntity);
 
-    ApplicationEntity saved = repository.save(application);
+    ApplicationEntity saved = saveAsModified(application);
     recordEvent(
         AuditAction.APPLICATION_DECLARATION_UPDATED,
         command,
@@ -327,7 +327,7 @@ public class ApplicationService {
 
     application.setEvidence(savedEvidence);
     application.setModifiedBy(userContext.getCurrentUser());
-    ApplicationEntity saved = repository.save(application);
+    ApplicationEntity saved = saveAsModified(application);
     recordEvent(
         AuditAction.APPLICATION_EVIDENCE_UPDATED,
         command,
@@ -352,6 +352,20 @@ public class ApplicationService {
     if (application.getEtag() != providedEtag) {
       throw new EtagMismatchException(providedEtag, application.getEtag());
     }
+  }
+
+  /**
+   * Saves the application and always bumps its eTag, even when only a child record (client details,
+   * address, evidence, declaration) changed and the application row itself is not dirty. Setting
+   * modifiedAt makes the row dirty so it is written (and versioned) immediately; the database
+   * trigger also refreshes modified_at. Retention and optimistic concurrency both rely on this, so
+   * every edit path must save through here.
+   */
+  private ApplicationEntity saveAsModified(ApplicationEntity application) {
+    application.setModifiedAt(Instant.now());
+    ApplicationEntity saved = repository.save(application);
+    repository.flush();
+    return saved;
   }
 
   private void validateProviderOfficeCode(String providerOfficeCode) {
@@ -394,7 +408,7 @@ public class ApplicationService {
 
     application.setScopingQuestions(objectMapper.valueToTree(command.getScopingQuestions()));
     application.setModifiedBy(userContext.getCurrentUser());
-    ApplicationEntity saved = repository.save(application);
+    ApplicationEntity saved = saveAsModified(application);
     recordEvent(
         AuditAction.APPLICATION_SCOPING_UPDATED,
         command,
@@ -429,7 +443,7 @@ public class ApplicationService {
 
     boolean wasCompleted = application.getApplicationState() == ApplicationState.COMPLETED;
     applicationMapper.updateApplicationEntity(command, application);
-    ApplicationEntity saved = repository.save(application);
+    ApplicationEntity saved = saveAsModified(application);
     boolean submitted = !wasCompleted && saved.getApplicationState() == ApplicationState.COMPLETED;
     recordEvent(
         submitted ? AuditAction.APPLICATION_SUBMITTED : AuditAction.APPLICATION_UPDATED,
@@ -514,8 +528,7 @@ public class ApplicationService {
       application.setEvidence(evidenceRepository.save(evidence));
     }
 
-    ApplicationEntity saved = repository.save(application);
-    repository.flush();
+    ApplicationEntity saved = saveAsModified(application);
     recordEvent(
         AuditAction.APPLICATION_UPDATED,
         command,
@@ -656,7 +669,7 @@ public class ApplicationService {
     clientDetailsMapper.updateClientDetailsEntity(command, clientDetails);
 
     application.setModifiedBy(userContext.getCurrentUser());
-    ApplicationEntity saved = repository.save(application);
+    ApplicationEntity saved = saveAsModified(application);
     recordEvent(
         AuditAction.APPLICATION_CLIENT_DETAILS_UPDATED,
         command,
