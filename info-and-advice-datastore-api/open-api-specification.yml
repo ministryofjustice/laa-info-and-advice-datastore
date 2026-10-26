@@ -39,9 +39,9 @@ components:
 
   schemas:
     ClientDetails:
-      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ClientDetails'
+      $ref: './open-api-applications/client-details-components.yml#/components/schemas/ClientDetails'
     Address:
-      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/Address'
+      $ref: './open-api-applications/client-details-components.yml#/components/schemas/Address'
     ApplicationResponse:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApplicationResponse'
     ApplicationSummary:
