@@ -1,7 +1,7 @@
 plugins {
-    id 'io.freefair.lombok' version '9.8.0'
+    id 'io.freefair.lombok' version '9.8.2'
     id 'uk.gov.justice.service.laa.laa-spring-boot-gradle-plugin'
-    id 'com.diffplug.spotless' version "8.10.3"
+    id 'com.diffplug.spotless' version "8.10.4"
 }
 
 test {
@@ -88,7 +88,7 @@ jacocoTestCoverageVerification {
 dependencies {
     implementation project(':info-and-advice-datastore-api')
     implementation 'org.openapitools:jackson-databind-nullable:0.2.12'
-    implementation platform("com.fasterxml.jackson:jackson-bom:2.22.3")
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.22.4")
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-aspectj:4.1.1'
@@ -103,8 +103,8 @@ dependencies {
 
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
-    implementation 'io.sentry:sentry-spring-boot-4:8.57.0'
-    implementation 'io.sentry:sentry-logback:8.57.0'
+    implementation 'io.sentry:sentry-spring-boot-4:8.61.0'
+    implementation 'io.sentry:sentry-logback:8.61.0'
     // In-memory rate limiting (core module only; the Spring Boot starters target Boot 3)
     implementation 'io.github.resilience4j:resilience4j-ratelimiter:2.4.0'
 
