@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,7 @@ import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationDataDeletionService;
 import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
+import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /**
@@ -150,6 +152,22 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
     // Assert
     final var saved = applicationRepository.findById(application.getId()).orElseThrow();
     assertNull(saved.getDataRetentionDate());
+  }
+
+  @Test
+  void givenSpecificationQuery_thenEligibilityResultsAreEagerlyLoaded() {
+    // Arrange
+    saveCompletedApplication(false, MODIFIED_AT);
+    clearCache();
+
+    // Act
+    final var applications =
+        applicationRepository.findAll(
+            ApplicationSpecification.findByMissingDataRetentionDateAndStatus());
+
+    // Assert: readable without an open session, as in scheduled execution
+    assertEquals(1, applications.size());
+    assertTrue(Hibernate.isInitialized(applications.getFirst().getEligibilityResults()));
   }
 
   private ApplicationEntity saveCompletedApplication(boolean eligible, Instant modifiedAt) {

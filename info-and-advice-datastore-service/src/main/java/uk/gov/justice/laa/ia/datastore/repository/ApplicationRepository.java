@@ -1,5 +1,6 @@
 package uk.gov.justice.laa.ia.datastore.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -37,6 +38,11 @@ public interface ApplicationRepository
         "evidence"
       })
   Page<ApplicationEntity> findAll(Specification<ApplicationEntity> spec, Pageable pageable);
+
+  /** Eagerly loads eligibility results so scheduled tasks can read them outside a transaction. */
+  @Override
+  @EntityGraph(attributePaths = {"eligibilityResults"})
+  List<ApplicationEntity> findAll(Specification<ApplicationEntity> spec);
 
   /**
    * Checks whether another application (excluding the one identified by {@code id}) already has the
