@@ -26,14 +26,21 @@ import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 @EnableScheduling
 @ExcludeFromCodeCoverage(reason = "Config")
 public class ScheduledTasksConfig {
+  /** Resolves retention dates for completed applications, based on claims or ineligibility. */
   @Bean
   public DataRetentionDateResolverTask dataRetentionDateResolver(
       ClaimsGateway claimsGateway,
       @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
+      @Value("${laa.datastore.data-retention.ineligible-years-offset}")
+          int ineligibleRetentionYearsOffset,
       ApplicationRepository applicationRepository,
       RetentionDateUpdateService retentionDateUpdateService) {
     return new DataRetentionDateResolverTask(
-        claimsGateway, dataRetentionYearsOffset, applicationRepository, retentionDateUpdateService);
+        claimsGateway,
+        dataRetentionYearsOffset,
+        ineligibleRetentionYearsOffset,
+        applicationRepository,
+        retentionDateUpdateService);
   }
 
   /**

@@ -129,6 +129,12 @@ public class ApplicationEntity {
         .orElse(null);
   }
 
+  /** Whether the most recent eligibility result says the client is ineligible. */
+  public boolean hasIneligibleMostRecentResult() {
+    final var latestResult = getMostRecentEligibilityResult();
+    return latestResult != null && Boolean.FALSE.equals(latestResult.getIndication());
+  }
+
   @Column(name = "created_at", nullable = false)
   @CreationTimestamp
   private Instant createdAt;

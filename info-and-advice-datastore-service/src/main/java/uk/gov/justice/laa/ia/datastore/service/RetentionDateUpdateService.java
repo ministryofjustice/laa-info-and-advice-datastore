@@ -34,6 +34,8 @@ public class RetentionDateUpdateService {
    * Re-fetches the application, then saves the new retention date and records the change. Committed
    * independently of the caller's transaction (if any). If the application's eTag has changed since
    * it was read by the caller, the update is skipped rather than overwriting a concurrent change.
+   *
+   * @param claimsId the claim the date was derived from, or null when the date isn't claim-based
    */
   @Transactional(Transactional.TxType.REQUIRES_NEW)
   public void saveAndRecord(
@@ -58,10 +60,10 @@ public class RetentionDateUpdateService {
     }
 
     ObjectNode dataRetentionDate =
-        JsonNodeFactory.instance
-            .objectNode()
-            .put("dataRetentionDate", newRetentionDate.toString())
-            .put("claimsId", claimsId.toString());
+        JsonNodeFactory.instance.objectNode().put("dataRetentionDate", newRetentionDate.toString());
+    if (claimsId != null) {
+      dataRetentionDate.put("claimsId", claimsId.toString());
+    }
     application.setDataRetentionDate(newRetentionDate);
     applicationRepository.save(application);
     systemDrivenEventService.record(

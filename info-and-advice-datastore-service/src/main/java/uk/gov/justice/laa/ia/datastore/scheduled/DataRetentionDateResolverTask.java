@@ -2,6 +2,8 @@ package uk.gov.justice.laa.ia.datastore.scheduled;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -24,17 +26,21 @@ import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 public class DataRetentionDateResolverTask {
   private final ClaimsGateway claimsGateway;
   private final int dataRetentionYearsOffset;
+  private final int ineligibleRetentionYearsOffset;
   private final ApplicationRepository applicationRepository;
   private final RetentionDateUpdateService retentionDateUpdateService;
 
-  /** Constructs the resolver, binding the configured data retention years offset. */
+  /** Constructs the resolver, binding the configured data retention years offsets. */
   public DataRetentionDateResolverTask(
       ClaimsGateway claimsGateway,
       @Value("${laa.datastore.data-retention.years-offset}") int dataRetentionYearsOffset,
+      @Value("${laa.datastore.data-retention.ineligible-years-offset}")
+          int ineligibleRetentionYearsOffset,
       ApplicationRepository applicationRepository,
       RetentionDateUpdateService retentionDateUpdateService) {
     this.claimsGateway = claimsGateway;
     this.dataRetentionYearsOffset = dataRetentionYearsOffset;
+    this.ineligibleRetentionYearsOffset = ineligibleRetentionYearsOffset;
     this.applicationRepository = applicationRepository;
     this.retentionDateUpdateService = retentionDateUpdateService;
   }
@@ -60,17 +66,12 @@ public class DataRetentionDateResolverTask {
       RetentionDateUpdate update = shouldUpdateDataRetentionDate(application);
       if (update.shouldUpdate) {
         Instant previousRetentionDate = application.getDataRetentionDate();
-        Instant newRetentionDate =
-            update
-                .newRetentionDate
-                .plus(dataRetentionYearsOffset, java.time.temporal.ChronoUnit.YEARS)
-                .toInstant();
         try {
           retentionDateUpdateService.saveAndRecord(
               application.getId(),
               application.getEtag(),
               previousRetentionDate,
-              newRetentionDate,
+              update.newRetentionDate,
               update.claimsId());
           log.debug("Updated data retention date for application with ID {}", application.getId());
         } catch (Exception e) {
@@ -85,8 +86,8 @@ public class DataRetentionDateResolverTask {
   }
 
   private record RetentionDateUpdate(
-      boolean shouldUpdate, OffsetDateTime newRetentionDate, UUID claimsId) {
-    static RetentionDateUpdate hasApproval(OffsetDateTime newRetentionDate, UUID claimsId) {
+      boolean shouldUpdate, Instant newRetentionDate, UUID claimsId) {
+    static RetentionDateUpdate hasApproval(Instant newRetentionDate, UUID claimsId) {
       return new RetentionDateUpdate(true, newRetentionDate, claimsId);
     }
 
@@ -96,6 +97,14 @@ public class DataRetentionDateResolverTask {
   }
 
   private RetentionDateUpdate shouldUpdateDataRetentionDate(ApplicationEntity application) {
+    if (application.hasIneligibleMostRecentResult()) {
+      // Ineligible applications never lead to a claim, so their date is based on the last
+      // modification and the claims API isn't consulted.
+      return RetentionDateUpdate.hasApproval(
+          addYears(
+              application.getModifiedAt().atOffset(ZoneOffset.UTC), ineligibleRetentionYearsOffset),
+          null);
+    }
     if (application.getUfn() == null || application.getUfn().isBlank()) {
       log.warn(
           "Completed application with ID {} has no UFN, skipping application", application.getId());
@@ -107,7 +116,8 @@ public class DataRetentionDateResolverTask {
       final var latestClaim = getLatestClaim(response);
       if (latestClaim != null) {
         return RetentionDateUpdate.hasApproval(
-            latestClaim.getUpdatedOn(), latestClaim.getClaimId());
+            addYears(latestClaim.getUpdatedOn(), dataRetentionYearsOffset),
+            latestClaim.getClaimId());
       }
       return RetentionDateUpdate.noApproval();
     } catch (Exception e) {
@@ -118,6 +128,10 @@ public class DataRetentionDateResolverTask {
           e);
       return RetentionDateUpdate.noApproval();
     }
+  }
+
+  private static Instant addYears(OffsetDateTime from, int years) {
+    return from.plus(years, ChronoUnit.YEARS).toInstant();
   }
 
   private static ClaimsModel getLatestClaim(ApplicationClaimResponse response) {

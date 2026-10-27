@@ -18,6 +18,7 @@ laa:
     data-retention:
       years-offset: 3
       draft-years-offset: 2
+      ineligible-years-offset: 3
     # Read by PiiRedactor, which is also unconditionally component-scanned; an empty/missing
     # binding here throws an NPE in its constructor rather than defaulting to no fields.
     events:
