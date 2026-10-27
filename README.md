@@ -445,6 +445,8 @@ We use release-please for generating release notes when merging into main, which
 #### API docs (JSON)
 - http://localhost:8080/v3/api-docs
 
+Swagger UI and API docs are disabled in production (`application-prod.yml`, CTRL-058) and remain available locally, in staging and in UAT (behind the VPN allowlist).
+
 ### Actuator Endpoints
 The following actuator endpoints have been configured:
 - http://localhost:8080/actuator
