@@ -1,0 +1,11 @@
+# CTRL-058: API documentation must not be exposed in production.
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+laa:
+  springboot.starter:
+    oauth2:
+      unprotected-uris: [ "/actuator/**", "/favicon.ico", "/error" ]
