@@ -13,3 +13,4 @@ spec:
       name: http
   selector:
     {{- include "your-repo-name.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: api
