@@ -8,5 +8,4 @@ springdoc:
 laa:
   springboot.starter:
     oauth2:
-      unprotected-uris: [ "/actuator/**", "/favicon.ico",
-                          "/open-api-specification.yml", "/error" ]
+      unprotected-uris: [ "/actuator/**", "/favicon.ico", "/error" ]
