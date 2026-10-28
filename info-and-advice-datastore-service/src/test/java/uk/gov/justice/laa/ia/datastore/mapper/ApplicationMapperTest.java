@@ -28,7 +28,9 @@ import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerato
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
+import uk.gov.justice.laa.ia.datastore.model.CategoryOfLaw;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityResult;
+import uk.gov.justice.laa.ia.datastore.model.ProviderContractType;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 
@@ -96,6 +98,9 @@ public class ApplicationMapperTest {
                       EligibilityResultEntityGenerator.createEligibilityResult(
                           UUID.randomUUID(), "ELIGIBLE", 100)));
               builder.etag(1969);
+              builder
+                  .providerContractType(ProviderContractType.FACE_TO_FACE)
+                  .categoryOfLaw(CategoryOfLaw.FAMILY);
             });
 
     final ApplicationResponse mappedModel = sut.toApplication(application);
@@ -103,6 +108,8 @@ public class ApplicationMapperTest {
     assertEquals(application.getId(), mappedModel.getId());
     assertEquals(application.getProviderFirmCode(), mappedModel.getProviderFirmCode());
     assertEquals(application.getProviderOfficeCode(), mappedModel.getProviderOfficeCode());
+    assertEquals(ProviderContractType.FACE_TO_FACE, mappedModel.getProviderContractType());
+    assertEquals(CategoryOfLaw.FAMILY, mappedModel.getCategoryOfLaw());
     assertEquals(application.getApplicationState(), mappedModel.getApplicationState());
     assertEquals(application.getReasonForReapplication(), mappedModel.getReasonForReapplication());
     assertEquals(
@@ -138,12 +145,19 @@ public class ApplicationMapperTest {
 
   @Test
   void startApplicationCommand_toApplication_shouldMapProperties() {
-    final StartApplicationCommand cmd = StartApplicationCommandGenerator.create(null);
+    final StartApplicationCommand cmd =
+        StartApplicationCommandGenerator.create(
+            builder ->
+                builder
+                    .providerContractType(ProviderContractType.FACE_TO_FACE)
+                    .categoryOfLaw(CategoryOfLaw.FAMILY));
 
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
 
     assertNotNull(mappedModel);
     assertNotNull(mappedModel.getClientDetails());
+    assertEquals(ProviderContractType.FACE_TO_FACE, mappedModel.getProviderContractType());
+    assertEquals(CategoryOfLaw.FAMILY, mappedModel.getCategoryOfLaw());
   }
 
   @Test
