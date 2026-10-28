@@ -32,16 +32,17 @@ dependencies {
     // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGAPACHETOMCATEMBED-20552494
     
     implementation 'com.fasterxml.jackson.core:jackson-core:2.21.7'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.7'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
-    // fix https://security.snyk.io/vuln/SNYK-JAVA-TOOLSJACKSONCORE-19778371
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.4'
+    // fix https://security.snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-21761837
 
     // fix https://security.snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-20059683
     implementation 'org.apache.httpcomponents.core5:httpcore5-h2:5.4.3'
     // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGAPACHEHTTPCOMPONENTSCORE5-17817217
     implementation 'tools.jackson.core:jackson-core:3.2.3'
     //fix https://security.snyk.io/vuln/SNYK-JAVA-TOOLSJACKSONCORE-20059180
-    implementation 'tools.jackson.core:jackson-databind:3.1.7'
+    implementation 'tools.jackson.core:jackson-databind:3.1.8'
+    //fix https://security.snyk.io/vuln/SNYK-JAVA-TOOLSJACKSONCORE-21761838
+    
     // fix for PACT resolution issue
     implementation 'org.bouncycastle:bcpkix-jdk18on:1.86'
 }
