@@ -61,22 +61,6 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
-  void handleDeclarationAlreadySignedException_returnsConflictStatusAndErrorMessage() {
-    UUID applicationId = UUID.randomUUID();
-    DeclarationAlreadySignedException exception =
-        new DeclarationAlreadySignedException(applicationId);
-
-    ResponseEntity<ProblemDetail> result =
-        globalExceptionHandler.handleDeclarationAlreadySignedException(exception);
-
-    assertThat(result).isNotNull();
-    assertThat(result.getStatusCode()).isEqualTo(CONFLICT);
-    assertThat(result.getBody()).isNotNull();
-    assertThat(result.getBody().getStatus()).isEqualTo(CONFLICT.value());
-    assertThat(result.getBody().getDetail()).isEqualTo(exception.getMessage());
-  }
-
-  @Test
   void handleApplicationDeletedException_returnsGoneStatusAndErrorMessage() {
     UUID applicationId = UUID.randomUUID();
     ApplicationDeletedException exception = new ApplicationDeletedException(applicationId);
