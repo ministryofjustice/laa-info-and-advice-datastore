@@ -63,6 +63,7 @@ public abstract class ApplicationMapper {
   @Mapping(source = "declaration", target = "declaration")
   @Mapping(source = "evidence", target = "evidence")
   @Mapping(source = "mostRecentEligibilityAssessment", target = "eligibilityResult")
+  @Mapping(source = "mostRecentEligibilityAssessment", target = "eligibilityAssessment")
   @Mapping(source = "etag", target = "eTag")
   public abstract ApplicationResponse toApplication(ApplicationEntity entity);
 

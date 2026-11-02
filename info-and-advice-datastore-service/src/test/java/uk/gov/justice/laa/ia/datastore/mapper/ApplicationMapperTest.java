@@ -135,6 +135,9 @@ public class ApplicationMapperTest {
         mappedModel.getClient().getAddress().getAddressLine1());
     assertEligibiltyEquals(
         application.getMostRecentEligibilityAssessment(), mappedModel.getEligibilityResult());
+    assertEligibiltyEquals(
+        application.getMostRecentEligibilityAssessment(), mappedModel.getEligibilityAssessment());
+    assertEquals(mappedModel.getEligibilityResult(), mappedModel.getEligibilityAssessment());
     assertEquals(application.getEtag(), mappedModel.geteTag());
   }
 
