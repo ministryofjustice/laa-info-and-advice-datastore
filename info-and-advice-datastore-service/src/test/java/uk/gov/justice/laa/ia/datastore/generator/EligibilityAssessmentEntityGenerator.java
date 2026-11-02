@@ -26,10 +26,11 @@ public class EligibilityAssessmentEntityGenerator {
     JsonNode dummyJson = objectMapper.createObjectNode().put("success", true);
     JsonNode dummyData = objectMapper.createObjectNode().put("client_age", "18-24");
 
-    var builder = EligibilityAssessmentEntity.builder()
-        .applicationId(UUID.randomUUID())
-        .data(dummyData)
-        .resultJson(dummyJson);
+    var builder =
+        EligibilityAssessmentEntity.builder()
+            .applicationId(UUID.randomUUID())
+            .data(dummyData)
+            .resultJson(dummyJson);
 
     if (customizer != null) {
       customizer.accept(builder);
