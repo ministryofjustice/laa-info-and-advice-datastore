@@ -40,7 +40,9 @@ public class EligibilityAssessmentRepositoryIntegrationTest extends BaseIntegrat
 
     // Assert
     EligibilityAssessmentEntity retrievedEntity =
-        eligibilityAssessmentRepository.findById(savedEntity.getEligibilityAssessmentId()).orElseThrow();
+        eligibilityAssessmentRepository
+            .findById(savedEntity.getEligibilityAssessmentId())
+            .orElseThrow();
 
     assertThat(retrievedEntity.getEligibilityAssessmentId()).isNotNull();
     assertThat(retrievedEntity.getApplicationId()).isEqualTo(savedApplication.getId());
@@ -82,7 +84,8 @@ public class EligibilityAssessmentRepositoryIntegrationTest extends BaseIntegrat
   }
 
   private static void assertSetContainsEligiblityResult(
-      Iterable<EligibilityAssessmentEntity> eligibilityAssessments, EligibilityAssessmentEntity expected) {
+      Iterable<EligibilityAssessmentEntity> eligibilityAssessments,
+      EligibilityAssessmentEntity expected) {
     assertThat(eligibilityAssessments)
         .anySatisfy(
             result -> {

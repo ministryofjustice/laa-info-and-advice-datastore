@@ -182,7 +182,8 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
                         .applicationState(ApplicationState.COMPLETED)
                         .providerOfficeCode(ClaimsGatewayStub.FIXTURE_OFFICE_CODE)));
     final EligibilityAssessmentEntity result =
-        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(application.getId(), "RESULT", 1);
+        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
+            application.getId(), "RESULT", 1);
     result.setIndication(eligible);
     eligibilityAssessmentRepository.saveAndFlush(result);
     backdateModifiedAt(application.getId(), modifiedAt);

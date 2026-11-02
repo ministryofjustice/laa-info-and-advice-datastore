@@ -32,7 +32,8 @@ public class ApplicationEntityTests {
   }
 
   @Test
-  void givenApplicationWithNullEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
+  void
+      givenApplicationWithNullEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
     // Arrange
     final ApplicationEntity applicationEntity = new ApplicationEntity();
     // Act
@@ -44,7 +45,8 @@ public class ApplicationEntityTests {
   }
 
   @Test
-  void givenApplicationWithEmptyEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
+  void
+      givenApplicationWithEmptyEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
     // Arrange
     final ApplicationEntity applicationEntity = new ApplicationEntity();
     applicationEntity.setEligibilityAssessments(java.util.Collections.emptySet());

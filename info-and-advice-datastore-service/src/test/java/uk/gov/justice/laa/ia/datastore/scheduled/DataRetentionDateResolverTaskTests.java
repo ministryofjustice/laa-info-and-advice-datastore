@@ -225,7 +225,10 @@ class DataRetentionDateResolverTaskTests {
   }
 
   private static EligibilityAssessmentEntity result(Boolean indication, Instant createdAt) {
-    return EligibilityAssessmentEntity.builder().indication(indication).createdAt(createdAt).build();
+    return EligibilityAssessmentEntity.builder()
+        .indication(indication)
+        .createdAt(createdAt)
+        .build();
   }
 
   private static ApplicationEntity applicationWithResults(

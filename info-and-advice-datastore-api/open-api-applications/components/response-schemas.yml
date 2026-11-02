@@ -70,6 +70,8 @@ components:
           format: uuid
         eligibilityResult:
           $ref: '#/components/schemas/EligibilityAssessment'
+        eligibilityAssessment:
+          $ref: '#/components/schemas/EligibilityAssessment'
         createdAt:
           type: string
           format: date-time

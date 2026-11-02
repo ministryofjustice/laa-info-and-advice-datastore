@@ -7,4 +7,5 @@ import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 
 /** Repository for EligibilityAssessmentEntity. */
 @Repository
-public interface EligibilityAssessmentRepository extends JpaRepository<EligibilityAssessmentEntity, UUID> {}
+public interface EligibilityAssessmentRepository
+    extends JpaRepository<EligibilityAssessmentEntity, UUID> {}

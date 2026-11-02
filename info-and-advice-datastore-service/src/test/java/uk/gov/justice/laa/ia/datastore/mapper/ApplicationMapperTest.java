@@ -36,33 +36,32 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
 
 /** Tests for the mapper behaviour. */
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest(classes = {
-    ApplicationMapperImpl.class,
-    UserContext.class,
-    DeclarationMapperImpl.class,
-    EligibilityAssessmentMapperImpl.class,
-    EvidenceMapperImpl.class,
-    ClientDetailsMapperImpl.class,
-    AddressMapperImpl.class,
-    DateTimeMapperImpl.class,
-    JsonNodeMapperImpl.class,
-    JacksonConfig.class,
-})
+@SpringBootTest(
+    classes = {
+      ApplicationMapperImpl.class,
+      UserContext.class,
+      DeclarationMapperImpl.class,
+      EligibilityAssessmentMapperImpl.class,
+      EvidenceMapperImpl.class,
+      ClientDetailsMapperImpl.class,
+      AddressMapperImpl.class,
+      DateTimeMapperImpl.class,
+      JsonNodeMapperImpl.class,
+      JacksonConfig.class,
+    })
 public class ApplicationMapperTest {
-  @Autowired
-  private ApplicationMapper sut;
-  @Autowired
-  private ObjectMapper objectMapper;
-  @MockitoBean
-  private UserContext userContext;
+  @Autowired private ApplicationMapper sut;
+  @Autowired private ObjectMapper objectMapper;
+  @MockitoBean private UserContext userContext;
 
   @Test
   void toApplicationSummary_shouldMapSummaryFields() {
-    final ApplicationEntity application = ApplicationEntityGenerator.createWithId(
-        builder -> {
-          builder.clientDetails(ClientDetailsEntityGenerator.createWithId(null));
-          builder.referenceNumber("LAA-TEST-001");
-        });
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> {
+              builder.clientDetails(ClientDetailsEntityGenerator.createWithId(null));
+              builder.referenceNumber("LAA-TEST-001");
+            });
 
     final ApplicationSummary summary = sut.toApplicationSummary(application);
 
@@ -80,28 +79,29 @@ public class ApplicationMapperTest {
 
   @Test
   void toApplication_shouldMapAllProperties() {
-    final ApplicationEntity application = ApplicationEntityGenerator.createWithId(
-        builder -> {
-          builder.clientDetails(
-              ClientDetailsEntityGenerator.createWithId(
-                  clientDetailsBuilder -> {
-                    clientDetailsBuilder.address(AddressEntityGenerator.createWithId(null));
-                  }));
-          builder.evidence(
-              EvidenceEntity.builder()
-                  .evidenceExemptionCode("EXEMPT_01")
-                  .evidenceExemptionReason("Test reason")
-                  .build());
-          builder.declaration(DeclarationEntityGenerator.createWithId(null));
-          builder.eligibilityAssessments(
-              Set.of(
-                  EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
-                      UUID.randomUUID(), "ELIGIBLE", 100)));
-          builder.etag(1969);
-          builder
-              .providerContractType(ProviderContractType.FACE_TO_FACE)
-              .categoryOfLaw(CategoryOfLaw.FAMILY);
-        });
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> {
+              builder.clientDetails(
+                  ClientDetailsEntityGenerator.createWithId(
+                      clientDetailsBuilder -> {
+                        clientDetailsBuilder.address(AddressEntityGenerator.createWithId(null));
+                      }));
+              builder.evidence(
+                  EvidenceEntity.builder()
+                      .evidenceExemptionCode("EXEMPT_01")
+                      .evidenceExemptionReason("Test reason")
+                      .build());
+              builder.declaration(DeclarationEntityGenerator.createWithId(null));
+              builder.eligibilityAssessments(
+                  Set.of(
+                      EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
+                          UUID.randomUUID(), "ELIGIBLE", 100)));
+              builder.etag(1969);
+              builder
+                  .providerContractType(ProviderContractType.FACE_TO_FACE)
+                  .categoryOfLaw(CategoryOfLaw.FAMILY);
+            });
 
     final ApplicationResponse mappedModel = sut.toApplication(application);
 
@@ -145,10 +145,12 @@ public class ApplicationMapperTest {
 
   @Test
   void startApplicationCommand_toApplication_shouldMapProperties() {
-    final StartApplicationCommand cmd = StartApplicationCommandGenerator.create(
-        builder -> builder
-            .providerContractType(ProviderContractType.FACE_TO_FACE)
-            .categoryOfLaw(CategoryOfLaw.FAMILY));
+    final StartApplicationCommand cmd =
+        StartApplicationCommandGenerator.create(
+            builder ->
+                builder
+                    .providerContractType(ProviderContractType.FACE_TO_FACE)
+                    .categoryOfLaw(CategoryOfLaw.FAMILY));
 
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
 
@@ -188,7 +190,8 @@ public class ApplicationMapperTest {
   @Test
   void startApplicationCommand_toApplication_shouldMapUfn() {
     // Arrange
-    final StartApplicationCommand cmd = StartApplicationCommandGenerator.create(builder -> builder.ufn("123456/1"));
+    final StartApplicationCommand cmd =
+        StartApplicationCommandGenerator.create(builder -> builder.ufn("123456/1"));
 
     // Act
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
@@ -197,7 +200,8 @@ public class ApplicationMapperTest {
     assertEquals("123456/1", mappedModel.getUfn());
   }
 
-  private void assertEligibiltyEquals(EligibilityAssessmentEntity expected, EligibilityAssessment model) {
+  private void assertEligibiltyEquals(
+      EligibilityAssessmentEntity expected, EligibilityAssessment model) {
     assertEquals(
         expected.getData().get("client_age").asText(), model.getData().getClientAge().get());
     assertEquals(expected.getResultJson(), objectMapper.valueToTree(model.getResult()));
@@ -206,12 +210,14 @@ public class ApplicationMapperTest {
   @Test
   void updateApplicationEntity_shouldUpdateApplicationState_whenSet() {
     // Arrange
-    final ApplicationEntity application = ApplicationEntityGenerator.createWithId(
-        builder -> builder.applicationState(ApplicationState.DRAFT));
-    final UpdateApplicationCommand command = UpdateApplicationCommand.builder()
-        .eTag(0L)
-        .applicationState(ApplicationState.COMPLETED)
-        .build();
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> builder.applicationState(ApplicationState.DRAFT));
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
 
     // Act
     sut.updateApplicationEntity(command, application);
@@ -223,8 +229,9 @@ public class ApplicationMapperTest {
   @Test
   void updateApplicationEntity_shouldLeaveApplicationStateUnchanged_whenNotSet() {
     // Arrange
-    final ApplicationEntity application = ApplicationEntityGenerator.createWithId(
-        builder -> builder.applicationState(ApplicationState.DRAFT));
+    final ApplicationEntity application =
+        ApplicationEntityGenerator.createWithId(
+            builder -> builder.applicationState(ApplicationState.DRAFT));
     final UpdateApplicationCommand command = UpdateApplicationCommand.builder().eTag(0L).build();
 
     // Act
@@ -256,10 +263,11 @@ public class ApplicationMapperTest {
     final String originalCreatedBy = application.getCreatedBy();
     final var originalCreatedAt = application.getCreatedAt();
     final var originalModifiedAt = application.getModifiedAt();
-    final UpdateApplicationCommand command = UpdateApplicationCommand.builder()
-        .eTag(0L)
-        .applicationState(ApplicationState.COMPLETED)
-        .build();
+    final UpdateApplicationCommand command =
+        UpdateApplicationCommand.builder()
+            .eTag(0L)
+            .applicationState(ApplicationState.COMPLETED)
+            .build();
 
     // Act
     sut.updateApplicationEntity(command, application);
