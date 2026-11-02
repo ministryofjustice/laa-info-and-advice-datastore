@@ -1463,37 +1463,6 @@ public class ApplicationServiceTest {
   }
 
   @Test
-  void editApplication_shouldThrowDeclarationAlreadySignedException_whenDeclarationSigned() {
-    // Arrange
-    final UUID applicationId = UUID.randomUUID();
-    final String officeCode = UUID.randomUUID().toString();
-    final DeclarationEntity declaration =
-        DeclarationEntity.builder().dateSigned(java.time.LocalDate.now()).build();
-    final ApplicationEntity application =
-        ApplicationEntity.builder()
-            .id(applicationId)
-            .providerOfficeCode(officeCode)
-            .declaration(declaration)
-            .build(); // eTag = 0
-    final uk.gov.justice.laa.ia.datastore.model.PatchDeclarationData declarationPatch =
-        uk.gov.justice.laa.ia.datastore.model.PatchDeclarationData.builder()
-            .declarationConfirmation(true)
-            .build();
-    final EditApplicationCommand command =
-        EditApplicationCommand.builder().eTag(0L).declaration(declarationPatch).build();
-    when(userContext.getProviderFirmCode()).thenReturn("123456");
-    when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
-    when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
-
-    // Act + Assert
-    assertThrows(
-        uk.gov.justice.laa.ia.datastore.exception.DeclarationAlreadySignedException.class,
-        () -> sut.editApplication(applicationId, command));
-    verify(declarationMapper, never()).patchDeclarationEntity(any(), any());
-    verify(repo, never()).save(any(ApplicationEntity.class));
-  }
-
-  @Test
   void editApplication_shouldCreateAndPatchDeclaration_whenNoDeclarationExists() {
     // Arrange
     final UUID applicationId = UUID.randomUUID();

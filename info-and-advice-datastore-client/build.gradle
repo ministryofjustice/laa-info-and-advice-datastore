@@ -14,7 +14,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-autoconfigure'
     implementation 'org.springframework.security:spring-security-oauth2-client'
     implementation 'org.springframework.security:spring-security-oauth2-resource-server'
-    implementation 'org.openapitools:jackson-databind-nullable:0.2.12'
+    implementation 'org.openapitools:jackson-databind-nullable:0.2.13'
     implementation platform("com.fasterxml.jackson:jackson-bom:2.22.4")
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'

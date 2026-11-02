@@ -1040,40 +1040,6 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  void shouldReturn409_whenPatchingAlreadySignedDeclaration() throws Exception {
-    // Arrange
-    final UUID applicationId =
-        applicationRepository
-            .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .declaration(
-                                DeclarationEntityGenerator.createWithoutId(
-                                    declarationBuilder ->
-                                        declarationBuilder.dateSigned(java.time.LocalDate.now())))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
-            .getId();
-    clearCache();
-
-    final String payload =
-        """
-        {"eTag": 0, "declaration": {"declarationConfirmation": true}}
-        """;
-
-    // Act + Assert
-    mockMvc
-        .perform(
-            patch(TestConstants.EditApplication, applicationId)
-                .withBearerWriteToken()
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(payload))
-        .andExpect(status().isConflict());
-  }
-
-  @Test
   void shouldCreateDeclaration_whenNoneExistsYet() throws Exception {
     // Arrange
     final UUID applicationId =

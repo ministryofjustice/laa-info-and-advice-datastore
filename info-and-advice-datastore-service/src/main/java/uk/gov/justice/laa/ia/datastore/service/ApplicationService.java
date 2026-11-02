@@ -26,7 +26,6 @@ import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.ApplicationDeletedException;
-import uk.gov.justice.laa.ia.datastore.exception.DeclarationAlreadySignedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
 import uk.gov.justice.laa.ia.datastore.exception.EditCompletedApplicationException;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
@@ -510,8 +509,6 @@ public class ApplicationService {
         declaration = new DeclarationEntity();
         declaration.setClientDeclarationStatus(ClientDeclarationStatus.DRAFT);
         declaration.setCreatedBy(userContext.getCurrentUser());
-      } else if (declaration.getDateSigned() != null) {
-        throw new DeclarationAlreadySignedException(applicationId);
       }
       declarationMapper.patchDeclarationEntity(command.getDeclaration(), declaration);
       application.setDeclaration(declaration);

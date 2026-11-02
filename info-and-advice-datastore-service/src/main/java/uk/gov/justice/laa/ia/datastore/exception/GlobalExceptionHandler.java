@@ -72,21 +72,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
-   * The handler for DeclarationAlreadySignedException.
-   *
-   * @param exception the exception
-   * @return 409 Conflict response
-   */
-  @ExceptionHandler(DeclarationAlreadySignedException.class)
-  public ResponseEntity<ProblemDetail> handleDeclarationAlreadySignedException(
-      DeclarationAlreadySignedException exception) {
-    log.warn("Declaration already signed: {}", exception.getMessage());
-    ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
-    return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
-  }
-
-  /**
    * The handler for EditCompletedApplicationException.
    *
    * @param exception the exception
