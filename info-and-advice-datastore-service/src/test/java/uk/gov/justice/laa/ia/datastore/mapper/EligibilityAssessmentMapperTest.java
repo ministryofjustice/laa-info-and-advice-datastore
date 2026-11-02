@@ -8,25 +8,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import uk.gov.justice.laa.ia.datastore.config.JacksonConfig;
-import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EligibilityAssessmentEntityGenerator;
 
-/** Test class for {@link EligibilityMapper}. */
+/** Test class for {@link EligibilityAssessmentMapper}. */
 @SpringBootTest(
     classes = {
-      EligibilityMapperImpl.class,
+      EligibilityAssessmentMapperImpl.class,
       DateTimeMapperImpl.class,
       JsonNodeMapperImpl.class,
       JacksonConfig.class
     })
-public class EligibilityMapperTest {
-  @Autowired private EligibilityMapper eligibilityMapper;
+public class EligibilityAssessmentMapperTest {
+  @Autowired private EligibilityAssessmentMapper eligibilityAssessmentMapper;
   @Autowired private ObjectMapper objectMapper;
 
   @Test
-  void toEligibilityResult_shouldMapAllProperties() {
-    final var entity = EligibilityResultEntityGenerator.createWithoutId(null);
+  void toEligibilityAssessment_shouldMapAllProperties() {
+    final var entity = EligibilityAssessmentEntityGenerator.createWithoutId(null);
 
-    final var mappedModel = eligibilityMapper.toEligibilityResult(entity);
+    final var mappedModel = eligibilityAssessmentMapper.toEligibilityAssessment(entity);
 
     assertNotNull(mappedModel.getData());
     assertEquals(

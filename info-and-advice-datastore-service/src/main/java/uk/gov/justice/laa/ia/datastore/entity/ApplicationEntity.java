@@ -121,7 +121,7 @@ public class ApplicationEntity {
 
   @OneToMany(cascade = CascadeType.ALL)
   @JoinColumn(name = "application_id", referencedColumnName = "id")
-  private Set<EligibilityResultEntity> eligibilityResults;
+  private Set<EligibilityAssessmentEntity> eligibilityAssessments;
 
   @Column(name = "deleted", nullable = false)
   private boolean deleted;
@@ -130,18 +130,18 @@ public class ApplicationEntity {
   private Instant deletedAt;
 
   /** Returns the most recent eligibility result for this application. */
-  public EligibilityResultEntity getMostRecentEligibilityResult() {
-    if (eligibilityResults == null || eligibilityResults.isEmpty()) {
+  public EligibilityAssessmentEntity getMostRecentEligibilityAssessment() {
+    if (eligibilityAssessments == null || eligibilityAssessments.isEmpty()) {
       return null;
     }
-    return eligibilityResults.stream()
+    return eligibilityAssessments.stream()
         .max((er1, er2) -> er1.getCreatedAt().compareTo(er2.getCreatedAt()))
         .orElse(null);
   }
 
   /** Whether the most recent eligibility result says the client is ineligible. */
   public boolean hasIneligibleMostRecentResult() {
-    final var latestResult = getMostRecentEligibilityResult();
+    final var latestResult = getMostRecentEligibilityAssessment();
     return latestResult != null && Boolean.FALSE.equals(latestResult.getIndication());
   }
 

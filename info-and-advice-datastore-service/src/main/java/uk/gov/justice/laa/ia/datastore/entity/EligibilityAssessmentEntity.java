@@ -24,12 +24,12 @@ import org.hibernate.type.SqlTypes;
 @AllArgsConstructor
 @Entity
 @Table(name = "eligibility_results")
-public class EligibilityResultEntity {
+public class EligibilityAssessmentEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "eligibility_result_id")
-  private UUID eligibilityResultId;
+  private UUID eligibilityAssessmentId;
 
   @Column(name = "application_id", nullable = false)
   private UUID applicationId;

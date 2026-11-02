@@ -39,7 +39,7 @@ import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.ApplicationDeletedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
@@ -69,7 +69,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
-import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityAssessmentRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 
 /** Unit tests for the {@link ApplicationService}. */
@@ -77,7 +77,7 @@ import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
-  @Mock private EligibilityResultRepository eligibilityResultRepository;
+  @Mock private EligibilityAssessmentRepository eligibilityAssessmentRepository;
   @Mock private EvidenceRepository evidenceRepository;
   @Mock private ApplicationMapper mapper;
   @Mock private DeclarationMapper declarationMapper;
@@ -359,9 +359,9 @@ public class ApplicationServiceTest {
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
 
-    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
-        ArgumentCaptor.forClass(EligibilityResultEntity.class);
-    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    ArgumentCaptor<EligibilityAssessmentEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityAssessmentEntity.class);
+    verify(eligibilityAssessmentRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
     assertThat(resultCaptor.getValue().getData()).isEqualTo(dataNode);
     assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(resultNode);
@@ -378,7 +378,7 @@ public class ApplicationServiceTest {
     OptionalLong result =
         sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build());
     assertTrue(result.isEmpty());
-    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(eligibilityAssessmentRepository, never()).save(any(EligibilityAssessmentEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -400,7 +400,7 @@ public class ApplicationServiceTest {
         ProviderOfficeNotAuthorizedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
-    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(eligibilityAssessmentRepository, never()).save(any(EligibilityAssessmentEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -424,7 +424,7 @@ public class ApplicationServiceTest {
         ApplicationDeletedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
-    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(eligibilityAssessmentRepository, never()).save(any(EligibilityAssessmentEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -448,7 +448,7 @@ public class ApplicationServiceTest {
         ApplicationDeletedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
-    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(eligibilityAssessmentRepository, never()).save(any(EligibilityAssessmentEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -1177,9 +1177,9 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isPresent());
-    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
-        ArgumentCaptor.forClass(EligibilityResultEntity.class);
-    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    ArgumentCaptor<EligibilityAssessmentEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityAssessmentEntity.class);
+    verify(eligibilityAssessmentRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getIndication()).isTrue();
   }
 
@@ -1217,9 +1217,9 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isPresent());
-    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
-        ArgumentCaptor.forClass(EligibilityResultEntity.class);
-    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    ArgumentCaptor<EligibilityAssessmentEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityAssessmentEntity.class);
+    verify(eligibilityAssessmentRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getIndication()).isFalse();
   }
 

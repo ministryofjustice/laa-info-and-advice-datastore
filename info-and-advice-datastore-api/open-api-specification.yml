@@ -74,7 +74,7 @@ components:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/EditApplicationCommand'
     UpdateClientDetailsCommand:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/UpdateClientDetailsCommand'
-    EligibilityResult:
-      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityResult'
+    EligibilityAssessment:
+      $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/EligibilityAssessment'
     ApiError:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApiError'

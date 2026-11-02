@@ -27,7 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
@@ -224,12 +224,12 @@ class DataRetentionDateResolverTaskTests {
         .saveAndRecord(eq(succeedingApplication.getId()), anyLong(), any(), any(), any());
   }
 
-  private static EligibilityResultEntity result(Boolean indication, Instant createdAt) {
-    return EligibilityResultEntity.builder().indication(indication).createdAt(createdAt).build();
+  private static EligibilityAssessmentEntity result(Boolean indication, Instant createdAt) {
+    return EligibilityAssessmentEntity.builder().indication(indication).createdAt(createdAt).build();
   }
 
   private static ApplicationEntity applicationWithResults(
-      String ufn, Instant modifiedAt, EligibilityResultEntity... results) {
+      String ufn, Instant modifiedAt, EligibilityAssessmentEntity... results) {
     final ApplicationEntity application =
         ApplicationEntityGenerator.createWithId(
             builder ->
@@ -238,7 +238,7 @@ class DataRetentionDateResolverTaskTests {
                     .ufn(ufn)
                     .dataRetentionDate(null)
                     .providerOfficeCode(OFFICE_CODE)
-                    .eligibilityResults(Set.of(results)));
+                    .eligibilityAssessments(Set.of(results)));
     application.setModifiedAt(modifiedAt);
     return application;
   }

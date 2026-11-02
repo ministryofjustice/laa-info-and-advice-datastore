@@ -25,7 +25,7 @@ public abstract class JsonNodeMapper {
   /**
    * Converts a {@link JsonNode} to the typed {@link EligibilityData} means-assessment schema.
    * Declared explicitly so MapStruct uses it (rather than generating an empty bean) when mapping
-   * {@code EligibilityResultEntity.data} onto {@code EligibilityResult.data}. Unknown properties
+   * {@code EligibilityAssessmentEntity.data} onto {@code EligibilityAssessment.data}. Unknown properties
    * are ignored (rather than failing) since older/legacy stored payloads may not yet match every
    * field of the current schema.
    */

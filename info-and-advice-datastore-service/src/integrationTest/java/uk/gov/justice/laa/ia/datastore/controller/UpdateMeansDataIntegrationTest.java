@@ -12,7 +12,7 @@ import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
@@ -61,16 +61,16 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     // Assert
     clearCache();
     final JsonNode expectedResult = objectMapper.readTree("{\"status\": \"ELIGIBLE\"}");
-    final List<EligibilityResultEntity> eligibilityResults =
-        eligibilityResultRepository.findAll().stream()
+    final List<EligibilityAssessmentEntity> eligibilityAssessments =
+        eligibilityAssessmentRepository.findAll().stream()
             .filter(result -> result.getApplicationId().equals(applicationId))
             .toList();
 
-    assertThat(eligibilityResults).hasSize(1);
-    assertThat(eligibilityResults.getFirst().getData().get("client_age").asText())
+    assertThat(eligibilityAssessments).hasSize(1);
+    assertThat(eligibilityAssessments.getFirst().getData().get("client_age").asText())
         .isEqualTo("18-24");
-    assertThat(eligibilityResults.getFirst().getResultJson()).isEqualTo(expectedResult);
-    assertThat(eligibilityResults.getFirst().getCreatedAt()).isNotNull();
+    assertThat(eligibilityAssessments.getFirst().getResultJson()).isEqualTo(expectedResult);
+    assertThat(eligibilityAssessments.getFirst().getCreatedAt()).isNotNull();
   }
 
   @Test
@@ -192,7 +192,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
     clearCache();
     assertThat(
-            eligibilityResultRepository.findAll().stream()
+            eligibilityAssessmentRepository.findAll().stream()
                 .anyMatch(result -> result.getApplicationId().equals(applicationId)))
         .isFalse();
   }

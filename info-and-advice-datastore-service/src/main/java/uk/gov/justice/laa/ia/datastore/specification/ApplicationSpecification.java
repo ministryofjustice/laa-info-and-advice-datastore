@@ -142,7 +142,7 @@ public class ApplicationSpecification {
     }
     final Boolean indication = eligibilityIndication == EligibilityIndication.ELIGIBLE;
     return (root, query, criteriaBuilder) -> {
-      var eligibilityJoin = root.join("eligibilityResults", JoinType.LEFT);
+      var eligibilityJoin = root.join("eligibilityAssessments", JoinType.LEFT);
       query.distinct(true);
       return criteriaBuilder.equal(eligibilityJoin.get("indication"), indication);
     };

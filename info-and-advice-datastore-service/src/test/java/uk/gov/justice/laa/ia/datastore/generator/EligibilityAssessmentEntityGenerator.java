@@ -6,28 +6,28 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 
-/** Generator for EligibilityResultEntity. */
+/** Generator for EligibilityAssessmentEntity. */
 @UtilityClass
-public class EligibilityResultEntityGenerator {
+public class EligibilityAssessmentEntityGenerator {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   /**
-   * Create an EligibilityResultEntity without an ID.
+   * Create an EligibilityAssessmentEntity without an ID.
    *
    * @param customizer consumer to customize the entity
    * @return the entity
    */
-  public static EligibilityResultEntity createWithoutId(
-      Consumer<EligibilityResultEntity.EligibilityResultEntityBuilder> customizer) {
+  public static EligibilityAssessmentEntity createWithoutId(
+      Consumer<EligibilityAssessmentEntity.EligibilityAssessmentEntityBuilder> customizer) {
 
     JsonNode dummyJson = objectMapper.createObjectNode().put("test", "data");
     JsonNode dummyData = objectMapper.createObjectNode().put("client_age", "18-24");
 
     var builder =
-        EligibilityResultEntity.builder()
+        EligibilityAssessmentEntity.builder()
             .applicationId(UUID.randomUUID())
             .data(dummyData)
             .resultJson(dummyJson);
@@ -39,13 +39,13 @@ public class EligibilityResultEntityGenerator {
     return builder.build();
   }
 
-  /** Create a basic EligibilityResultEntity. */
-  public static EligibilityResultEntity createEligibilityResult(
+  /** Create a basic EligibilityAssessmentEntity. */
+  public static EligibilityAssessmentEntity createEligibilityAssessment(
       UUID applicationId, String status, int score) {
     JsonNode resultJson =
         new ObjectMapper().createObjectNode().put("status", status).put("score", score);
     JsonNode data = new ObjectMapper().createObjectNode().put("client_age", "18-24");
-    return EligibilityResultEntityGenerator.createWithoutId(
+    return EligibilityAssessmentEntityGenerator.createWithoutId(
         builder -> {
           builder
               .applicationId(applicationId)

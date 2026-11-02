@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EligibilityAssessmentEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
@@ -70,8 +70,8 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
                     .providerFirmCode(FIRM_CODE)
                     .providerOfficeCode(PROVIDER_OFFICE_CODE));
     ApplicationEntity savedEntity = applicationRepository.save(entity);
-    eligibilityResultRepository.saveAndFlush(
-        EligibilityResultEntityGenerator.createEligibilityResult(
+    eligibilityAssessmentRepository.saveAndFlush(
+        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
             savedEntity.getId(), "ELIGIBLE", 100));
 
     clearCache();
