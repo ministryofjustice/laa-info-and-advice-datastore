@@ -44,6 +44,7 @@ tests {
     const application = getApplicationRes.data;
     expect(application.eligibilityResult.data.client_age).to.equal("18-24");
     expect(application.eligibilityResult.result.status).to.equal("ELIGIBLE");
+    expect(application.eligibilityAssessment).to.deep.equal(application.eligibilityResult);
   });
 }
 

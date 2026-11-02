@@ -91,6 +91,8 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(eligibilityResult.get("data").get("client_age").asText()).isEqualTo("18-24");
     assertThat(eligibilityResult.get("result"))
         .isEqualTo(objectMapper.readTree("{\"status\":\"ELIGIBLE\",\"score\":100}"));
+    assertThat(objectMapper.readTree(responseBody).get("eligibilityAssessment"))
+        .isEqualTo(eligibilityResult);
   }
 
   @Test

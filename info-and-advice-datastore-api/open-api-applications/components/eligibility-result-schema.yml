@@ -1,0 +1,471 @@
+# Raw CFE v6 response saved by CCQ as session_data.api_response.
+# Sources:
+# https://github.com/ministryofjustice/cfe-civil/blob/main/swagger/v6/swagger.yaml
+# https://github.com/ministryofjustice/cfe-civil/tree/main/app/services/decorators/v6
+components:
+  schemas:
+    EligibilityResult:
+      type: object
+      description: Raw CFE v6 assessment response persisted by CCQ.
+      properties:
+        version:
+          type: string
+          description: CFE API version used for the assessment.
+        timestamp:
+          type: string
+          description: Timestamp returned by CFE.
+        success:
+          type: boolean
+        result_summary:
+          $ref: '#/components/schemas/EligibilityResultSummary'
+        assessment:
+          $ref: '#/components/schemas/EligibilityResultAssessment'
+
+    EligibilityResultSummary:
+      type: object
+      properties:
+        overall_result:
+          type: object
+          properties:
+            result:
+              type: string
+              enum: [eligible, ineligible, contribution_required, partially_eligible]
+            capital_contribution:
+              type: number
+            income_contribution:
+              type: number
+            proceeding_types:
+              type: array
+              items:
+                $ref: '#/components/schemas/EligibilityResultProceedingType'
+        gross_income:
+          $ref: '#/components/schemas/EligibilityResultGrossIncomeSummary'
+        partner_gross_income:
+          $ref: '#/components/schemas/EligibilityResultGrossIncomeSummary'
+        disposable_income:
+          $ref: '#/components/schemas/EligibilityResultDisposableIncomeSummary'
+        partner_disposable_income:
+          $ref: '#/components/schemas/EligibilityResultDisposableIncomeSummary'
+        capital:
+          $ref: '#/components/schemas/EligibilityResultCapitalSummary'
+        partner_capital:
+          $ref: '#/components/schemas/EligibilityResultCapitalSummary'
+
+    EligibilityResultProceedingType:
+      type: object
+      properties:
+        ccms_code:
+          type: string
+        client_involvement_type:
+          type: string
+        upper_threshold:
+          type: number
+        lower_threshold:
+          type: number
+        result:
+          type: string
+          enum: [eligible, ineligible, contribution_required, not_yet_known, not_calculated]
+
+    EligibilityResultGrossIncomeSummary:
+      type: object
+      properties:
+        total_gross_income:
+          type: number
+        combined_total_gross_income:
+          type: number
+        proceeding_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/EligibilityResultProceedingType'
+
+    EligibilityResultDisposableIncomeSummary:
+      type: object
+      properties:
+        employment_income:
+          type: object
+          properties:
+            gross_income:
+              type: number
+            benefits_in_kind:
+              type: number
+            tax:
+              type: number
+            national_insurance:
+              type: number
+            prisoner_levy:
+              type: number
+            student_debt_repayment:
+              type: number
+            fixed_employment_deduction:
+              type: number
+            net_employment_income:
+              type: number
+        housing_costs:
+          type: number
+        gross_housing_costs:
+          type: number
+        net_housing_costs:
+          type: number
+        housing_benefit:
+          type: number
+        allowed_housing_costs:
+          type: number
+        maintenance_allowance:
+          type: number
+        dependant_allowance_under_16:
+          type: number
+        dependant_allowance_over_16:
+          type: number
+        dependant_allowance:
+          type: number
+        total_outgoings_and_allowances:
+          type: number
+        total_disposable_income:
+          type: number
+        income_contribution:
+          type: number
+        partner_allowance:
+          type: number
+        lone_parent_allowance:
+          type: number
+        combined_total_outgoings_and_allowances:
+          type: number
+        combined_total_disposable_income:
+          type: number
+        proceeding_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/EligibilityResultProceedingType'
+
+    EligibilityResultCapitalSummary:
+      type: object
+      properties:
+        total_liquid:
+          type: number
+        total_non_liquid:
+          type: number
+        total_vehicle:
+          type: number
+        total_property:
+          type: number
+        total_capital:
+          type: number
+        total_capital_with_smod:
+          type: number
+        total_mortgage_allowance:
+          type: number
+        subject_matter_of_dispute_disregard:
+          type: number
+        assessed_capital:
+          type: number
+        disputed_non_property_disregard:
+          type: number
+        pensioner_disregard_applied:
+          type: number
+        pensioner_capital_disregard:
+          type: number
+        capital_contribution:
+          type: number
+        combined_disputed_capital:
+          type: number
+        combined_non_disputed_capital:
+          type: number
+        combined_assessed_capital:
+          type: number
+        proceeding_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/EligibilityResultProceedingType'
+
+    EligibilityResultAssessment:
+      type: object
+      properties:
+        id:
+          type: string
+        client_reference_id:
+          type: string
+          nullable: true
+        submission_date:
+          type: string
+          format: date
+        level_of_help:
+          type: string
+          enum: [certificated, controlled]
+        applicant:
+          type: object
+          nullable: true
+          properties:
+            date_of_birth:
+              type: string
+              format: date
+            involvement_type:
+              type: string
+              nullable: true
+            employed:
+              type: boolean
+              nullable: true
+            has_partner_opponent:
+              type: boolean
+            receives_qualifying_benefit:
+              type: boolean
+        gross_income:
+          $ref: '#/components/schemas/EligibilityResultGrossIncome'
+        partner_gross_income:
+          $ref: '#/components/schemas/EligibilityResultGrossIncome'
+        disposable_income:
+          $ref: '#/components/schemas/EligibilityResultDisposableIncome'
+        partner_disposable_income:
+          $ref: '#/components/schemas/EligibilityResultDisposableIncome'
+        capital:
+          $ref: '#/components/schemas/EligibilityResultCapital'
+        partner_capital:
+          $ref: '#/components/schemas/EligibilityResultCapital'
+        remarks:
+          type: object
+          description: CFE remarks grouped by applicant, category and issue.
+          additionalProperties: true
+
+    EligibilityResultGrossIncome:
+      type: object
+      properties:
+        employment_income:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              payments:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EligibilityResultEmploymentPayment'
+        employment_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/EligibilityResultEmploymentDetails'
+        self_employment_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/EligibilityResultEmploymentDetails'
+        irregular_income:
+          type: object
+          properties:
+            monthly_equivalents:
+              type: object
+              properties:
+                student_loan:
+                  type: number
+                unspecified_source:
+                  type: number
+        state_benefits:
+          type: object
+          properties:
+            monthly_equivalents:
+              type: object
+              properties:
+                all_sources:
+                  type: number
+                cash_transactions:
+                  type: number
+                bank_transactions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      monthly_value:
+                        type: number
+                      excluded_from_income_assessment:
+                        type: boolean
+        other_income:
+          type: object
+          properties:
+            monthly_equivalents:
+              type: object
+              properties:
+                all_sources:
+                  $ref: '#/components/schemas/EligibilityResultOtherIncome'
+                bank_transactions:
+                  $ref: '#/components/schemas/EligibilityResultOtherIncome'
+                cash_transactions:
+                  $ref: '#/components/schemas/EligibilityResultOtherIncome'
+
+    EligibilityResultEmploymentDetails:
+      type: object
+      properties:
+        client_reference:
+          type: string
+        monthly_income:
+          type: object
+          properties:
+            gross:
+              type: number
+            tax:
+              type: number
+            national_insurance:
+              type: number
+            prisoner_levy:
+              type: number
+            student_debt_repayment:
+              type: number
+            benefits_in_kind:
+              type: number
+
+    EligibilityResultEmploymentPayment:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        gross:
+          type: number
+        benefits_in_kind:
+          type: number
+        tax:
+          type: number
+        national_insurance:
+          type: number
+        prisoner_levy:
+          type: number
+        student_debt_repayment:
+          type: number
+        net_employment_income:
+          type: number
+
+    EligibilityResultOtherIncome:
+      type: object
+      properties:
+        friends_or_family:
+          type: number
+        maintenance_in:
+          type: number
+        property_or_lodger:
+          type: number
+        pension:
+          type: number
+
+    EligibilityResultDisposableIncome:
+      type: object
+      properties:
+        monthly_equivalents:
+          type: object
+          properties:
+            all_sources:
+              $ref: '#/components/schemas/EligibilityResultOutgoings'
+            bank_transactions:
+              $ref: '#/components/schemas/EligibilityResultOutgoings'
+            cash_transactions:
+              $ref: '#/components/schemas/EligibilityResultOutgoings'
+        childcare_allowance:
+          type: number
+        deductions:
+          type: object
+          properties:
+            dependants_allowance:
+              type: number
+            disregarded_state_benefits:
+              type: number
+
+    EligibilityResultOutgoings:
+      type: object
+      properties:
+        child_care:
+          type: number
+        rent_or_mortgage:
+          type: number
+        maintenance_out:
+          type: number
+        legal_aid:
+          type: number
+        pension_contribution:
+          type: number
+        council_tax:
+          type: number
+        priority_debt_repayment:
+          type: number
+
+    EligibilityResultCapital:
+      type: object
+      properties:
+        capital_items:
+          type: object
+          properties:
+            liquid:
+              type: array
+              items:
+                $ref: '#/components/schemas/EligibilityResultAsset'
+            non_liquid:
+              type: array
+              items:
+                $ref: '#/components/schemas/EligibilityResultAsset'
+            vehicles:
+              type: array
+              items:
+                type: object
+                properties:
+                  value:
+                    type: number
+                  loan_amount_outstanding:
+                    type: number
+                  date_of_purchase:
+                    type: string
+                    format: date
+                  in_regular_use:
+                    type: boolean
+                  included_in_assessment:
+                    type: boolean
+                  disregards_and_deductions:
+                    type: number
+                  assessed_value:
+                    type: number
+            properties:
+              type: object
+              properties:
+                main_home:
+                  nullable: true
+                  allOf:
+                    - $ref: '#/components/schemas/EligibilityResultProperty'
+                additional_properties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EligibilityResultProperty'
+
+    EligibilityResultAsset:
+      type: object
+      properties:
+        description:
+          type: string
+        value:
+          type: number
+
+    EligibilityResultProperty:
+      type: object
+      properties:
+        value:
+          type: number
+        outstanding_mortgage:
+          type: number
+        percentage_owned:
+          type: number
+        main_home:
+          type: boolean
+        shared_with_housing_assoc:
+          type: boolean
+        transaction_allowance:
+          type: number
+        allowable_outstanding_mortgage:
+          type: number
+        net_value:
+          type: number
+        net_equity:
+          type: number
+        smod_allowance:
+          type: number
+        main_home_equity_disregard:
+          type: number
+        assessed_equity:
+          type: number
+        subject_matter_of_dispute:
+          type: boolean
+          nullable: true

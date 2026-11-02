@@ -134,10 +134,14 @@ public class ApplicationMapperTest {
         application.getClientDetails().getAddress().getAddressLine1(),
         mappedModel.getClient().getAddress().getAddressLine1());
     assertEligibiltyEquals(
-        application.getMostRecentEligibilityAssessment(), mappedModel.getEligibilityResult());
-    assertEligibiltyEquals(
         application.getMostRecentEligibilityAssessment(), mappedModel.getEligibilityAssessment());
-    assertEquals(mappedModel.getEligibilityResult(), mappedModel.getEligibilityAssessment());
+    assertNotNull(mappedModel.getEligibilityResult());
+    assertEquals(
+        mappedModel.getEligibilityAssessment().getData(),
+        mappedModel.getEligibilityResult().getData());
+    assertEquals(
+        objectMapper.valueToTree(mappedModel.getEligibilityAssessment().getResult()),
+        objectMapper.valueToTree(mappedModel.getEligibilityResult().getResult()));
     assertEquals(application.getEtag(), mappedModel.geteTag());
   }
 
