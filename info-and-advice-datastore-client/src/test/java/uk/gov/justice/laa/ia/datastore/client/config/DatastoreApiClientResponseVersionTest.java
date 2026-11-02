@@ -26,7 +26,9 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import uk.gov.justice.laa.ia.datastore.client.api.ApplicationApi;
 import uk.gov.justice.laa.ia.datastore.client.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.client.model.ApplicationResponses;
+import uk.gov.justice.laa.ia.datastore.client.model.CategoryOfLaw;
 import uk.gov.justice.laa.ia.datastore.client.model.CreateClientCommand;
+import uk.gov.justice.laa.ia.datastore.client.model.ProviderContractType;
 import uk.gov.justice.laa.ia.datastore.client.model.StartApplicationCommand;
 
 class DatastoreApiClientResponseVersionTest {
@@ -124,6 +126,8 @@ class DatastoreApiClientResponseVersionTest {
                     .noFixedAbode(false))
             .applicationType(StartApplicationCommand.ApplicationTypeEnum.RCW)
             .providerOfficeCode("office")
+            .providerContractType(ProviderContractType.FACE_TO_FACE)
+            .categoryOfLaw(CategoryOfLaw.FAMILY)
             .ufn("123456789");
 
     ApplicationResponse response =
@@ -134,7 +138,7 @@ class DatastoreApiClientResponseVersionTest {
         .isEqualTo(
             objectMapper.readTree(
                 """
-                {"client":{"firstName":"Jane","lastName":"Doe","dateOfBirth":[1990,1,1],"noFixedAbode":false},"applicationType":"RCW","providerOfficeCode":"office","ufn":"123456789"}
+                {"client":{"firstName":"Jane","lastName":"Doe","dateOfBirth":[1990,1,1],"noFixedAbode":false},"applicationType":"RCW","providerOfficeCode":"office","providerContractType":"face-to-face","categoryOfLaw":"family","ufn":"123456789"}
                 """));
   }
 

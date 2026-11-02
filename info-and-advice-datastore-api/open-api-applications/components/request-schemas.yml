@@ -16,6 +16,10 @@ components:
             - CLA
         providerOfficeCode:
           type: string
+        providerContractType:
+          $ref: './application-enums.yml#/components/schemas/ProviderContractType'
+        categoryOfLaw:
+          $ref: './application-enums.yml#/components/schemas/CategoryOfLaw'
         ufn:
           type: string
           maxLength: 9

@@ -54,6 +54,10 @@ components:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ClientDeclarationStatus'
     ApplicationState:
       $ref: './open-api-applications/components/response-schemas.yml#/components/schemas/ApplicationState'
+    ProviderContractType:
+      $ref: './open-api-applications/components/application-enums.yml#/components/schemas/ProviderContractType'
+    CategoryOfLaw:
+      $ref: './open-api-applications/components/application-enums.yml#/components/schemas/CategoryOfLaw'
     StartApplicationCommand:
       $ref: './open-api-applications/components/request-schemas.yml#/components/schemas/StartApplicationCommand'
     DeclarationCommand:

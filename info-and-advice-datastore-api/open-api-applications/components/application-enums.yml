@@ -1,0 +1,10 @@
+components:
+  schemas:
+    ProviderContractType:
+      type: string
+      enum:
+        - face-to-face
+    CategoryOfLaw:
+      type: string
+      enum:
+        - family

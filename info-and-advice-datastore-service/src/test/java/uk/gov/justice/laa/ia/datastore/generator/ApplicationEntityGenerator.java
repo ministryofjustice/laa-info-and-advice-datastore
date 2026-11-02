@@ -5,6 +5,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.CategoryOfLaw;
+import uk.gov.justice.laa.ia.datastore.model.ProviderContractType;
 
 /** Generator for setting for an ApplicationEntity for tests. */
 public class ApplicationEntityGenerator {
@@ -40,6 +42,8 @@ public class ApplicationEntityGenerator {
             .applicationState(ApplicationState.DRAFT)
             .referenceNumber("L-56C-FTQ")
             .applicationType("RCW")
+            .providerContractType(ProviderContractType.FACE_TO_FACE)
+            .categoryOfLaw(CategoryOfLaw.FAMILY)
             .createdBy("Joe Bloggs")
             .modifiedBy("Joe Bloggs");
     if (customizer != null) {

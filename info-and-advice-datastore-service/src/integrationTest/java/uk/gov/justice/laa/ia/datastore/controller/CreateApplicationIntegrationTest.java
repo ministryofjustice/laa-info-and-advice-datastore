@@ -43,6 +43,8 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.referenceNumber").exists())
             .andExpect(jsonPath("$.providerOfficeCode").exists())
+            .andExpect(jsonPath("$.providerContractType").value("face-to-face"))
+            .andExpect(jsonPath("$.categoryOfLaw").value("family"))
             .andExpect(jsonPath("$.client").exists())
             .andExpect(jsonPath("$.client.firstName").exists())
             .andExpect(jsonPath("$.client.lastName").exists())
@@ -93,6 +95,8 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
     assertThat(savedEntity.getReferenceNumber()).matches("L-\\w{3}-\\w{3}");
     assertThat(savedEntity.getCreatedBy()).isEqualTo("SYSTEM");
     assertThat(savedEntity.getProviderOfficeCode()).isEqualTo(command.getProviderOfficeCode());
+    assertThat(savedEntity.getProviderContractType().name()).isEqualTo("FACE_TO_FACE");
+    assertThat(savedEntity.getCategoryOfLaw().name()).isEqualTo("FAMILY");
   }
 
   @Test
