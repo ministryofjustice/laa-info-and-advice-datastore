@@ -199,8 +199,7 @@ components:
         data:
           $ref: 'eligibility-data-schema.yml#/components/schemas/EligibilityData'
         result:
-          type: object
-          description: The means assessment calculation result
+          $ref: 'eligibility-result-schema.yml#/components/schemas/EligibilityCalculationResult'
 
     ApiError:
       type: object

@@ -17,7 +17,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/** Entity to represent eligibility results. */
+/** Entity to represent an eligibility assessment's data and calculation result. */
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor

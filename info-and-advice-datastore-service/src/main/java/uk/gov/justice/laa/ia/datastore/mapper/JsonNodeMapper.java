@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityCalculationResult;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 
 /**
@@ -37,5 +38,16 @@ public abstract class JsonNodeMapper {
         .copy()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .convertValue(node, EligibilityData.class);
+  }
+
+  /** Converts saved CFE JSON to the typed result, ignoring legacy fields as with means data. */
+  public EligibilityCalculationResult toEligibilityCalculationResult(JsonNode node) {
+    if (node == null) {
+      return null;
+    }
+    return objectMapper
+        .copy()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .convertValue(node, EligibilityCalculationResult.class);
   }
 }

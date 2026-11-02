@@ -339,11 +339,11 @@ public class ApplicationServiceTest {
             .modifiedAt(originalModifiedAt)
             .build();
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
-    final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final Map<String, Object> meansResult = Map.of("success", true);
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode dataNode = new ObjectMapper().createObjectNode().put("question", "answer");
-    final ObjectNode resultNode = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final ObjectNode resultNode = new ObjectMapper().createObjectNode().put("success", true);
     final String user = "TEST_USER";
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
@@ -662,7 +662,7 @@ public class ApplicationServiceTest {
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
-    final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final Map<String, Object> meansResult = Map.of("success", true);
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode objectNode = new ObjectMapper().createObjectNode();
@@ -1158,18 +1158,19 @@ public class ApplicationServiceTest {
     final ObjectMapper om = new ObjectMapper();
     final ObjectNode resultNode = om.createObjectNode();
     resultNode.putObject("result_summary").putObject("overall_result").put("result", "eligible");
+    final Map<String, Object> meansResult = Map.of("success", true);
 
     final ObjectNode dataNode = om.createObjectNode().put("question", "answer");
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
     final UpdateMeansDataCommand command =
-        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(resultNode).build();
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(objectMapper.valueToTree(data)).thenReturn(dataNode);
-    when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+    when(objectMapper.valueToTree(meansResult)).thenReturn(resultNode);
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
@@ -1198,18 +1199,19 @@ public class ApplicationServiceTest {
     final ObjectMapper om = new ObjectMapper();
     final ObjectNode resultNode = om.createObjectNode();
     resultNode.putObject("result_summary").putObject("overall_result").put("result", "ineligible");
+    final Map<String, Object> meansResult = Map.of("success", true);
 
     final ObjectNode dataNode = om.createObjectNode().put("question", "answer");
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
     final UpdateMeansDataCommand command =
-        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(resultNode).build();
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(objectMapper.valueToTree(data)).thenReturn(dataNode);
-    when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+    when(objectMapper.valueToTree(meansResult)).thenReturn(resultNode);
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act

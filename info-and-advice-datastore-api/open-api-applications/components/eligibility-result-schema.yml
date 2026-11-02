@@ -4,7 +4,7 @@
 # https://github.com/ministryofjustice/cfe-civil/tree/main/app/services/decorators/v6
 components:
   schemas:
-    EligibilityResult:
+    EligibilityCalculationResult:
       type: object
       description: Raw CFE v6 assessment response persisted by CCQ.
       properties:

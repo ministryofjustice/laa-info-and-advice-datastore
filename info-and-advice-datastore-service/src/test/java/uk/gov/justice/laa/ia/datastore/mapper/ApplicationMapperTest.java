@@ -96,7 +96,7 @@ public class ApplicationMapperTest {
               builder.eligibilityAssessments(
                   Set.of(
                       EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
-                          UUID.randomUUID(), "ELIGIBLE", 100)));
+                          UUID.randomUUID())));
               builder.etag(1969);
               builder
                   .providerContractType(ProviderContractType.FACE_TO_FACE)
@@ -140,7 +140,7 @@ public class ApplicationMapperTest {
         mappedModel.getEligibilityAssessment().getData(),
         mappedModel.getEligibilityResult().getData());
     assertEquals(
-        objectMapper.valueToTree(mappedModel.getEligibilityAssessment().getResult()),
+        application.getMostRecentEligibilityAssessment().getResultJson(),
         objectMapper.valueToTree(mappedModel.getEligibilityResult().getResult()));
     assertEquals(application.getEtag(), mappedModel.geteTag());
   }
@@ -211,7 +211,8 @@ public class ApplicationMapperTest {
       EligibilityAssessmentEntity expected, EligibilityAssessment model) {
     assertEquals(
         expected.getData().get("client_age").asText(), model.getData().getClientAge().get());
-    assertEquals(expected.getResultJson(), objectMapper.valueToTree(model.getResult()));
+    assertEquals(
+        expected.getResultJson().get("success").asBoolean(), model.getResult().getSuccess());
   }
 
   @Test

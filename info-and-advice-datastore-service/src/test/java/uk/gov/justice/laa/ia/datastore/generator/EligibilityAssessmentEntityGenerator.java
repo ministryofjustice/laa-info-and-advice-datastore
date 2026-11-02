@@ -23,14 +23,13 @@ public class EligibilityAssessmentEntityGenerator {
   public static EligibilityAssessmentEntity createWithoutId(
       Consumer<EligibilityAssessmentEntity.EligibilityAssessmentEntityBuilder> customizer) {
 
-    JsonNode dummyJson = objectMapper.createObjectNode().put("test", "data");
+    JsonNode dummyJson = objectMapper.createObjectNode().put("success", true);
     JsonNode dummyData = objectMapper.createObjectNode().put("client_age", "18-24");
 
-    var builder =
-        EligibilityAssessmentEntity.builder()
-            .applicationId(UUID.randomUUID())
-            .data(dummyData)
-            .resultJson(dummyJson);
+    var builder = EligibilityAssessmentEntity.builder()
+        .applicationId(UUID.randomUUID())
+        .data(dummyData)
+        .resultJson(dummyJson);
 
     if (customizer != null) {
       customizer.accept(builder);
@@ -40,19 +39,10 @@ public class EligibilityAssessmentEntityGenerator {
   }
 
   /** Create a basic EligibilityAssessmentEntity. */
-  public static EligibilityAssessmentEntity createEligibilityAssessment(
-      UUID applicationId, String status, int score) {
-    JsonNode resultJson =
-        new ObjectMapper().createObjectNode().put("status", status).put("score", score);
-    JsonNode data = new ObjectMapper().createObjectNode().put("client_age", "18-24");
+  public static EligibilityAssessmentEntity createEligibilityAssessment(UUID applicationId) {
     return EligibilityAssessmentEntityGenerator.createWithoutId(
         builder -> {
-          builder
-              .applicationId(applicationId)
-              .data(data)
-              .resultJson(resultJson)
-              .createdAt(Instant.now())
-              .createdBy("SYSTEM");
+          builder.applicationId(applicationId).createdAt(Instant.now()).createdBy("SYSTEM");
         });
   }
 }

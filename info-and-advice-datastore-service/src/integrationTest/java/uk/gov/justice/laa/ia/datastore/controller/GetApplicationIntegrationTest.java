@@ -71,8 +71,12 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
                     .providerOfficeCode(PROVIDER_OFFICE_CODE));
     ApplicationEntity savedEntity = applicationRepository.save(entity);
     eligibilityAssessmentRepository.saveAndFlush(
-        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
-            savedEntity.getId(), "ELIGIBLE", 100));
+        EligibilityAssessmentEntityGenerator.createWithoutId(
+            builder ->
+                builder
+                    .applicationId(savedEntity.getId())
+                    .createdBy("SYSTEM")
+                    .resultJson(objectMapper.createObjectNode().put("success", true))));
 
     clearCache();
 
@@ -90,9 +94,7 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
     JsonNode eligibilityResult = objectMapper.readTree(responseBody).get("eligibilityResult");
     assertThat(eligibilityResult.get("data").get("client_age").asText()).isEqualTo("18-24");
     assertThat(eligibilityResult.get("result"))
-        .isEqualTo(objectMapper.readTree("{\"status\":\"ELIGIBLE\",\"score\":100}"));
-    assertThat(objectMapper.readTree(responseBody).get("eligibilityAssessment"))
-        .isEqualTo(eligibilityResult);
+        .isEqualTo(objectMapper.readTree("{\"success\":true}"));
   }
 
   @Test

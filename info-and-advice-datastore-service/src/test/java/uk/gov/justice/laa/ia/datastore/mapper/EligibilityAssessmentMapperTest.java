@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.mapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,14 +24,16 @@ public class EligibilityAssessmentMapperTest {
   @Autowired private ObjectMapper objectMapper;
 
   @Test
-  void toEligibilityAssessment_shouldMapAllProperties() {
-    final var entity = EligibilityAssessmentEntityGenerator.createWithoutId(null);
+  void toEligibility_shouldMapAllProperties() {
+    final var entity =
+        EligibilityAssessmentEntityGenerator.createWithoutId(
+            builder -> builder.resultJson(objectMapper.createObjectNode().put("success", false)));
 
     final var mappedModel = eligibilityAssessmentMapper.toEligibilityAssessment(entity);
 
     assertNotNull(mappedModel.getData());
     assertEquals(
         entity.getData().get("client_age").asText(), mappedModel.getData().getClientAge().get());
-    assertEquals(entity.getResultJson(), objectMapper.valueToTree(mappedModel.getResult()));
+    assertFalse(mappedModel.getResult().getSuccess());
   }
 }

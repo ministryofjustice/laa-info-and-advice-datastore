@@ -17,7 +17,11 @@ body:json {
       "client_age": "18-24"
     },
     "result": {
-      "status": "ELIGIBLE"
+      "success": true,
+      "result_summary": {
+        "overall_result": {"result": "eligible"}
+      },
+      "legacy_answer": "retained"
     }
   }
 }
@@ -43,8 +47,11 @@ tests {
     const getApplicationRes = await bru.runRequest("Applications/Get Application");
     const application = getApplicationRes.data;
     expect(application.eligibilityResult.data.client_age).to.equal("18-24");
-    expect(application.eligibilityResult.result.status).to.equal("ELIGIBLE");
-    expect(application.eligibilityAssessment).to.deep.equal(application.eligibilityResult);
+    expect(application.eligibilityResult.result.legacy_answer).to.equal("retained");
+    expect(application.eligibilityAssessment.data).to.deep.equal(application.eligibilityResult.data);
+    expect(application.eligibilityAssessment.result.success).to.equal(true);
+    expect(application.eligibilityAssessment.result.result_summary.overall_result.result).to.equal("eligible");
+    expect(application.eligibilityAssessment.result).not.to.have.property("legacy_answer");
   });
 }
 

@@ -77,4 +77,38 @@ public class JsonNodeMapperTest {
   void toEligibilityData_whenNull_shouldReturnNull() {
     assertNull(sut.toEligibilityData(null));
   }
+
+  @Test
+  void toEligibilityCalculationResult_shouldConvertKnownFieldsAndIgnoreUnknownFields()
+      throws Exception {
+    final JsonNode node =
+        objectMapper.readTree(
+            """
+            {
+              "success": false,
+              "result_summary": {
+                "gross_income": {"total_gross_income": 500.25},
+                "capital": {"combined_assessed_capital": 0, "proceeding_types": []}
+              },
+              "assessment": {"client_reference_id": null, "applicant": {"employed": null}},
+              "legacy_answer": "ignored"
+            }
+            """);
+
+    final var result = sut.toEligibilityCalculationResult(node);
+
+    assertThat(result.getSuccess()).isFalse();
+    assertThat(result.getResultSummary().getGrossIncome().getTotalGrossIncome())
+        .isEqualByComparingTo("500.25");
+    assertThat(result.getResultSummary().getCapital().getCombinedAssessedCapital()).isZero();
+    assertThat(result.getResultSummary().getCapital().getProceedingTypes()).isEmpty();
+    assertThat(result.getAssessment().getClientReferenceId().isPresent()).isTrue();
+    assertThat(result.getAssessment().getClientReferenceId().get()).isNull();
+    assertThat(result.getAssessment().getApplicant().get().getEmployed().get()).isNull();
+  }
+
+  @Test
+  void toEligibilityCalculationResult_whenNull_shouldReturnNull() {
+    assertNull(sut.toEligibilityCalculationResult(null));
+  }
 }

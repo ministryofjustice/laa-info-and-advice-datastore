@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
@@ -21,8 +20,6 @@ import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBu
 /** Integration test for updating means data on an application. */
 @ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
 public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
   void shouldUpdateMeansDataSuccessfully() throws Exception {
@@ -44,7 +41,29 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
         {
           "eTag": 0,
           "data": {"client_age": "18-24"},
-          "result": {"status": "ELIGIBLE"}
+          "result": {
+            "legacy_answer": "retained",
+            "version": "6",
+            "success": true,
+            "result_summary": {
+              "overall_result": {"result": "eligible"},
+              "gross_income": {"total_gross_income": 500.25},
+              "capital": {"combined_assessed_capital": 0, "proceeding_types": []}
+            },
+            "assessment": {
+              "submission_date": "2026-01-01",
+              "client_reference_id": null,
+              "applicant": {"employed": null},
+              "gross_income": {
+                "employment_income": [],
+                "self_employment_details": [
+                  {"monthly_income": {"gross": 500.25, "tax": -25}}
+                ]
+              },
+              "capital": {"capital_items": {"properties": {"main_home": null}}},
+              "remarks": {}
+            }
+          }
         }
         """;
 
@@ -60,7 +79,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
 
     // Assert
     clearCache();
-    final JsonNode expectedResult = objectMapper.readTree("{\"status\": \"ELIGIBLE\"}");
+    final JsonNode expectedResult = objectMapper.readTree(payload).get("result");
     final List<EligibilityAssessmentEntity> eligibilityAssessments =
         eligibilityAssessmentRepository.findAll().stream()
             .filter(result -> result.getApplicationId().equals(applicationId))
@@ -70,6 +89,7 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
     assertThat(eligibilityAssessments.getFirst().getData().get("client_age").asText())
         .isEqualTo("18-24");
     assertThat(eligibilityAssessments.getFirst().getResultJson()).isEqualTo(expectedResult);
+    assertThat(eligibilityAssessments.getFirst().getIndication()).isTrue();
     assertThat(eligibilityAssessments.getFirst().getCreatedAt()).isNotNull();
   }
 

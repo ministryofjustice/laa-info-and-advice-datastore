@@ -31,8 +31,7 @@ public class EligibilityAssessmentRepositoryIntegrationTest extends BaseIntegrat
     ApplicationEntity savedApplication = applicationRepository.saveAndFlush(application);
     // Arrange: Create eligibility result
     EligibilityAssessmentEntity entity =
-        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
-            savedApplication.getId(), "ELIGIBLE", 100);
+        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(savedApplication.getId());
 
     // Act
     EligibilityAssessmentEntity savedEntity = eligibilityAssessmentRepository.saveAndFlush(entity);
@@ -63,11 +62,9 @@ public class EligibilityAssessmentRepositoryIntegrationTest extends BaseIntegrat
 
     // Arrange: Create multiple eligibility results
     EligibilityAssessmentEntity entity1 =
-        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
-            savedApplication.getId(), "ELIGIBLE", 100);
+        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(savedApplication.getId());
     EligibilityAssessmentEntity entity2 =
-        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
-            savedApplication.getId(), "INELIGIBLE", 50);
+        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(savedApplication.getId());
 
     eligibilityAssessmentRepository.saveAndFlush(entity1);
     eligibilityAssessmentRepository.saveAndFlush(entity2);

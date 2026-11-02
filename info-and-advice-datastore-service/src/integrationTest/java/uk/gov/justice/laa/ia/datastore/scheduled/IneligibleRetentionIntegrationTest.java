@@ -53,7 +53,8 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
 
   @BeforeEach
   void setUpTasks() {
-    // The trigger resets modified_at on every update. Postgres DDL is transactional, so this is
+    // The trigger resets modified_at on every update. Postgres DDL is
+    // transactional, so this is
     // rolled back with the test transaction.
     entityManager
         .createNativeQuery(
@@ -182,8 +183,7 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
                         .applicationState(ApplicationState.COMPLETED)
                         .providerOfficeCode(ClaimsGatewayStub.FIXTURE_OFFICE_CODE)));
     final EligibilityAssessmentEntity result =
-        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
-            application.getId(), "RESULT", 1);
+        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(application.getId());
     result.setIndication(eligible);
     eligibilityAssessmentRepository.saveAndFlush(result);
     backdateModifiedAt(application.getId(), modifiedAt);

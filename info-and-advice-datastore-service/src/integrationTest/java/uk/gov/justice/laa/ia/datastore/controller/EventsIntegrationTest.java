@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         UpdateMeansDataCommand.builder()
             .eTag(0L)
             .data(EligibilityData.builder().clientAge("18-24").build())
-            .result(new ObjectMapper().createObjectNode().put("status", "ELIGIBLE"))
+            .result(Map.of("success", true))
             .build();
     final String payload = toJson(command);
 
