@@ -6,37 +6,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.web.servlet.ResultMatcher;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
-/** Integration test for CTRL-057 security response headers on the API. */
+/**
+ * Integration test for CTRL-057's {@code Referrer-Policy} header on the API. The other CTRL-057
+ * headers (nosniff, no-store) come from Spring Security's defaults and HSTS from the ingress, so
+ * are not asserted here.
+ */
 @ExtensionMethod(MockHttpServletRequestBuilderExtensions.class)
-public class SecurityHeadersIntegrationTest extends BaseIntegrationTest {
-
-  private static ResultMatcher[] securityHeaders() {
-    return new ResultMatcher[] {
-      header().string("X-Content-Type-Options", "nosniff"),
-      header().string("Referrer-Policy", "no-referrer"),
-      header().string("Cache-Control", "no-store"),
-      header().string("Pragma", "no-cache"),
-      header().exists("Strict-Transport-Security")
-    };
-  }
+public class ResponseHeadersIntegrationTest extends BaseIntegrationTest {
 
   @Test
-  void whenAuthenticatedRequestSucceeds_thenSecurityHeadersPresent() throws Exception {
+  void whenAuthenticatedRequestSucceeds_thenReferrerPolicyPresent() throws Exception {
     mockMvc
         .perform(get("/api/v0/applications").withBearerReadToken())
         .andExpect(status().isOk())
-        .andExpectAll(securityHeaders());
+        .andExpect(header().string("Referrer-Policy", "no-referrer"));
   }
 
   @Test
-  void whenRequestUnauthenticated_thenSecurityHeadersPresentOnError() throws Exception {
+  void whenRequestUnauthenticated_thenReferrerPolicyPresentOnError() throws Exception {
     mockMvc
         .perform(get("/api/v0/applications"))
         .andExpect(status().isUnauthorized())
-        .andExpectAll(securityHeaders());
+        .andExpect(header().string("Referrer-Policy", "no-referrer"));
   }
 }
