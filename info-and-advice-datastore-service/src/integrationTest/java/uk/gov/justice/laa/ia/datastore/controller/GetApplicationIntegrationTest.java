@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
@@ -62,6 +64,7 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldGetApplicationWithEligibilityResultAsProperJson() throws Exception {
     // Arrange
+    final JsonNode cfeResponse = EligibilityAssessmentEntityGenerator.createResultJson();
     ApplicationEntity entity =
         ApplicationEntityGenerator.createWithoutId(
             builder ->
@@ -76,7 +79,7 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
                 builder
                     .applicationId(savedEntity.getId())
                     .createdBy("SYSTEM")
-                    .resultJson(objectMapper.createObjectNode().put("success", true))));
+                    .resultJson(cfeResponse)));
 
     clearCache();
 
@@ -89,12 +92,18 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
             .getResponse()
             .getContentAsString();
 
-    // Assert: the raw JsonNode payloads must round-trip as plain JSON, not as
-    // serialized JsonNode bean properties (e.g. "object", "nodeType", "containerNode").
-    JsonNode eligibilityResult = objectMapper.readTree(responseBody).get("eligibilityResult");
-    assertThat(eligibilityResult.get("data").get("client_age").asText()).isEqualTo("18-24");
-    assertThat(eligibilityResult.get("result"))
-        .isEqualTo(objectMapper.readTree("{\"success\":true}"));
+    // Assert: the stored CFE result is returned unchanged in both the typed and legacy fields,
+    // as plain JSON rather than serialized JsonNode bean properties (e.g. "nodeType").
+    JsonNode response = objectMapper.readTree(responseBody);
+    assertThat(response.at("/eligibilityResult/data/client_age").asText()).isEqualTo("18-24");
+    JSONAssert.assertEquals(
+        cfeResponse.toString(),
+        response.at("/eligibilityAssessment/result").toString(),
+        JSONCompareMode.STRICT);
+    JSONAssert.assertEquals(
+        cfeResponse.toString(),
+        response.at("/eligibilityResult/result").toString(),
+        JSONCompareMode.STRICT);
   }
 
   @Test

@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
@@ -20,6 +19,7 @@ import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityCalculationResult;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
@@ -67,7 +67,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         UpdateMeansDataCommand.builder()
             .eTag(0L)
             .data(EligibilityData.builder().clientAge("18-24").build())
-            .result(Map.of("success", true))
+            .result(EligibilityCalculationResult.builder().success(true).build())
             .build();
     final String payload = toJson(command);
 

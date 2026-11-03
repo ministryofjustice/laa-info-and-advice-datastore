@@ -59,6 +59,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityCalculationResult;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 import uk.gov.justice.laa.ia.datastore.model.PatchAddressData;
 import uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData;
@@ -339,7 +340,8 @@ public class ApplicationServiceTest {
             .modifiedAt(originalModifiedAt)
             .build();
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
-    final Map<String, Object> meansResult = Map.of("success", true);
+    final EligibilityCalculationResult meansResult =
+        EligibilityCalculationResult.builder().success(true).build();
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode dataNode = new ObjectMapper().createObjectNode().put("question", "answer");
@@ -662,7 +664,8 @@ public class ApplicationServiceTest {
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
-    final Map<String, Object> meansResult = Map.of("success", true);
+    final EligibilityCalculationResult meansResult =
+        EligibilityCalculationResult.builder().success(true).build();
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode objectNode = new ObjectMapper().createObjectNode();
@@ -1158,7 +1161,8 @@ public class ApplicationServiceTest {
     final ObjectMapper om = new ObjectMapper();
     final ObjectNode resultNode = om.createObjectNode();
     resultNode.putObject("result_summary").putObject("overall_result").put("result", "eligible");
-    final Map<String, Object> meansResult = Map.of("success", true);
+    final EligibilityCalculationResult meansResult =
+        EligibilityCalculationResult.builder().success(true).build();
 
     final ObjectNode dataNode = om.createObjectNode().put("question", "answer");
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
@@ -1199,7 +1203,8 @@ public class ApplicationServiceTest {
     final ObjectMapper om = new ObjectMapper();
     final ObjectNode resultNode = om.createObjectNode();
     resultNode.putObject("result_summary").putObject("overall_result").put("result", "ineligible");
-    final Map<String, Object> meansResult = Map.of("success", true);
+    final EligibilityCalculationResult meansResult =
+        EligibilityCalculationResult.builder().success(true).build();
 
     final ObjectNode dataNode = om.createObjectNode().put("question", "answer");
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();

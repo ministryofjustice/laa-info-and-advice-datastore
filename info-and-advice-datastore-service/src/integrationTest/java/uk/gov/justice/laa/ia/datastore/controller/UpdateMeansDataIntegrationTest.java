@@ -10,10 +10,13 @@ import java.util.List;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.http.MediaType;
 import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EligibilityAssessmentEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 import uk.gov.justice.laa.ia.datastore.utils.extensions.MockHttpServletRequestBuilderExtensions;
 
@@ -24,48 +27,13 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldUpdateMeansDataSuccessfully() throws Exception {
     // Arrange
-    final UUID applicationId =
-        applicationRepository
-            .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
-            .getId();
-    clearCache();
-
+    final UUID applicationId = createApplication();
+    final JsonNode cfeResponse = EligibilityAssessmentEntityGenerator.createResultJson();
     final String payload =
         """
-        {
-          "eTag": 0,
-          "data": {"client_age": "18-24"},
-          "result": {
-            "legacy_answer": "retained",
-            "version": "6",
-            "success": true,
-            "result_summary": {
-              "overall_result": {"result": "eligible"},
-              "gross_income": {"total_gross_income": 500.25},
-              "capital": {"combined_assessed_capital": 0, "proceeding_types": []}
-            },
-            "assessment": {
-              "submission_date": "2026-01-01",
-              "client_reference_id": null,
-              "applicant": {"employed": null},
-              "gross_income": {
-                "employment_income": [],
-                "self_employment_details": [
-                  {"monthly_income": {"gross": 500.25, "tax": -25}}
-                ]
-              },
-              "capital": {"capital_items": {"properties": {"main_home": null}}},
-              "remarks": {}
-            }
-          }
-        }
-        """;
+        {"eTag": 0, "data": {"client_age": "18-24"}, "result": %s}
+        """
+            .formatted(cfeResponse);
 
     // Act
     mockMvc
@@ -78,19 +46,37 @@ public class UpdateMeansDataIntegrationTest extends BaseIntegrationTest {
         .andExpect(header().exists("ETag"));
 
     // Assert
+    final EligibilityAssessmentEntity stored = findOnlyAssessment(applicationId);
+    assertThat(stored.getData().get("client_age").asText()).isEqualTo("18-24");
+    JSONAssert.assertEquals(
+        cfeResponse.toString(), stored.getResultJson().toString(), JSONCompareMode.STRICT);
+    assertThat(stored.getIndication()).isFalse();
+    assertThat(stored.getCreatedAt()).isNotNull();
+  }
+
+  private UUID createApplication() {
+    final UUID applicationId =
+        applicationRepository
+            .saveAndFlush(
+                ApplicationEntityGenerator.createWithoutId(
+                    builder ->
+                        builder
+                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                            .providerFirmCode(FIRM_CODE)
+                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            .getId();
     clearCache();
-    final JsonNode expectedResult = objectMapper.readTree(payload).get("result");
+    return applicationId;
+  }
+
+  private EligibilityAssessmentEntity findOnlyAssessment(UUID applicationId) {
+    clearCache();
     final List<EligibilityAssessmentEntity> eligibilityAssessments =
         eligibilityAssessmentRepository.findAll().stream()
-            .filter(result -> result.getApplicationId().equals(applicationId))
+            .filter(assessment -> assessment.getApplicationId().equals(applicationId))
             .toList();
-
     assertThat(eligibilityAssessments).hasSize(1);
-    assertThat(eligibilityAssessments.getFirst().getData().get("client_age").asText())
-        .isEqualTo("18-24");
-    assertThat(eligibilityAssessments.getFirst().getResultJson()).isEqualTo(expectedResult);
-    assertThat(eligibilityAssessments.getFirst().getIndication()).isTrue();
-    assertThat(eligibilityAssessments.getFirst().getCreatedAt()).isNotNull();
+    return eligibilityAssessments.getFirst();
   }
 
   @Test

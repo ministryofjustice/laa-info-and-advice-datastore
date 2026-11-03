@@ -10,8 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ApplicationEntityTests {
   @Test
-  void
-      givenApplicationWithEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsMostRecent() {
+  void givenEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsMostRecent() {
     // Arrange
     final ApplicationEntity applicationEntity = new ApplicationEntity();
     final EligibilityAssessmentEntity olderEligibilityResult =
@@ -32,8 +31,7 @@ public class ApplicationEntityTests {
   }
 
   @Test
-  void
-      givenApplicationWithNullEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
+  void givenNullEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
     // Arrange
     final ApplicationEntity applicationEntity = new ApplicationEntity();
     // Act
@@ -45,8 +43,7 @@ public class ApplicationEntityTests {
   }
 
   @Test
-  void
-      givenApplicationWithEmptyEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
+  void givenEmptyEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
     // Arrange
     final ApplicationEntity applicationEntity = new ApplicationEntity();
     applicationEntity.setEligibilityAssessments(java.util.Collections.emptySet());

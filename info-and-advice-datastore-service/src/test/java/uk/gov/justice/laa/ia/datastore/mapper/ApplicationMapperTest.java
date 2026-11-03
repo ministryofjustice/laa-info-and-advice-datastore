@@ -212,7 +212,7 @@ public class ApplicationMapperTest {
     assertEquals(
         expected.getData().get("client_age").asText(), model.getData().getClientAge().get());
     assertEquals(
-        expected.getResultJson().get("success").asBoolean(), model.getResult().getSuccess());
+        expected.getResultJson().get("success").asBoolean(), model.getResult().getSuccess().get());
   }
 
   @Test

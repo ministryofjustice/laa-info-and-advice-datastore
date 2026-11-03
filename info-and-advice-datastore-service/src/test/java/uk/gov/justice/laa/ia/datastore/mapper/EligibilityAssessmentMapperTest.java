@@ -34,6 +34,6 @@ public class EligibilityAssessmentMapperTest {
     assertNotNull(mappedModel.getData());
     assertEquals(
         entity.getData().get("client_age").asText(), mappedModel.getData().getClientAge().get());
-    assertFalse(mappedModel.getResult().getSuccess());
+    assertFalse(mappedModel.getResult().getSuccess().get());
   }
 }
