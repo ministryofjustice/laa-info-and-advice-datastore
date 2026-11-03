@@ -53,6 +53,8 @@ spec:
           resources:
             {{- toYaml .Values.metabase.resources | nindent 12 }}
           env:
+            - name: MB_SITE_URL
+              value: "https://{{ .Values.metabase.ingress.host }}"
             - name: MB_DB_CONNECTION_URI
               valueFrom:
                 secretKeyRef:

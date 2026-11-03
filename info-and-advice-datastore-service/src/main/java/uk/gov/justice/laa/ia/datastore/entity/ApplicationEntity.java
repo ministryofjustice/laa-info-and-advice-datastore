@@ -26,6 +26,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
+import uk.gov.justice.laa.ia.datastore.model.CategoryOfLaw;
+import uk.gov.justice.laa.ia.datastore.model.ProviderContractType;
 
 /** Entity to represent an application. */
 @Data
@@ -105,6 +107,14 @@ public class ApplicationEntity {
 
   @Column(name = "application_type", nullable = false)
   private String applicationType;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "provider_contract_type", nullable = false)
+  private ProviderContractType providerContractType;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "category_of_law", nullable = false)
+  private CategoryOfLaw categoryOfLaw;
 
   @Column(name = "determination_id", nullable = true)
   private UUID determinationId;
