@@ -49,5 +49,8 @@ public final class AuditAction {
   /** A verified caller lacked the claims or scopes needed for the request. */
   public static final String CLAIMS_AUTHORISATION_FAILED = "security.claimsAuthorisationFailed";
 
+  /** The Authorization or X-Authorization header was duplicated, comma-joined or malformed. */
+  public static final String AMBIGUOUS_AUTH_HEADERS = "security.ambiguousAuthHeaders";
+
   private AuditAction() {}
 }

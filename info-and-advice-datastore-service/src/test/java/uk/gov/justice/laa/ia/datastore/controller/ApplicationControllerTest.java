@@ -28,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
@@ -41,6 +43,7 @@ import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.exception.EtagMismatchException;
+import uk.gov.justice.laa.ia.datastore.filter.AuthHeaderValidationFilter;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
@@ -55,7 +58,12 @@ import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.utils.TestConstants;
 
 /** Unit testing for the {@link ApplicationController}. */
-@WebMvcTest({ApplicationController.class, UserContext.class, ObjectMapper.class})
+@WebMvcTest(
+    value = {ApplicationController.class, UserContext.class, ObjectMapper.class},
+    excludeFilters =
+        @ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = AuthHeaderValidationFilter.class))
 @TestPropertySource(
     properties = {
       "spring.autoconfigure.exclude="
