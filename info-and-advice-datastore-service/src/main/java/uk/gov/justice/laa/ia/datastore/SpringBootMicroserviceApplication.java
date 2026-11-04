@@ -1,14 +1,17 @@
 package uk.gov.justice.laa.ia.datastore;
 
+import org.openapitools.configuration.EnumConverterConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Import;
 import uk.gov.justice.laa.ia.datastore.config.ClaimsApiProperties;
 import uk.gov.justice.laa.ia.datastore.config.PiiRedactionProperties;
 import uk.gov.justice.laa.ia.datastore.config.RateLimitProperties;
 
 /** Entry point for the Spring Boot microservice application. */
 @SpringBootApplication
+@Import(EnumConverterConfiguration.class)
 @EnableConfigurationProperties({
   PiiRedactionProperties.class,
   RateLimitProperties.class,
