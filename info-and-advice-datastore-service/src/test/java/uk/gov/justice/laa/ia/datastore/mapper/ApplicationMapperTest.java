@@ -133,15 +133,7 @@ public class ApplicationMapperTest {
     assertEquals(
         application.getClientDetails().getAddress().getAddressLine1(),
         mappedModel.getClient().getAddress().getAddressLine1());
-    assertEligibiltyEquals(
-        application.getMostRecentEligibilityAssessment(), mappedModel.getEligibilityAssessment());
-    assertNotNull(mappedModel.getEligibilityResult());
-    assertEquals(
-        mappedModel.getEligibilityAssessment().getData(),
-        mappedModel.getEligibilityResult().getData());
-    assertEquals(
-        application.getMostRecentEligibilityAssessment().getResultJson(),
-        objectMapper.valueToTree(mappedModel.getEligibilityResult().getResult()));
+    assertEligibiltyEquals(application.getMostRecentEligibilityAssessment(), mappedModel);
     assertEquals(application.getEtag(), mappedModel.geteTag());
   }
 
@@ -208,11 +200,19 @@ public class ApplicationMapperTest {
   }
 
   private void assertEligibiltyEquals(
-      EligibilityAssessmentEntity expected, EligibilityAssessment model) {
+      EligibilityAssessmentEntity expected, ApplicationResponse model) {
+    final EligibilityAssessment assessment = model.getEligibilityAssessment();
     assertEquals(
-        expected.getData().get("client_age").asText(), model.getData().getClientAge().get());
+        expected.getData().get("client_age").asText(), assessment.getData().getClientAge().get());
     assertEquals(
-        expected.getResultJson().get("success").asBoolean(), model.getResult().getSuccess().get());
+        expected.getResultJson().get("success").asBoolean(),
+        assessment.getResult().getSuccess().get());
+
+    assertNotNull(model.getEligibilityResult());
+    assertEquals(assessment.getData(), model.getEligibilityResult().getData());
+    assertEquals(
+        expected.getResultJson(),
+        objectMapper.valueToTree(model.getEligibilityResult().getResult()));
   }
 
   @Test
