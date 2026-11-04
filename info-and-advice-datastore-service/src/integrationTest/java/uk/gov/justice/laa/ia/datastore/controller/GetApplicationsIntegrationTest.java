@@ -360,7 +360,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     mockMvc
         .perform(
             get("/api/v0/applications")
-                .param("eligibilityIndication", "ELIGIBLE")
+                .param("eligibilityIndication", "eligible")
                 .withBearerReadToken())
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -425,7 +425,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     mockMvc
         .perform(
             get("/api/v0/applications")
-                .param("eligibilityIndication", "INELIGIBLE")
+                .param("eligibilityIndication", "ineligible")
                 .withBearerReadToken())
         .andExpect(status().isOk())
         .andExpect(content().contentType(MediaType.APPLICATION_JSON))
