@@ -39,7 +39,7 @@ import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.ApplicationDeletedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
@@ -59,6 +59,7 @@ import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
 import uk.gov.justice.laa.ia.datastore.model.EditApplicationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityCalculationResult;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 import uk.gov.justice.laa.ia.datastore.model.PatchAddressData;
 import uk.gov.justice.laa.ia.datastore.model.PatchClientDetailsData;
@@ -69,7 +70,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
-import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityAssessmentRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 
 /** Unit tests for the {@link ApplicationService}. */
@@ -77,7 +78,7 @@ import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ApplicationServiceTest {
   @Mock private ApplicationRepository repo;
-  @Mock private EligibilityResultRepository eligibilityResultRepository;
+  @Mock private EligibilityAssessmentRepository eligibilityAssessmentRepository;
   @Mock private EvidenceRepository evidenceRepository;
   @Mock private ApplicationMapper mapper;
   @Mock private DeclarationMapper declarationMapper;
@@ -339,11 +340,12 @@ public class ApplicationServiceTest {
             .modifiedAt(originalModifiedAt)
             .build();
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
-    final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final EligibilityCalculationResult meansResult =
+        EligibilityCalculationResult.builder().success(true).build();
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode dataNode = new ObjectMapper().createObjectNode().put("question", "answer");
-    final ObjectNode resultNode = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final ObjectNode resultNode = new ObjectMapper().createObjectNode().put("success", true);
     final String user = "TEST_USER";
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
@@ -359,9 +361,9 @@ public class ApplicationServiceTest {
     verify(repo, times(1)).save(application);
     assertThat(application.getModifiedBy()).isEqualTo(user);
 
-    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
-        ArgumentCaptor.forClass(EligibilityResultEntity.class);
-    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    ArgumentCaptor<EligibilityAssessmentEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityAssessmentEntity.class);
+    verify(eligibilityAssessmentRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getApplicationId()).isEqualTo(applicationId);
     assertThat(resultCaptor.getValue().getData()).isEqualTo(dataNode);
     assertThat(resultCaptor.getValue().getResultJson()).isEqualTo(resultNode);
@@ -378,7 +380,7 @@ public class ApplicationServiceTest {
     OptionalLong result =
         sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build());
     assertTrue(result.isEmpty());
-    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(eligibilityAssessmentRepository, never()).save(any(EligibilityAssessmentEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -400,7 +402,7 @@ public class ApplicationServiceTest {
         ProviderOfficeNotAuthorizedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
-    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(eligibilityAssessmentRepository, never()).save(any(EligibilityAssessmentEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -424,7 +426,7 @@ public class ApplicationServiceTest {
         ApplicationDeletedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
-    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(eligibilityAssessmentRepository, never()).save(any(EligibilityAssessmentEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -448,7 +450,7 @@ public class ApplicationServiceTest {
         ApplicationDeletedException.class,
         () ->
             sut.updateMeansData(applicationId, UpdateMeansDataCommand.builder().eTag(0L).build()));
-    verify(eligibilityResultRepository, never()).save(any(EligibilityResultEntity.class));
+    verify(eligibilityAssessmentRepository, never()).save(any(EligibilityAssessmentEntity.class));
     verify(repo, never()).save(any(ApplicationEntity.class));
   }
 
@@ -662,7 +664,8 @@ public class ApplicationServiceTest {
     final UUID applicationId = UUID.randomUUID();
     final String officeCode = UUID.randomUUID().toString();
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
-    final Object meansResult = new ObjectMapper().createObjectNode().put("status", "ELIGIBLE");
+    final EligibilityCalculationResult meansResult =
+        EligibilityCalculationResult.builder().success(true).build();
     final UpdateMeansDataCommand command =
         UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
     final ObjectNode objectNode = new ObjectMapper().createObjectNode();
@@ -1158,18 +1161,20 @@ public class ApplicationServiceTest {
     final ObjectMapper om = new ObjectMapper();
     final ObjectNode resultNode = om.createObjectNode();
     resultNode.putObject("result_summary").putObject("overall_result").put("result", "eligible");
+    final EligibilityCalculationResult meansResult =
+        EligibilityCalculationResult.builder().success(true).build();
 
     final ObjectNode dataNode = om.createObjectNode().put("question", "answer");
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
     final UpdateMeansDataCommand command =
-        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(resultNode).build();
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(objectMapper.valueToTree(data)).thenReturn(dataNode);
-    when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+    when(objectMapper.valueToTree(meansResult)).thenReturn(resultNode);
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
@@ -1177,9 +1182,9 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isPresent());
-    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
-        ArgumentCaptor.forClass(EligibilityResultEntity.class);
-    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    ArgumentCaptor<EligibilityAssessmentEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityAssessmentEntity.class);
+    verify(eligibilityAssessmentRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getIndication()).isTrue();
   }
 
@@ -1198,18 +1203,20 @@ public class ApplicationServiceTest {
     final ObjectMapper om = new ObjectMapper();
     final ObjectNode resultNode = om.createObjectNode();
     resultNode.putObject("result_summary").putObject("overall_result").put("result", "ineligible");
+    final EligibilityCalculationResult meansResult =
+        EligibilityCalculationResult.builder().success(true).build();
 
     final ObjectNode dataNode = om.createObjectNode().put("question", "answer");
     final EligibilityData data = EligibilityData.builder().clientAge("18-24").build();
     final UpdateMeansDataCommand command =
-        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(resultNode).build();
+        UpdateMeansDataCommand.builder().eTag(0L).data(data).result(meansResult).build();
 
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeCode));
     when(repo.findOne(any(Specification.class))).thenReturn(Optional.of(application));
     when(userContext.getCurrentUser()).thenReturn("TEST_USER");
     when(objectMapper.valueToTree(data)).thenReturn(dataNode);
-    when(objectMapper.valueToTree(resultNode)).thenReturn(resultNode);
+    when(objectMapper.valueToTree(meansResult)).thenReturn(resultNode);
     when(repo.save(any(ApplicationEntity.class))).thenReturn(application);
 
     // Act
@@ -1217,9 +1224,9 @@ public class ApplicationServiceTest {
 
     // Assert
     assertTrue(result.isPresent());
-    ArgumentCaptor<EligibilityResultEntity> resultCaptor =
-        ArgumentCaptor.forClass(EligibilityResultEntity.class);
-    verify(eligibilityResultRepository).save(resultCaptor.capture());
+    ArgumentCaptor<EligibilityAssessmentEntity> resultCaptor =
+        ArgumentCaptor.forClass(EligibilityAssessmentEntity.class);
+    verify(eligibilityAssessmentRepository).save(resultCaptor.capture());
     assertThat(resultCaptor.getValue().getIndication()).isFalse();
   }
 

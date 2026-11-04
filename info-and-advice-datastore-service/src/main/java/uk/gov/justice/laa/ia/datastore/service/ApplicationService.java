@@ -23,7 +23,7 @@ import uk.gov.justice.laa.ia.datastore.entity.AddressEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.ClientDetailsEntity;
 import uk.gov.justice.laa.ia.datastore.entity.DeclarationEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.exception.ApplicationDeletedException;
 import uk.gov.justice.laa.ia.datastore.exception.DuplicateUfnException;
@@ -50,7 +50,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateEvidenceCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateScopingDataCommand;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
-import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityAssessmentRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 
@@ -64,7 +64,7 @@ public class ApplicationService {
   private static final int DEFAULT_PAGE_SIZE = 25;
 
   private final ApplicationRepository repository;
-  private final EligibilityResultRepository eligibilityResultRepository;
+  private final EligibilityAssessmentRepository eligibilityAssessmentRepository;
   private final EvidenceRepository evidenceRepository;
   private final ApplicationMapper applicationMapper;
   private final DeclarationMapper declarationMapper;
@@ -209,8 +209,8 @@ public class ApplicationService {
         objectMapper.valueToTree(command.getResult());
     Boolean indication = extractEligibilityIndication(resultJson);
 
-    EligibilityResultEntity resultEntity =
-        EligibilityResultEntity.builder()
+    EligibilityAssessmentEntity resultEntity =
+        EligibilityAssessmentEntity.builder()
             .applicationId(applicationId)
             .data(objectMapper.valueToTree(command.getData()))
             .resultJson(resultJson)
@@ -218,7 +218,7 @@ public class ApplicationService {
             .createdBy(userContext.getCurrentUser())
             .build();
 
-    eligibilityResultRepository.save(resultEntity);
+    eligibilityAssessmentRepository.save(resultEntity);
 
     application.setModifiedBy(userContext.getCurrentUser());
     ApplicationEntity saved = saveAsModified(application);

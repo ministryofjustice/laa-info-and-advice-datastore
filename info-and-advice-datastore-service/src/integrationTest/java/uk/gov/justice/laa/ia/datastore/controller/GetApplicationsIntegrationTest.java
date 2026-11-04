@@ -327,7 +327,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
 
     // Create eligibility results with different indication values
     var eligibleResult =
-        uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity.builder()
+        uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity.builder()
             .applicationId(savedEligible.getId())
             .resultJson(
                 com.fasterxml.jackson.databind.node.JsonNodeFactory.instance
@@ -340,7 +340,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
             .build();
 
     var ineligibleResult =
-        uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity.builder()
+        uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity.builder()
             .applicationId(savedIneligible.getId())
             .resultJson(
                 com.fasterxml.jackson.databind.node.JsonNodeFactory.instance
@@ -352,8 +352,8 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
             .indication(false)
             .build();
 
-    eligibilityResultRepository.save(eligibleResult);
-    eligibilityResultRepository.save(ineligibleResult);
+    eligibilityAssessmentRepository.save(eligibleResult);
+    eligibilityAssessmentRepository.save(ineligibleResult);
     clearCache();
 
     // Act & Assert - filter by eligible
@@ -392,7 +392,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
 
     // Create eligibility results with different indication values
     var eligibleResult =
-        uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity.builder()
+        uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity.builder()
             .applicationId(savedEligible.getId())
             .resultJson(
                 com.fasterxml.jackson.databind.node.JsonNodeFactory.instance
@@ -405,7 +405,7 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
             .build();
 
     var ineligibleResult =
-        uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity.builder()
+        uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity.builder()
             .applicationId(savedIneligible.getId())
             .resultJson(
                 com.fasterxml.jackson.databind.node.JsonNodeFactory.instance
@@ -417,8 +417,8 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
             .indication(false)
             .build();
 
-    eligibilityResultRepository.save(eligibleResult);
-    eligibilityResultRepository.save(ineligibleResult);
+    eligibilityAssessmentRepository.save(eligibleResult);
+    eligibilityAssessmentRepository.save(ineligibleResult);
     clearCache();
 
     // Act & Assert - filter by ineligible

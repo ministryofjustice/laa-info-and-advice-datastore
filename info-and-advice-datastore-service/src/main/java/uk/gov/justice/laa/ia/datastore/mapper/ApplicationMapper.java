@@ -23,7 +23,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
       DateTimeMapper.class,
       ClientDetailsMapper.class,
       DeclarationMapper.class,
-      EligibilityMapper.class,
+      EligibilityAssessmentMapper.class,
       EvidenceMapper.class,
       JsonNodeMapper.class
     },
@@ -45,10 +45,10 @@ public abstract class ApplicationMapper {
    */
   public uk.gov.justice.laa.ia.datastore.model.EligibilityIndication mapEligibilityIndication(
       ApplicationEntity entity) {
-    if (entity.getMostRecentEligibilityResult() == null) {
+    if (entity.getMostRecentEligibilityAssessment() == null) {
       return null;
     }
-    Boolean indication = entity.getMostRecentEligibilityResult().getIndication();
+    Boolean indication = entity.getMostRecentEligibilityAssessment().getIndication();
     if (indication == null) {
       return null;
     }
@@ -62,7 +62,8 @@ public abstract class ApplicationMapper {
   @Mapping(source = "clientDetails", target = "client")
   @Mapping(source = "declaration", target = "declaration")
   @Mapping(source = "evidence", target = "evidence")
-  @Mapping(source = "mostRecentEligibilityResult", target = "eligibilityResult")
+  @Mapping(source = "mostRecentEligibilityAssessment", target = "eligibilityResult")
+  @Mapping(source = "mostRecentEligibilityAssessment", target = "eligibilityAssessment")
   @Mapping(source = "etag", target = "eTag")
   public abstract ApplicationResponse toApplication(ApplicationEntity entity);
 
@@ -90,7 +91,7 @@ public abstract class ApplicationMapper {
   @Mapping(target = "contribution", ignore = true)
   @Mapping(target = "determinationId", ignore = true)
   @Mapping(source = "client", target = "clientDetails")
-  @Mapping(target = "eligibilityResults", ignore = true)
+  @Mapping(target = "eligibilityAssessments", ignore = true)
   @Mapping(target = "deleted", ignore = true)
   @Mapping(target = "deletedAt", ignore = true)
   public abstract ApplicationEntity toApplicationEntity(StartApplicationCommand cmd);
@@ -127,7 +128,7 @@ public abstract class ApplicationMapper {
   @Mapping(target = "contribution", ignore = true)
   @Mapping(target = "applicationType", ignore = true)
   @Mapping(target = "determinationId", ignore = true)
-  @Mapping(target = "eligibilityResults", ignore = true)
+  @Mapping(target = "eligibilityAssessments", ignore = true)
   @Mapping(target = "deleted", ignore = true)
   @Mapping(target = "deletedAt", ignore = true)
   public abstract void updateApplicationEntity(
@@ -160,7 +161,7 @@ public abstract class ApplicationMapper {
   @Mapping(target = "dataRetentionDate", ignore = true)
   @Mapping(target = "applicationState", ignore = true)
   @Mapping(target = "applicationType", ignore = true)
-  @Mapping(target = "eligibilityResults", ignore = true)
+  @Mapping(target = "eligibilityAssessments", ignore = true)
   @Mapping(target = "deleted", ignore = true)
   @Mapping(target = "deletedAt", ignore = true)
   public abstract void editApplicationEntity(

@@ -10,49 +10,48 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class ApplicationEntityTests {
   @Test
-  void
-      givenApplicationWithEligibilityResults_thenGetMostRecentEligibilityResultReturnsMostRecent() {
+  void givenEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsMostRecent() {
     // Arrange
     final ApplicationEntity applicationEntity = new ApplicationEntity();
-    final EligibilityResultEntity olderEligibilityResult =
-        EligibilityResultEntity.builder()
+    final EligibilityAssessmentEntity olderEligibilityResult =
+        EligibilityAssessmentEntity.builder()
             .createdAt(java.time.Instant.now().minusSeconds(3600))
             .build();
-    final EligibilityResultEntity newerEligibilityResult =
-        EligibilityResultEntity.builder().createdAt(java.time.Instant.now()).build();
-    applicationEntity.setEligibilityResults(
+    final EligibilityAssessmentEntity newerEligibilityResult =
+        EligibilityAssessmentEntity.builder().createdAt(java.time.Instant.now()).build();
+    applicationEntity.setEligibilityAssessments(
         java.util.Set.of(olderEligibilityResult, newerEligibilityResult));
 
     // Act
-    final EligibilityResultEntity mostRecentEligibilityResult =
-        applicationEntity.getMostRecentEligibilityResult();
+    final EligibilityAssessmentEntity mostRecentEligibilityAssessment =
+        applicationEntity.getMostRecentEligibilityAssessment();
 
     // Assert
-    assertThat(mostRecentEligibilityResult).isEqualTo(newerEligibilityResult);
+    assertThat(mostRecentEligibilityAssessment).isEqualTo(newerEligibilityResult);
   }
 
   @Test
-  void givenApplicationWithNullEligibilityResults_thenGetMostRecentEligibilityResultReturnsNull() {
+  void givenNullEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
     // Arrange
     final ApplicationEntity applicationEntity = new ApplicationEntity();
     // Act
-    final EligibilityResultEntity mostRecentEligibilityResult =
-        applicationEntity.getMostRecentEligibilityResult();
+    final EligibilityAssessmentEntity mostRecentEligibilityAssessment =
+        applicationEntity.getMostRecentEligibilityAssessment();
 
     // Assert
-    assertThat(mostRecentEligibilityResult).isNull();
+    assertThat(mostRecentEligibilityAssessment).isNull();
   }
 
   @Test
-  void givenApplicationWithEmptyEligibilityResults_thenGetMostRecentEligibilityResultReturnsNull() {
+  void givenEmptyEligibilityAssessments_thenGetMostRecentEligibilityAssessmentReturnsNull() {
     // Arrange
     final ApplicationEntity applicationEntity = new ApplicationEntity();
-    applicationEntity.setEligibilityResults(java.util.Collections.emptySet());
+    applicationEntity.setEligibilityAssessments(java.util.Collections.emptySet());
     // Act
-    final EligibilityResultEntity mostRecentEligibilityResult =
-        applicationEntity.getMostRecentEligibilityResult();
+    final EligibilityAssessmentEntity mostRecentEligibilityAssessment =
+        applicationEntity.getMostRecentEligibilityAssessment();
 
     // Assert
-    assertThat(mostRecentEligibilityResult).isNull();
+    assertThat(mostRecentEligibilityAssessment).isNull();
   }
 }

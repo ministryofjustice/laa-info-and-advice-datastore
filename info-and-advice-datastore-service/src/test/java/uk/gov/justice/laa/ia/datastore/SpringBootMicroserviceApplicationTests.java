@@ -17,7 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
-import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityAssessmentRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
 
@@ -34,7 +34,7 @@ class SpringBootMicroserviceApplicationTests {
   @MockitoBean private EntityManager entityManager;
   @MockitoBean private ClientDetailsRepository clientDetailsRepository;
   @MockitoBean private ApplicationRepository applicationRepository;
-  @MockitoBean private EligibilityResultRepository eligibilityResultRepository;
+  @MockitoBean private EligibilityAssessmentRepository eligibilityAssessmentRepository;
   @MockitoBean private EvidenceRepository evidenceRepository;
   @MockitoBean private EventRepository eventRepository;
   @MockitoBean private ClaimsGateway claimsGateway;

@@ -19,6 +19,7 @@ import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.EvidenceGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.DeclarationCommand;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityCalculationResult;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateMeansDataCommand;
@@ -66,7 +67,7 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
         UpdateMeansDataCommand.builder()
             .eTag(0L)
             .data(EligibilityData.builder().clientAge("18-24").build())
-            .result(new ObjectMapper().createObjectNode().put("status", "ELIGIBLE"))
+            .result(EligibilityCalculationResult.builder().success(true).build())
             .build();
     final String payload = toJson(command);
 

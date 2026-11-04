@@ -1,5 +1,5 @@
 # Schema for the means-assessment "session data" persisted against an
-# eligibility result (EligibilityResult.data). Mirrors the CCQ (Check Client
+# eligibility result (EligibilityAssessment.data). Mirrors the CCQ (Check Client
 # Qualifies) session_data schema documented at:
 # https://github.com/ministryofjustice/laa-check-client-qualifies/blob/main/docs/session_data_schema.md
 # All fields are optional/nullable since they are populated incrementally as
