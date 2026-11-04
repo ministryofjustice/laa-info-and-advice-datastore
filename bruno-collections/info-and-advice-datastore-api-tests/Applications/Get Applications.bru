@@ -61,5 +61,5 @@ docs {
   Get a paginated list of applications. The pre-request script creates three fresh applications
   via Start Application (spaced apart so each gets a distinct `modifiedAt`) and stores their ids
   in a local `createdApplicationIds` runtime variable. Optional query params: `officeId`,
-  `status` (DRAFT | COMPLETED).
+  `status` (DRAFT | COMPLETED), `eligibilityIndication` (eligible | ineligible).
 }
