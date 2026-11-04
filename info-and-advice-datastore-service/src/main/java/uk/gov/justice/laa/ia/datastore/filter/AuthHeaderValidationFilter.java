@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,10 @@ import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 2)
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+    name = "feature.disable-security",
+    havingValue = "false",
+    matchIfMissing = true)
 public class AuthHeaderValidationFilter extends OncePerRequestFilter {
 
   private static final String API_PATH_PREFIX = "/api/";
