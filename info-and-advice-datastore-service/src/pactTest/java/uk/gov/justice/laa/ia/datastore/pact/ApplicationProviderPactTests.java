@@ -54,6 +54,7 @@ public class ApplicationProviderPactTests extends AbstractProviderPactTests {
   @TargetRequestFilter
   public void requestFilter(HttpRequest request) {
     request.setHeader("Authorization", "Bearer pact-test-token");
+    request.setHeader("X-Authorization", "Bearer pact-test-token");
     request.setHeader("X-Service-Name", "pact-verification");
   }
 }

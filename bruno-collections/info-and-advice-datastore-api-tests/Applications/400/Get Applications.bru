@@ -1,0 +1,30 @@
+meta {
+  name: Get Applications
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v0/applications?page=0&size=25
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("status is 400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("response is application/problem+json", function() {
+    expect(res.getHeader("content-type")).to.include("application/problem+json");
+  });
+
+  test("response does not reveal which header failed", function() {
+    const body = JSON.stringify(res.getBody());
+    expect(body).to.not.include("Authorization");
+  });
+}
+
+docs {
+  Asserts that a comma-joined Authorization header is rejected with 400 before any auth check.
+}
