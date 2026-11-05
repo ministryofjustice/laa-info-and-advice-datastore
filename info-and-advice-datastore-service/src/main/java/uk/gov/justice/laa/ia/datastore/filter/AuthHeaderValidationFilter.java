@@ -50,7 +50,8 @@ public class AuthHeaderValidationFilter extends OncePerRequestFilter {
   private static final List<String> BEARER_HEADER_NAMES =
       List.of("Authorization", "X-Authorization");
 
-  private static final Pattern SINGLE_BEARER_TOKEN = Pattern.compile("^Bearer [^\\s,]+$");
+  private static final Pattern SINGLE_BEARER_TOKEN =
+      Pattern.compile("^Bearer [^\\s,]+$", Pattern.CASE_INSENSITIVE);
 
   private static final String PROBLEM_JSON =
       "{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,"

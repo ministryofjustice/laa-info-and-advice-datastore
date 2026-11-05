@@ -51,6 +51,64 @@ class AuthHeaderValidationFilterTest {
   }
 
   @Test
+  void doFilterInternal_shouldAllowLowercaseBearerPrefix() throws Exception {
+    MockHttpServletRequest request = createRequestWithUri("/api/v0/applications");
+    request.addHeader("Authorization", "bearer service-token");
+    request.addHeader("X-Authorization", "bearer user-token");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    FilterChain filterChain = mock(FilterChain.class);
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    verify(filterChain).doFilter(any(), eq(response));
+    verify(auditLogger, never()).security(any(), any(), any(), any(), any());
+    assertThat(response.getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  void doFilterInternal_shouldAllowUppercaseBearerPrefix() throws Exception {
+    MockHttpServletRequest request = createRequestWithUri("/api/v0/applications");
+    request.addHeader("Authorization", "BEARER service-token");
+    request.addHeader("X-Authorization", "BEARER user-token");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    FilterChain filterChain = mock(FilterChain.class);
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    verify(filterChain).doFilter(any(), eq(response));
+    verify(auditLogger, never()).security(any(), any(), any(), any(), any());
+    assertThat(response.getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  void doFilterInternal_shouldAllowMixedCaseBearerPrefix() throws Exception {
+    MockHttpServletRequest request = createRequestWithUri("/api/v0/applications");
+    request.addHeader("Authorization", "BeArEr service-token");
+    request.addHeader("X-Authorization", "Bearer user-token");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    FilterChain filterChain = mock(FilterChain.class);
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    verify(filterChain).doFilter(any(), eq(response));
+    verify(auditLogger, never()).security(any(), any(), any(), any(), any());
+    assertThat(response.getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  void doFilterInternal_shouldRejectCommaJoinedMixedCaseBearerValue() throws Exception {
+    MockHttpServletRequest request = createRequestWithUri("/api/v0/applications");
+    request.addHeader("Authorization", "bearer token-one, BEARER token-two");
+    request.addHeader("X-Authorization", "Bearer user-token");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    FilterChain filterChain = mock(FilterChain.class);
+
+    filter.doFilterInternal(request, response, filterChain);
+
+    assertRejected(response, filterChain);
+  }
+
+  @Test
   void doFilterInternal_shouldRejectDuplicateAuthorizationHeaders() throws Exception {
     MockHttpServletRequest request = createRequestWithUri("/api/v0/applications");
     request.addHeader("Authorization", "Bearer token-one");
