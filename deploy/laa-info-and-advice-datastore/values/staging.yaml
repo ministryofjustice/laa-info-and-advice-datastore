@@ -219,3 +219,6 @@ metabase:
         # Global Protect alpha VPN firewall ranges
         # Prisma VPN egress range: 128.77.75.64/26
         SecRule REMOTE_ADDR "!@ipMatch 35.176.93.186/32,18.169.147.172/32,18.130.148.126/32,35.176.148.126/32,128.77.75.64/26" "id:1001,deny,status:403,tag:github_team=info-advice-datastore"
+        # Metabase native SQL queries are POSTed to /api/dataset and are blocked by the OWASP
+        # CRS SQL injection rules. Log only for this path; the IP allow rule above still applies.
+        SecRule REQUEST_URI "@beginsWith /api/dataset" "id:1002,phase:1,pass,nolog,ctl:ruleEngine=DetectionOnly"
