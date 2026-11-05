@@ -1,5 +1,5 @@
 plugins {
-    id 'io.freefair.lombok' version '9.8.2'
+    id 'io.freefair.lombok' version '9.8.3'
     id 'uk.gov.justice.service.laa.laa-spring-boot-gradle-plugin'
     id 'com.diffplug.spotless' version "8.10.4"
 }
@@ -23,7 +23,7 @@ configurations {
 }
 
 dependencies {
-    pactTestImplementation 'au.com.dius.pact.provider:spring7:4.7.5'
+    pactTestImplementation 'au.com.dius.pact.provider:spring7:4.7.6'
     pactTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     pactTestImplementation 'org.apache.httpcomponents.client5:httpclient5'
 }
@@ -103,8 +103,8 @@ dependencies {
 
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
-    implementation 'io.sentry:sentry-spring-boot-4:8.61.1'
-    implementation 'io.sentry:sentry-logback:8.61.1'
+    implementation 'io.sentry:sentry-spring-boot-4:8.62.0'
+    implementation 'io.sentry:sentry-logback:8.62.0'
     // In-memory rate limiting (core module only; the Spring Boot starters target Boot 3)
     implementation 'io.github.resilience4j:resilience4j-ratelimiter:2.4.0'
 
