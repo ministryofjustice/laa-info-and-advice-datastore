@@ -17,19 +17,19 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/** Entity to represent eligibility results. */
+/** Entity to represent an eligibility assessment's data and calculation result. */
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "eligibility_results")
-public class EligibilityResultEntity {
+@Table(name = "eligibility_assessments")
+public class EligibilityAssessmentEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "eligibility_result_id")
-  private UUID eligibilityResultId;
+  @Column(name = "eligibility_assessment_id")
+  private UUID eligibilityAssessmentId;
 
   @Column(name = "application_id", nullable = false)
   private UUID applicationId;

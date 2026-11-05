@@ -10,6 +10,9 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openapitools.jackson.nullable.JsonNullableModule;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+import uk.gov.justice.laa.ia.datastore.generator.EligibilityAssessmentEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.EligibilityData;
 
 /** Tests for {@link JsonNodeMapper}. */
@@ -76,5 +79,52 @@ public class JsonNodeMapperTest {
   @Test
   void toEligibilityData_whenNull_shouldReturnNull() {
     assertNull(sut.toEligibilityData(null));
+  }
+
+  @Test
+  void toEligibilityCalculationResult_shouldConvertKnownFieldsAndIgnoreUnknownFields()
+      throws Exception {
+    final JsonNode node =
+        objectMapper.readTree(
+            """
+            {
+              "success": false,
+              "result_summary": {
+                "gross_income": {"total_gross_income": 500.25},
+                "capital": {"combined_assessed_capital": 0, "proceeding_types": []}
+              },
+              "assessment": {"client_reference_id": null, "applicant": {"employed": null}},
+              "legacy_answer": "ignored"
+            }
+            """);
+
+    final var result = sut.toEligibilityCalculationResult(node);
+
+    final var resultSummary = result.getResultSummary().get();
+    final var assessment = result.getAssessment().get();
+    assertThat(result.getSuccess().get()).isFalse();
+    assertThat(resultSummary.getGrossIncome().get().getTotalGrossIncome().get())
+        .isEqualByComparingTo("500.25");
+    assertThat(resultSummary.getCapital().get().getCombinedAssessedCapital().get()).isZero();
+    assertThat(resultSummary.getCapital().get().getProceedingTypes().get()).isEmpty();
+    assertThat(assessment.getClientReferenceId().isPresent()).isTrue();
+    assertThat(assessment.getClientReferenceId().get()).isNull();
+    assertThat(assessment.getApplicant().get().getEmployed().get()).isNull();
+  }
+
+  @Test
+  void toEligibilityCalculationResult_shouldRoundTripCfeResponseWithoutChangingIt()
+      throws Exception {
+    final JsonNode cfeResponse = EligibilityAssessmentEntityGenerator.createResultJson();
+
+    final String roundTripped =
+        objectMapper.writeValueAsString(sut.toEligibilityCalculationResult(cfeResponse));
+
+    JSONAssert.assertEquals(cfeResponse.toString(), roundTripped, JSONCompareMode.STRICT);
+  }
+
+  @Test
+  void toEligibilityCalculationResult_whenNull_shouldReturnNull() {
+    assertNull(sut.toEligibilityCalculationResult(null));
   }
 }

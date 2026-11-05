@@ -1,0 +1,21 @@
+meta {
+  name: 400
+  seq: 5
+}
+
+headers {
+  Authorization: Bearer token-one, Bearer token-two
+  X-Authorization: Bearer placeholder-token
+  X-Service-Name: bruno-test
+}
+
+docs {
+  # 400 Bad Request (Ambiguous/Malformed Auth Headers)
+
+  `AuthHeaderValidationFilter` runs ahead of Spring Security and
+  rejects any request whose `Authorization` or `X-Authorization` header is duplicated,
+  comma-joined or otherwise not exactly one `Bearer <token>` value. The header override above
+  sends a comma-joined `Authorization` value, so every request in this folder should be rejected
+  with `400 Bad Request` (`application/problem+json`) before authentication is even attempted —
+  no valid token is required, and the response does not say which header/check failed.
+}

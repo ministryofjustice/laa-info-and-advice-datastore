@@ -23,7 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
@@ -89,9 +89,9 @@ class DataDeletionTaskTests {
                     .withDefaultClientDetails()
                     .ufn("101010/1")
                     .providerOfficeCode(OFFICE_CODE)
-                    .eligibilityResults(
+                    .eligibilityAssessments(
                         Set.of(
-                            EligibilityResultEntity.builder()
+                            EligibilityAssessmentEntity.builder()
                                 .indication(false)
                                 .createdAt(Instant.now())
                                 .build())));

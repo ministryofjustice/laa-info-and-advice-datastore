@@ -23,7 +23,7 @@ public interface ApplicationRepository
         "clientDetails",
         "clientDetails.address",
         "declaration",
-        "eligibilityResults",
+        "eligibilityAssessments",
         "evidence"
       })
   Optional<ApplicationEntity> findOne(Specification<ApplicationEntity> spec);
@@ -34,14 +34,14 @@ public interface ApplicationRepository
         "clientDetails",
         "clientDetails.address",
         "declaration",
-        "eligibilityResults",
+        "eligibilityAssessments",
         "evidence"
       })
   Page<ApplicationEntity> findAll(Specification<ApplicationEntity> spec, Pageable pageable);
 
   /** Eagerly loads eligibility results so scheduled tasks can read them outside a transaction. */
   @Override
-  @EntityGraph(attributePaths = {"eligibilityResults"})
+  @EntityGraph(attributePaths = {"eligibilityAssessments"})
   List<ApplicationEntity> findAll(Specification<ApplicationEntity> spec);
 
   /**

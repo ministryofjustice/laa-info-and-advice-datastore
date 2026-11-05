@@ -17,19 +17,19 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import uk.gov.justice.laa.ia.datastore.config.JacksonConfig;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ClientDetailsEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EligibilityAssessmentEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.StartApplicationCommandGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationSummary;
 import uk.gov.justice.laa.ia.datastore.model.CategoryOfLaw;
-import uk.gov.justice.laa.ia.datastore.model.EligibilityResult;
+import uk.gov.justice.laa.ia.datastore.model.EligibilityAssessment;
 import uk.gov.justice.laa.ia.datastore.model.ProviderContractType;
 import uk.gov.justice.laa.ia.datastore.model.StartApplicationCommand;
 import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
@@ -41,7 +41,7 @@ import uk.gov.justice.laa.ia.datastore.model.UpdateApplicationCommand;
       ApplicationMapperImpl.class,
       UserContext.class,
       DeclarationMapperImpl.class,
-      EligibilityMapperImpl.class,
+      EligibilityAssessmentMapperImpl.class,
       EvidenceMapperImpl.class,
       ClientDetailsMapperImpl.class,
       AddressMapperImpl.class,
@@ -93,10 +93,10 @@ public class ApplicationMapperTest {
                       .evidenceExemptionReason("Test reason")
                       .build());
               builder.declaration(DeclarationEntityGenerator.createWithId(null));
-              builder.eligibilityResults(
+              builder.eligibilityAssessments(
                   Set.of(
-                      EligibilityResultEntityGenerator.createEligibilityResult(
-                          UUID.randomUUID(), "ELIGIBLE", 100)));
+                      EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
+                          UUID.randomUUID())));
               builder.etag(1969);
               builder
                   .providerContractType(ProviderContractType.FACE_TO_FACE)
@@ -133,8 +133,7 @@ public class ApplicationMapperTest {
     assertEquals(
         application.getClientDetails().getAddress().getAddressLine1(),
         mappedModel.getClient().getAddress().getAddressLine1());
-    assertEligibiltyEquals(
-        application.getMostRecentEligibilityResult(), mappedModel.getEligibilityResult());
+    assertEligibiltyEquals(application.getMostRecentEligibilityAssessment(), mappedModel);
     assertEquals(application.getEtag(), mappedModel.geteTag());
   }
 
@@ -200,10 +199,20 @@ public class ApplicationMapperTest {
     assertEquals("123456/1", mappedModel.getUfn());
   }
 
-  private void assertEligibiltyEquals(EligibilityResultEntity expected, EligibilityResult model) {
+  private void assertEligibiltyEquals(
+      EligibilityAssessmentEntity expected, ApplicationResponse model) {
+    final EligibilityAssessment assessment = model.getEligibilityAssessment();
     assertEquals(
-        expected.getData().get("client_age").asText(), model.getData().getClientAge().get());
-    assertEquals(expected.getResultJson(), objectMapper.valueToTree(model.getResult()));
+        expected.getData().get("client_age").asText(), assessment.getData().getClientAge().get());
+    assertEquals(
+        expected.getResultJson().get("success").asBoolean(),
+        assessment.getResult().getSuccess().get());
+
+    assertNotNull(model.getEligibilityResult());
+    assertEquals(assessment.getData(), model.getEligibilityResult().getData());
+    assertEquals(
+        expected.getResultJson(),
+        objectMapper.valueToTree(model.getEligibilityResult().getResult()));
   }
 
   @Test

@@ -20,14 +20,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import uk.gov.justice.laa.ia.datastore.audit.AuditLogger;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
-import uk.gov.justice.laa.ia.datastore.entity.EligibilityResultEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
 import uk.gov.justice.laa.ia.datastore.gateway.stub.ClaimsGatewayStub;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
-import uk.gov.justice.laa.ia.datastore.generator.EligibilityResultEntityGenerator;
+import uk.gov.justice.laa.ia.datastore.generator.EligibilityAssessmentEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
-import uk.gov.justice.laa.ia.datastore.repository.EligibilityResultRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EligibilityAssessmentRepository;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationDataDeletionService;
 import uk.gov.justice.laa.ia.datastore.service.RetentionDateUpdateService;
 import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
@@ -45,7 +45,7 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
   private static final int RETENTION_YEARS_OFFSET = 3;
   private static final Instant MODIFIED_AT = Instant.parse("2020-03-01T10:00:00Z");
 
-  @Autowired private EligibilityResultRepository eligibilityResultRepository;
+  @Autowired private EligibilityAssessmentRepository eligibilityAssessmentRepository;
   @Spy private ClaimsGatewayStub claimsGateway = new ClaimsGatewayStub();
 
   private DataRetentionDateResolverTask resolver;
@@ -53,7 +53,8 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
 
   @BeforeEach
   void setUpTasks() {
-    // The trigger resets modified_at on every update. Postgres DDL is transactional, so this is
+    // The trigger resets modified_at on every update. Postgres DDL is
+    // transactional, so this is
     // rolled back with the test transaction.
     entityManager
         .createNativeQuery(
@@ -155,7 +156,7 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
   }
 
   @Test
-  void givenSpecificationQuery_thenEligibilityResultsAreEagerlyLoaded() {
+  void givenSpecificationQuery_thenEligibilityAssessmentsAreEagerlyLoaded() {
     // Arrange
     saveCompletedApplication(false, MODIFIED_AT);
     clearCache();
@@ -167,7 +168,7 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
 
     // Assert: readable without an open session, as in scheduled execution
     assertEquals(1, applications.size());
-    assertTrue(Hibernate.isInitialized(applications.getFirst().getEligibilityResults()));
+    assertTrue(Hibernate.isInitialized(applications.getFirst().getEligibilityAssessments()));
   }
 
   private ApplicationEntity saveCompletedApplication(boolean eligible, Instant modifiedAt) {
@@ -181,10 +182,10 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
                         .dataRetentionDate(null)
                         .applicationState(ApplicationState.COMPLETED)
                         .providerOfficeCode(ClaimsGatewayStub.FIXTURE_OFFICE_CODE)));
-    final EligibilityResultEntity result =
-        EligibilityResultEntityGenerator.createEligibilityResult(application.getId(), "RESULT", 1);
+    final EligibilityAssessmentEntity result =
+        EligibilityAssessmentEntityGenerator.createEligibilityAssessment(application.getId());
     result.setIndication(eligible);
-    eligibilityResultRepository.saveAndFlush(result);
+    eligibilityAssessmentRepository.saveAndFlush(result);
     backdateModifiedAt(application.getId(), modifiedAt);
     return application;
   }

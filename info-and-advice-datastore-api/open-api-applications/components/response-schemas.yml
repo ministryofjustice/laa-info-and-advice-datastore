@@ -69,7 +69,11 @@ components:
           type: string
           format: uuid
         eligibilityResult:
-          $ref: '#/components/schemas/EligibilityResult'
+          deprecated: true
+          allOf:
+            - $ref: '#/components/schemas/EligibilityResult'
+        eligibilityAssessment:
+          $ref: '#/components/schemas/EligibilityAssessment'
         createdAt:
           type: string
           format: date-time
@@ -180,12 +184,22 @@ components:
 
     EligibilityResult:
       type: object
+      deprecated: true
+      description: Legacy eligibility wrapper. Use EligibilityAssessment instead.
       properties:
         data:
           $ref: 'eligibility-data-schema.yml#/components/schemas/EligibilityData'
         result:
           type: object
           description: The means assessment calculation result
+
+    EligibilityAssessment:
+      type: object
+      properties:
+        data:
+          $ref: 'eligibility-data-schema.yml#/components/schemas/EligibilityData'
+        result:
+          $ref: 'eligibility-result-schema.yml#/components/schemas/EligibilityCalculationResult'
 
     ApiError:
       type: object

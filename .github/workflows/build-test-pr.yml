@@ -16,7 +16,32 @@ jobs:
       - name: Run secrets scan
         uses: ministryofjustice/devsecops-actions/sca/moj@7dc13c20e2bf541b8a77fa1320a04983b18846f6 # v1.6.0
 
+  check-api-version-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check API changes have a version bump
+        run: |
+          BASE_SHA=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
+
+          if git diff --quiet "$BASE_SHA" HEAD -- info-and-advice-datastore-api info-and-advice-datastore-client; then
+            echo "No changes to info-and-advice-datastore-api or info-and-advice-datastore-client."
+            exit 0
+          fi
+
+          if git diff --quiet "$BASE_SHA" HEAD -- gradle.properties; then
+            echo "::error::info-and-advice-datastore-api or info-and-advice-datastore-client has changed but gradle.properties version has not been bumped. Manual intervention required: bump the 'version' property in gradle.properties before this PR can proceed."
+            exit 1
+          fi
+
+          echo "info-and-advice-datastore-api or info-and-advice-datastore-client changed and gradle.properties version was bumped."
+
   build-test:
+    needs:
+      - check-api-version-bump
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
