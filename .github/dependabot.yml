@@ -41,3 +41,9 @@ updates:
       github-actions:
         patterns:
           - "**"
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "fix"

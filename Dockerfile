@@ -1,5 +1,5 @@
 # Build stage
-FROM amazoncorretto:25-alpine AS builder
+FROM amazoncorretto:25-alpine@sha256:abed4fe0730b802823f0cbc5c24ab8e3ba6023af99266f0e2ca3c08d9f6a20f9 AS builder
 
 # Patch known CVEs in base image packages (e.g. zlib) ahead of a new upstream image tag
 RUN apk update && apk upgrade --no-cache
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     chmod +x gradlew && ./gradlew :info-and-advice-datastore-service:bootJar --no-daemon
 
 # Runtime stage
-FROM amazoncorretto:25-alpine
+FROM amazoncorretto:25-alpine@sha256:abed4fe0730b802823f0cbc5c24ab8e3ba6023af99266f0e2ca3c08d9f6a20f9
 
 # Patch known CVEs in base image packages (e.g. zlib) ahead of a new upstream image tag
 RUN apk update && apk upgrade --no-cache
