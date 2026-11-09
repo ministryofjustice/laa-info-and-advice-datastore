@@ -29,6 +29,9 @@ WORKDIR /opt/laa-info-and-advice-datastore/
 # Copy the JAR file from the build stage
 COPY --from=builder /build/info-and-advice-datastore-service/build/libs/info-and-advice-datastore-service-*.jar app.jar
 
+# RDS root CAs so the JDBC connection can use sslmode=verify-full (see certs/README.md)
+COPY certs/rds-eu-west-2-bundle.pem /opt/laa-info-and-advice-datastore/rds-ca-bundle.pem
+
 # Create a group and non-root user
 RUN addgroup -S appgroup && adduser -u 1001 -S appuser -G appgroup
 
