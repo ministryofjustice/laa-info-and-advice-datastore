@@ -29,6 +29,12 @@ WORKDIR /opt/laa-info-and-advice-datastore/
 # Copy the JAR file from the build stage
 COPY --from=builder /build/info-and-advice-datastore-service/build/libs/info-and-advice-datastore-service-*.jar app.jar
 
+# Amazon RDS root CAs so the JDBC connection can use sslmode=verify-full.
+# Fetched at build time so the certificates are not stored in the repo.
+RUN wget -q -O /opt/laa-info-and-advice-datastore/rds-ca-bundle.pem \
+      https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
+    && grep -q "BEGIN CERTIFICATE" /opt/laa-info-and-advice-datastore/rds-ca-bundle.pem
+
 # Create a group and non-root user
 RUN addgroup -S appgroup && adduser -u 1001 -S appuser -G appgroup
 
