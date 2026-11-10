@@ -79,12 +79,11 @@ public class SentryPiiRedactor implements SentryOptions.Logs.BeforeSendLogCallba
       }
 
       if (containsPii) {
-        redactedAttributes.replaceAll(
-            (key, value) ->
-                key.toLowerCase(Locale.ROOT).startsWith("message.parameter.")
-                        || key.toLowerCase(Locale.ROOT).startsWith("sentry.message.parameter.")
-                    ? redactedValue()
-                    : value);
+        redactedAttributes.replaceAll((key, value) ->
+            key.toLowerCase(Locale.ROOT).startsWith("message.parameter.")
+                    || key.toLowerCase(Locale.ROOT).startsWith("sentry.message.parameter.")
+                ? redactedValue()
+                : value);
       }
       event.setAttributes(redactedAttributes);
     }

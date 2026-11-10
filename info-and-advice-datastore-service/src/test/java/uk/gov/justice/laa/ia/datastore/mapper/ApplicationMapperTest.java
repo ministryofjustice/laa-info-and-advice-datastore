@@ -57,11 +57,10 @@ public class ApplicationMapperTest {
   @Test
   void toApplicationSummary_shouldMapSummaryFields() {
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder -> {
-              builder.clientDetails(ClientDetailsEntityGenerator.createWithId(null));
-              builder.referenceNumber("LAA-TEST-001");
-            });
+        ApplicationEntityGenerator.createWithId(builder -> {
+          builder.clientDetails(ClientDetailsEntityGenerator.createWithId(null));
+          builder.referenceNumber("LAA-TEST-001");
+        });
 
     final ApplicationSummary summary = sut.toApplicationSummary(application);
 
@@ -80,28 +79,26 @@ public class ApplicationMapperTest {
   @Test
   void toApplication_shouldMapAllProperties() {
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder -> {
-              builder.clientDetails(
-                  ClientDetailsEntityGenerator.createWithId(
-                      clientDetailsBuilder -> {
-                        clientDetailsBuilder.address(AddressEntityGenerator.createWithId(null));
-                      }));
-              builder.evidence(
-                  EvidenceEntity.builder()
-                      .evidenceExemptionCode("EXEMPT_01")
-                      .evidenceExemptionReason("Test reason")
-                      .build());
-              builder.declaration(DeclarationEntityGenerator.createWithId(null));
-              builder.eligibilityAssessments(
-                  Set.of(
-                      EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
-                          UUID.randomUUID())));
-              builder.etag(1969);
-              builder
-                  .providerContractType(ProviderContractType.FACE_TO_FACE)
-                  .categoryOfLaw(CategoryOfLaw.FAMILY);
-            });
+        ApplicationEntityGenerator.createWithId(builder -> {
+          builder.clientDetails(
+              ClientDetailsEntityGenerator.createWithId(clientDetailsBuilder -> {
+                clientDetailsBuilder.address(AddressEntityGenerator.createWithId(null));
+              }));
+          builder.evidence(
+              EvidenceEntity.builder()
+                  .evidenceExemptionCode("EXEMPT_01")
+                  .evidenceExemptionReason("Test reason")
+                  .build());
+          builder.declaration(DeclarationEntityGenerator.createWithId(null));
+          builder.eligibilityAssessments(
+              Set.of(
+                  EligibilityAssessmentEntityGenerator.createEligibilityAssessment(
+                      UUID.randomUUID())));
+          builder.etag(1969);
+          builder
+              .providerContractType(ProviderContractType.FACE_TO_FACE)
+              .categoryOfLaw(CategoryOfLaw.FAMILY);
+        });
 
     final ApplicationResponse mappedModel = sut.toApplication(application);
 
@@ -145,11 +142,10 @@ public class ApplicationMapperTest {
   @Test
   void startApplicationCommand_toApplication_shouldMapProperties() {
     final StartApplicationCommand cmd =
-        StartApplicationCommandGenerator.create(
-            builder ->
-                builder
-                    .providerContractType(ProviderContractType.FACE_TO_FACE)
-                    .categoryOfLaw(CategoryOfLaw.FAMILY));
+        StartApplicationCommandGenerator.create(builder ->
+            builder
+                .providerContractType(ProviderContractType.FACE_TO_FACE)
+                .categoryOfLaw(CategoryOfLaw.FAMILY));
 
     final ApplicationEntity mappedModel = sut.toApplicationEntity(cmd);
 

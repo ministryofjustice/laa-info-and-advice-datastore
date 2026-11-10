@@ -67,15 +67,14 @@ public class ClaimsApiGateway implements ClaimsGateway {
   private RetentionLookupResult fetchPage(String officeCode, String ufn, int page) {
     return restClient
         .get()
-        .uri(
-            uriBuilder ->
-                uriBuilder
-                    .path(RETENTION_LOOKUP_PATH)
-                    .queryParam("office_code", "{officeCode}")
-                    .queryParam("ufn", "{ufn}")
-                    .queryParam("page", "{page}")
-                    .queryParam("size", "{size}")
-                    .build(officeCode, ufn, page, pageSize))
+        .uri(uriBuilder ->
+            uriBuilder
+                .path(RETENTION_LOOKUP_PATH)
+                .queryParam("office_code", "{officeCode}")
+                .queryParam("ufn", "{ufn}")
+                .queryParam("page", "{page}")
+                .queryParam("size", "{size}")
+                .build(officeCode, ufn, page, pageSize))
         .retrieve()
         .body(RetentionLookupResult.class);
   }

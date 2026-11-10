@@ -28,12 +28,11 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .save(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final LocalDate dateSigned = LocalDate.of(2026, 8, 5);
@@ -69,12 +68,11 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .save(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final String payload =
@@ -98,12 +96,11 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .save(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -146,12 +143,11 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .save(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final String payload =
@@ -178,12 +174,11 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .save(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(UUID.randomUUID().toString())))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(UUID.randomUUID().toString())))
             .getId();
     clearCache();
     final String payload =
@@ -214,13 +209,12 @@ public class UpdateDeclarationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .save(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                            .deleted(true)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                        .deleted(true)))
             .getId();
     clearCache();
     final String payload =

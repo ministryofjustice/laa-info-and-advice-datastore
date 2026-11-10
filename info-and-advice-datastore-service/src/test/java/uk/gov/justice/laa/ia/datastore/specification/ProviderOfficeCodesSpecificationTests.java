@@ -36,10 +36,9 @@ public class ProviderOfficeCodesSpecificationTests {
 
   @Test
   void givenBlankProviderFirmCode_whenFilterByDefaultConstraints_thenThrows() {
-    assertThatThrownBy(
-            () ->
-                ApplicationSpecification.filterByDefaultConstraints(
-                    "", Collections.singletonList("office-1")))
+    assertThatThrownBy(() ->
+            ApplicationSpecification.filterByDefaultConstraints(
+                "", Collections.singletonList("office-1")))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("providerFirmCode must not be null or blank");
   }

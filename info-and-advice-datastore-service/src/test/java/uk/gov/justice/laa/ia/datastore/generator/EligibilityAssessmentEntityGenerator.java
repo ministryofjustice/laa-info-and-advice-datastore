@@ -113,9 +113,8 @@ public class EligibilityAssessmentEntityGenerator {
 
   /** Create a basic EligibilityAssessmentEntity. */
   public static EligibilityAssessmentEntity createEligibilityAssessment(UUID applicationId) {
-    return EligibilityAssessmentEntityGenerator.createWithoutId(
-        builder -> {
-          builder.applicationId(applicationId).createdAt(Instant.now()).createdBy("SYSTEM");
-        });
+    return EligibilityAssessmentEntityGenerator.createWithoutId(builder -> {
+      builder.applicationId(applicationId).createdAt(Instant.now()).createdBy("SYSTEM");
+    });
   }
 }

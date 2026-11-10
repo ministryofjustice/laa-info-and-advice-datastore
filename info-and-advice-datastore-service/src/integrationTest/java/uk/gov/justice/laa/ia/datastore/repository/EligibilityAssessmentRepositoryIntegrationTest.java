@@ -14,7 +14,7 @@ import uk.gov.justice.laa.ia.datastore.generator.EligibilityAssessmentEntityGene
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for the EligibilityAssessmentRepository. */
-@WithMockUser()
+@WithMockUser
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class EligibilityAssessmentRepositoryIntegrationTest extends BaseIntegrationTest {
 
@@ -24,10 +24,9 @@ public class EligibilityAssessmentRepositoryIntegrationTest extends BaseIntegrat
   void shouldSaveAndRetrieveEligibilityResult() {
     // Arrange: Create and save an application first (for the foreign key)
     ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails();
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails();
+        });
     ApplicationEntity savedApplication = applicationRepository.saveAndFlush(application);
     // Arrange: Create eligibility result
     EligibilityAssessmentEntity entity =
@@ -54,10 +53,9 @@ public class EligibilityAssessmentRepositoryIntegrationTest extends BaseIntegrat
   void shouldRetrieveMultipleEligibilityAssessmentsForApplication() {
     // Arrange: Create and save an application first (for the foreign key)
     ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails();
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails();
+        });
     ApplicationEntity savedApplication = applicationRepository.saveAndFlush(application);
 
     // Arrange: Create multiple eligibility results
@@ -84,13 +82,12 @@ public class EligibilityAssessmentRepositoryIntegrationTest extends BaseIntegrat
       Iterable<EligibilityAssessmentEntity> eligibilityAssessments,
       EligibilityAssessmentEntity expected) {
     assertThat(eligibilityAssessments)
-        .anySatisfy(
-            result -> {
-              assertThat(result.getEligibilityAssessmentId())
-                  .isEqualTo(expected.getEligibilityAssessmentId());
-              assertThat(result.getApplicationId()).isEqualTo(expected.getApplicationId());
-              assertThat(result.getResultJson()).isEqualTo(expected.getResultJson());
-              assertThat(result.getCreatedAt()).isNotNull();
-            });
+        .anySatisfy(result -> {
+          assertThat(result.getEligibilityAssessmentId())
+              .isEqualTo(expected.getEligibilityAssessmentId());
+          assertThat(result.getApplicationId()).isEqualTo(expected.getApplicationId());
+          assertThat(result.getResultJson()).isEqualTo(expected.getResultJson());
+          assertThat(result.getCreatedAt()).isNotNull();
+        });
   }
 }

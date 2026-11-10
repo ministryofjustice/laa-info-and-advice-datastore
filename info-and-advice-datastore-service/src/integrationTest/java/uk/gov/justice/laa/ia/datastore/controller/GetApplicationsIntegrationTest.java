@@ -38,40 +38,35 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
 
   void setupApplications() {
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     clearCache();
   }
 
@@ -104,19 +99,17 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     // Arrange
     setupApplications();
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(SECONDARY_PROVIDER_OFFICE_CODE)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(SECONDARY_PROVIDER_OFFICE_CODE)));
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(SECONDARY_PROVIDER_OFFICE_CODE)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(SECONDARY_PROVIDER_OFFICE_CODE)));
     clearCache();
     // Act & Assert
     mockMvc
@@ -137,12 +130,11 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     // Arrange
     setupApplications();
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(UUID.randomUUID().toString())));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(UUID.randomUUID().toString())));
     clearCache();
 
     // Act & Assert - the unauthorized application must not appear even though the
@@ -160,13 +152,12 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     // Arrange
     setupApplications();
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                    .applicationState(ApplicationState.COMPLETED)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                .applicationState(ApplicationState.COMPLETED)));
     clearCache();
     // Act & Assert
     mockMvc
@@ -308,19 +299,17 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   void shouldFilterApplicationsByEligibilityIndication_eligible() throws Exception {
     // Arrange
     var eligibleApp =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE));
     var ineligibleApp =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE));
 
     var savedEligible = applicationRepository.save(eligibleApp);
     var savedIneligible = applicationRepository.save(ineligibleApp);
@@ -373,19 +362,17 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
   void shouldFilterApplicationsByEligibilityIndication_ineligible() throws Exception {
     // Arrange
     var eligibleApp =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE));
     var ineligibleApp =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE));
 
     var savedEligible = applicationRepository.save(eligibleApp);
     var savedIneligible = applicationRepository.save(ineligibleApp);
@@ -439,13 +426,12 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
     // Arrange
     setupApplications();
     applicationRepository.save(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                    .deleted(true)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                .deleted(true)));
     clearCache();
 
     // Act & Assert

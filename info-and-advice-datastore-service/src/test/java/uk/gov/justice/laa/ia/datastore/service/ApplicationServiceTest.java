@@ -107,12 +107,11 @@ public class ApplicationServiceTest {
     when(userContext.getOfficeCodes()).thenReturn(List.of(officeId.toString()));
     when(mapper.toApplicationEntity(cmd)).thenReturn(entity);
     when(repo.save(any(ApplicationEntity.class)))
-        .thenAnswer(
-            invocation -> {
-              ApplicationEntity saved = invocation.getArgument(0);
-              saved.setId(generatedId);
-              return saved;
-            });
+        .thenAnswer(invocation -> {
+          ApplicationEntity saved = invocation.getArgument(0);
+          saved.setId(generatedId);
+          return saved;
+        });
     ApplicationResponse expectedResponse = new ApplicationResponse();
     expectedResponse.setId(generatedId);
     when(mapper.toApplication(entity)).thenReturn(expectedResponse);
@@ -495,34 +494,31 @@ public class ApplicationServiceTest {
     final DeclarationCommand declarationCommand =
         DeclarationCommand.builder().eTag(0L).declarationConfirmation(true).build();
     final DeclarationEntity declarationEntity =
-        DeclarationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .declarationConfirmation(true)
-                    .clientDeclarationStatus(null)
-                    .modifiedBy(originalUser)
-                    .createdBy(originalUser));
+        DeclarationEntityGenerator.createWithoutId(builder ->
+            builder
+                .declarationConfirmation(true)
+                .clientDeclarationStatus(null)
+                .modifiedBy(originalUser)
+                .createdBy(originalUser));
     when(declarationMapper.toDeclarationEntity(declarationCommand)).thenReturn(declarationEntity);
     final ApplicationEntity applicationEntity =
-        ApplicationEntityGenerator.createWithId(
-            builder -> {
-              builder.declaration(
-                  DeclarationEntityGenerator.createWithoutId(
-                      declarationBuilder -> {
-                        declarationBuilder
-                            .declarationConfirmation(false)
-                            .clientDeclarationStatus(null)
-                            .id(originalDeclarationId)
-                            .createdAt(originalCreatedTime)
-                            .createdBy(originalUser)
-                            .modifiedAt(originalCreatedTime)
-                            .modifiedBy(originalUser);
-                      }));
-              builder.createdAt(originalCreatedTime);
-              builder.createdBy(originalUser);
-              builder.modifiedAt(originalCreatedTime);
-              builder.modifiedBy(originalUser);
-            });
+        ApplicationEntityGenerator.createWithId(builder -> {
+          builder.declaration(
+              DeclarationEntityGenerator.createWithoutId(declarationBuilder -> {
+                declarationBuilder
+                    .declarationConfirmation(false)
+                    .clientDeclarationStatus(null)
+                    .id(originalDeclarationId)
+                    .createdAt(originalCreatedTime)
+                    .createdBy(originalUser)
+                    .modifiedAt(originalCreatedTime)
+                    .modifiedBy(originalUser);
+              }));
+          builder.createdAt(originalCreatedTime);
+          builder.createdBy(originalUser);
+          builder.modifiedAt(originalCreatedTime);
+          builder.modifiedBy(originalUser);
+        });
     when(userContext.getProviderFirmCode()).thenReturn("123456");
     when(userContext.getOfficeCodes())
         .thenReturn(List.of(applicationEntity.getProviderOfficeCode()));

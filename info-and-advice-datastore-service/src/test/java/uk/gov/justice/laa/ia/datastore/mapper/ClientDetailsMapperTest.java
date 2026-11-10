@@ -71,10 +71,9 @@ public class ClientDetailsMapperTest {
   @Test
   void createClientCommand_toClientDetails_shouldMapProperties() {
     final CreateClientCommand cmd =
-        CreateClientCommandGenerator.create(
-            builder -> {
-              builder.createAddressCommand(CreateAddressCommandGenerator.create(null));
-            });
+        CreateClientCommandGenerator.create(builder -> {
+          builder.createAddressCommand(CreateAddressCommandGenerator.create(null));
+        });
     final ClientDetailsEntity mappedModel = sut.toClientDetailsEntity(cmd);
 
     assertEquals(cmd.getNationalInsuranceNumber(), mappedModel.getNiNumber());
@@ -89,10 +88,9 @@ public class ClientDetailsMapperTest {
     // Arrange
     when(userContext.getCurrentUser()).thenReturn("USERCONTEXT:SYSTEM");
     final CreateClientCommand cmd =
-        CreateClientCommandGenerator.create(
-            builder -> {
-              builder.createAddressCommand(CreateAddressCommandGenerator.create(null));
-            });
+        CreateClientCommandGenerator.create(builder -> {
+          builder.createAddressCommand(CreateAddressCommandGenerator.create(null));
+        });
 
     // Act
     final ClientDetailsEntity mappedModel = sut.toClientDetailsEntity(cmd);

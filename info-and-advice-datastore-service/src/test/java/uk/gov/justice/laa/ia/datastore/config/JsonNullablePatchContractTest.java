@@ -196,10 +196,9 @@ class JsonNullablePatchContractTest {
             "{\"clientDetails\":{\"address\":{\"addressLine1\":null}}}",
             "{\"clientDetails\":{\"address\":{\"country\":null}}}");
 
-    invalidBodies.forEach(
-        body ->
-            assertThatThrownBy(() -> objectMapper.readValue(body, EditApplicationCommand.class))
-                .isInstanceOf(JsonProcessingException.class));
+    invalidBodies.forEach(body ->
+        assertThatThrownBy(() -> objectMapper.readValue(body, EditApplicationCommand.class))
+            .isInstanceOf(JsonProcessingException.class));
   }
 
   @Test

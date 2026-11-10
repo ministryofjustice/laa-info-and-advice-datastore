@@ -29,12 +29,11 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -88,13 +87,12 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .scopingQuestions(existingScopingQuestions)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .scopingQuestions(existingScopingQuestions)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -130,13 +128,12 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .scopingQuestions(existingScopingQuestions)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .scopingQuestions(existingScopingQuestions)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -181,12 +178,11 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -211,12 +207,11 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(UUID.randomUUID().toString())))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(UUID.randomUUID().toString())))
             .getId();
     clearCache();
 
@@ -245,13 +240,12 @@ public class UpdateScopingDataIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                            .deleted(true)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                        .deleted(true)))
             .getId();
     clearCache();
 

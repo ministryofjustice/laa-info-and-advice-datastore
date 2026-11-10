@@ -13,9 +13,8 @@ public class ApplicationEntityBuilderExtensions {
   public static ApplicationEntity.ApplicationEntityBuilder withDefaultClientDetails(
       ApplicationEntity.ApplicationEntityBuilder builder) {
     return builder.clientDetails(
-        ClientDetailsEntityGenerator.createWithoutId(
-            clientBuilder -> {
-              clientBuilder.address(AddressEntityGenerator.createWithoutId(null));
-            }));
+        ClientDetailsEntityGenerator.createWithoutId(clientBuilder -> {
+          clientBuilder.address(AddressEntityGenerator.createWithoutId(null));
+        }));
   }
 }

@@ -178,14 +178,12 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
   void shouldReturnBadRequest_whenNiNumberInvalid(String invalidNiNumber) throws Exception {
     // Arrange
     StartApplicationCommand command =
-        StartApplicationCommandGenerator.create(
-            builder ->
-                builder
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                    .client(
-                        CreateClientCommandGenerator.create(
-                            clientBuilder ->
-                                clientBuilder.nationalInsuranceNumber(invalidNiNumber))));
+        StartApplicationCommandGenerator.create(builder ->
+            builder
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                .client(
+                    CreateClientCommandGenerator.create(
+                        clientBuilder -> clientBuilder.nationalInsuranceNumber(invalidNiNumber))));
 
     // Act + Assert
     mockMvc

@@ -18,7 +18,7 @@ import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for ApplicationSpecification.findByExpiredDraft. */
-@WithMockUser()
+@WithMockUser
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ExpiredDraftSpecificationIntegrationTest extends BaseIntegrationTest {
 
@@ -107,13 +107,12 @@ public class ExpiredDraftSpecificationIntegrationTest extends BaseIntegrationTes
   private ApplicationEntity saveApplication(
       ApplicationState state, boolean deleted, Instant modifiedAt) {
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .applicationState(state)
-                    .deleted(deleted)
-                    .deletedAt(deleted ? Instant.now() : null));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .applicationState(state)
+                .deleted(deleted)
+                .deletedAt(deleted ? Instant.now() : null));
     applicationRepository.saveAndFlush(application);
     setTimestamps(application.getId(), "modified_at", modifiedAt);
     return application;

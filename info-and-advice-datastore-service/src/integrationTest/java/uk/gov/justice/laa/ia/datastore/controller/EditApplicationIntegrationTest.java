@@ -42,14 +42,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                            .applicationState(ApplicationState.COMPLETED)
-                            .laaReference("original")))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                        .applicationState(ApplicationState.COMPLETED)
+                        .laaReference("original")))
             .getId();
     clearCache();
 
@@ -76,16 +75,14 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder ->
-                                        clientBuilder.address(
-                                            AddressEntityGenerator.createWithoutId(null))))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(clientBuilder ->
+                                clientBuilder.address(
+                                    AddressEntityGenerator.createWithoutId(null))))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final UUID addressId =
@@ -124,14 +121,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder -> clientBuilder.noFixedAbode(false)))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(
+                                clientBuilder -> clientBuilder.noFixedAbode(false)))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -166,18 +162,16 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder ->
-                                        clientBuilder
-                                            .firstName("Original")
-                                            .noFixedAbode(false)
-                                            .address(AddressEntityGenerator.createWithoutId(null))))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(clientBuilder ->
+                                clientBuilder
+                                    .firstName("Original")
+                                    .noFixedAbode(false)
+                                    .address(AddressEntityGenerator.createWithoutId(null))))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -209,14 +203,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder -> clientBuilder.noFixedAbode(false)))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(
+                                clientBuilder -> clientBuilder.noFixedAbode(false)))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -245,14 +238,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder -> clientBuilder.noFixedAbode(true)))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(
+                                clientBuilder -> clientBuilder.noFixedAbode(true)))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -288,23 +280,20 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder ->
-                                        clientBuilder
-                                            .noFixedAbode(false)
-                                            .address(
-                                                AddressEntityGenerator.createWithoutId(
-                                                    addressBuilder ->
-                                                        addressBuilder
-                                                            .addressLine1("Existing Street")
-                                                            .country("GB")
-                                                            .county("Kent")))))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(clientBuilder ->
+                                clientBuilder
+                                    .noFixedAbode(false)
+                                    .address(
+                                        AddressEntityGenerator.createWithoutId(addressBuilder ->
+                                            addressBuilder
+                                                .addressLine1("Existing Street")
+                                                .country("GB")
+                                                .county("Kent")))))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
     final UUID addressId =
@@ -350,17 +339,16 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder -> clientBuilder.noFixedAbode(true)))
-                            .reasonForReapplication("Legacy ReapplicationReason")
-                            .ecfFlag(true)
-                            .scopingQuestions(existingScopingQuestions)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(
+                                clientBuilder -> clientBuilder.noFixedAbode(true)))
+                        .reasonForReapplication("Legacy ReapplicationReason")
+                        .ecfFlag(true)
+                        .scopingQuestions(existingScopingQuestions)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -416,25 +404,22 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder ->
-                                        clientBuilder
-                                            .noFixedAbode(false)
-                                            .address(
-                                                AddressEntityGenerator.createWithoutId(
-                                                    addressBuilder ->
-                                                        addressBuilder
-                                                            .addressLine3("Old line 3")
-                                                            .county("Kent")))))
-                            .reasonForReapplication("Existing ReapplicationReason")
-                            .scopingQuestions(existingScopingQuestions)
-                            .ecfFlag(true)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(clientBuilder ->
+                                clientBuilder
+                                    .noFixedAbode(false)
+                                    .address(
+                                        AddressEntityGenerator.createWithoutId(addressBuilder ->
+                                            addressBuilder
+                                                .addressLine3("Old line 3")
+                                                .county("Kent")))))
+                        .reasonForReapplication("Existing ReapplicationReason")
+                        .scopingQuestions(existingScopingQuestions)
+                        .ecfFlag(true)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -471,28 +456,25 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder ->
-                                        clientBuilder
-                                            .noFixedAbode(false)
-                                            .address(
-                                                AddressEntityGenerator.createWithoutId(
-                                                    addressBuilder ->
-                                                        addressBuilder
-                                                            .addressLine1("Existing Street")
-                                                            .country("GB")
-                                                            .addressLine2("Flat 2")
-                                                            .addressLine3("Line 3")
-                                                            .addressLine4("Line 4")
-                                                            .townOrCity("London")
-                                                            .postCode("SW1A 1AA")
-                                                            .county("Kent")))))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(clientBuilder ->
+                                clientBuilder
+                                    .noFixedAbode(false)
+                                    .address(
+                                        AddressEntityGenerator.createWithoutId(addressBuilder ->
+                                            addressBuilder
+                                                .addressLine1("Existing Street")
+                                                .country("GB")
+                                                .addressLine2("Flat 2")
+                                                .addressLine3("Line 3")
+                                                .addressLine4("Line 4")
+                                                .townOrCity("London")
+                                                .postCode("SW1A 1AA")
+                                                .county("Kent")))))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -531,17 +513,16 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder -> clientBuilder.noFixedAbode(true)))
-                            .reasonForReapplication("Existing ReapplicationReason")
-                            .ecfFlag(true)
-                            .scopingQuestions(existingScopingQuestions)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(
+                                clientBuilder -> clientBuilder.noFixedAbode(true)))
+                        .reasonForReapplication("Existing ReapplicationReason")
+                        .ecfFlag(true)
+                        .scopingQuestions(existingScopingQuestions)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -579,13 +560,12 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .reasonForReapplication("Existing ReapplicationReason")
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .reasonForReapplication("Existing ReapplicationReason")
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -611,14 +591,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .reasonForReapplication("Legacy ReapplicationReason")
-                            .scopingQuestions(existingScopingQuestions)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .reasonForReapplication("Legacy ReapplicationReason")
+                        .scopingQuestions(existingScopingQuestions)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -646,14 +625,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .reasonForReapplication("Legacy ReapplicationReason")
-                            .scopingQuestions(existingScopingQuestions)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .reasonForReapplication("Legacy ReapplicationReason")
+                        .scopingQuestions(existingScopingQuestions)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -681,14 +659,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .reasonForReapplication("Legacy ReapplicationReason")
-                            .scopingQuestions(existingScopingQuestions)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .reasonForReapplication("Legacy ReapplicationReason")
+                        .scopingQuestions(existingScopingQuestions)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -716,17 +693,16 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder -> clientBuilder.noFixedAbode(true)))
-                            .reasonForReapplication("Legacy ReapplicationReason")
-                            .ecfFlag(true)
-                            .scopingQuestions(existingScopingQuestions)
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(
+                                clientBuilder -> clientBuilder.noFixedAbode(true)))
+                        .reasonForReapplication("Legacy ReapplicationReason")
+                        .ecfFlag(true)
+                        .scopingQuestions(existingScopingQuestions)
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -760,13 +736,12 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                            .etag(1L)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                        .etag(1L)))
             .getId();
     clearCache();
 
@@ -792,25 +767,24 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .ufn("123456/12")
-                            .laaReference("LAA-123")
-                            .meansAssessmentRequired(true)
-                            .typeOfNonMeans(false)
-                            .contribution("20")
-                            .determinationId(determinationId)
-                            .declaration(DeclarationEntityGenerator.createWithoutId(null))
-                            .evidence(
-                                EvidenceEntity.builder()
-                                    .evidenceExemptionCode("EXEMPT_01")
-                                    .createdBy("SYSTEM")
-                                    .modifiedBy("SYSTEM")
-                                    .build())
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .ufn("123456/12")
+                        .laaReference("LAA-123")
+                        .meansAssessmentRequired(true)
+                        .typeOfNonMeans(false)
+                        .contribution("20")
+                        .determinationId(determinationId)
+                        .declaration(DeclarationEntityGenerator.createWithoutId(null))
+                        .evidence(
+                            EvidenceEntity.builder()
+                                .evidenceExemptionCode("EXEMPT_01")
+                                .createdBy("SYSTEM")
+                                .modifiedBy("SYSTEM")
+                                .build())
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -845,13 +819,12 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .ufn("123456/12")
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .ufn("123456/12")
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -886,14 +859,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .declaration(DeclarationEntityGenerator.createWithoutId(null))
-                            .ufn("123456/12")
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .declaration(DeclarationEntityGenerator.createWithoutId(null))
+                        .ufn("123456/12")
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -919,24 +891,22 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldRejectDuplicateUfnWithoutChangingUfnOrDeclaration() throws Exception {
     applicationRepository.saveAndFlush(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                    .ufn("123456/12")
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                .ufn("123456/12")
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)));
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .declaration(DeclarationEntityGenerator.createWithoutId(null))
-                            .ufn("654321/98")
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .declaration(DeclarationEntityGenerator.createWithoutId(null))
+                        .ufn("654321/98")
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -965,14 +935,13 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(
-                                ClientDetailsEntityGenerator.createWithoutId(
-                                    clientBuilder -> clientBuilder.firstName("Original")))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(
+                            ClientDetailsEntityGenerator.createWithoutId(
+                                clientBuilder -> clientBuilder.firstName("Original")))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -1008,13 +977,12 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .declaration(DeclarationEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .declaration(DeclarationEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -1045,12 +1013,11 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -1084,12 +1051,11 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -1123,12 +1089,11 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -1154,13 +1119,12 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                            .deleted(true)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                        .deleted(true)))
             .getId();
     clearCache();
 
