@@ -132,13 +132,12 @@ class ApplicationDataDeletionServiceTests {
   void givenClientDetailsHasNoAddress_thenOnlyClientDetailsFieldsAreNulled() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .clientDetails(
-                        ClientDetailsEntityGenerator.createWithId(
-                            clientBuilder -> clientBuilder.address(null)))
-                    .etag(1L));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .clientDetails(
+                    ClientDetailsEntityGenerator.createWithId(
+                        clientBuilder -> clientBuilder.address(null)))
+                .etag(1L));
     when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
     when(eventRepository.findByApplicationId(application.getId())).thenReturn(List.of());
 
@@ -158,14 +157,12 @@ class ApplicationDataDeletionServiceTests {
   void givenNoExistingEventsForApplication_thenDoesNotAttemptToSaveAnyEvent() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .clientDetails(
-                        ClientDetailsEntityGenerator.createWithId(
-                            clientBuilder ->
-                                clientBuilder.address(AddressEntityGenerator.createWithId(null))))
-                    .etag(1L));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .clientDetails(
+                    ClientDetailsEntityGenerator.createWithId(clientBuilder ->
+                        clientBuilder.address(AddressEntityGenerator.createWithId(null))))
+                .etag(1L));
     when(applicationRepository.findById(application.getId())).thenReturn(Optional.of(application));
     when(eventRepository.findByApplicationId(application.getId())).thenReturn(List.of());
 

@@ -104,7 +104,8 @@ class ClaimsApiGatewayTests {
     page0Override =
         """
         {"content":[{"claim_id":"%s","status":"VALID","created_on":"2024-01-02T03:04:05Z"}],\
-        "total_pages":1}"""
+        "total_pages":1}\
+        """
             .formatted(CLAIM_1);
 
     assertThrows(IllegalStateException.class, () -> gateway().getClaims("0R695K", "230493/001"));
@@ -132,10 +133,11 @@ class ClaimsApiGatewayTests {
   private static String pageBody(int page) {
     final var claim = page == 0 ? CLAIM_1 : CLAIM_2;
     return """
-        {"content":[{"claim_id":"%s","status":"VALID",\
-        "created_on":"2024-01-02T03:04:05Z","updated_on":"2024-02-03T04:05:06Z",\
-        "ignored":"x"}],\
-        "total_pages":2,"total_elements":2,"number":%d,"size":1}"""
+    {"content":[{"claim_id":"%s","status":"VALID",\
+    "created_on":"2024-01-02T03:04:05Z","updated_on":"2024-02-03T04:05:06Z",\
+    "ignored":"x"}],\
+    "total_pages":2,"total_elements":2,"number":%d,"size":1}\
+    """
         .formatted(claim, page);
   }
 }

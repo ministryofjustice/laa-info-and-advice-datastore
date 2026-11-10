@@ -63,14 +63,13 @@ class DataRetentionDateResolverTaskUatIntegrationTest extends BaseIntegrationTes
 
   private ApplicationEntity saveCompletedApplication(String officeCode, String ufn) {
     return applicationRepository.saveAndFlush(
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode)));
   }
 
   private Instant retentionDateOf(ApplicationEntity application) {

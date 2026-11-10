@@ -56,14 +56,13 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
     final String ufn = ClaimsGatewayStub.NO_CLAIMS_UFN;
 
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
     // Act
@@ -79,14 +78,13 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
   void givenApplicationWithoutUfn_thenSkipApplicationWithoutCallingClaimsApi() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(null)
-                    .dataRetentionDate(null)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(null)
+                .dataRetentionDate(null)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
     // Act
@@ -108,14 +106,13 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
     final String ufn = ClaimsGatewayStub.RECENT_CLAIM_UFN;
 
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
     // Act
@@ -147,14 +144,13 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
     final String ufn = ClaimsGatewayStub.MULTIPLE_CLAIMS_UFN;
 
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
     // Act
@@ -174,23 +170,21 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
     final String ufn = ClaimsGatewayStub.RECENT_CLAIM_UFN;
     final String ufnWithRetentionDate = ClaimsGatewayStub.NO_CLAIMS_UFN;
     final ApplicationEntity applicationWithRetentionDate =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufnWithRetentionDate)
-                    .dataRetentionDate(existingDataRetentionDate)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufnWithRetentionDate)
+                .dataRetentionDate(existingDataRetentionDate)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     final ApplicationEntity applicationWithoutRetentionDate =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(applicationWithRetentionDate);
     applicationRepository.saveAndFlush(applicationWithoutRetentionDate);
 
@@ -207,14 +201,13 @@ public class DataRetentionDateResolverTaskIntegrationTest extends BaseIntegratio
     // Arrange
     final String ufn = ClaimsGatewayStub.RECENT_CLAIM_UFN;
     final ApplicationEntity draftApplication =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .applicationState(ApplicationState.DRAFT)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .applicationState(ApplicationState.DRAFT)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(draftApplication);
 
     // Act

@@ -165,19 +165,18 @@ public class ApplicationService {
         ApplicationSpecification.findById(applicationId, userContext.getProviderFirmCode());
     Optional<ApplicationEntity> applicationOpt =
         repository.findOne(findApplicationByIdSpecification);
-    applicationOpt.ifPresent(
-        application -> {
-          validateProviderOfficeCode(application.getProviderOfficeCode());
-          validateNotDeletedOrExpired(application);
-          auditLogger.read(
-              AuditAction.APPLICATION_VIEWED,
-              userContext.getCurrentUser(),
-              "application",
-              String.valueOf(application.getId()),
-              userContext.getProviderFirmCode(),
-              application.getProviderOfficeCode(),
-              Map.of());
-        });
+    applicationOpt.ifPresent(application -> {
+      validateProviderOfficeCode(application.getProviderOfficeCode());
+      validateNotDeletedOrExpired(application);
+      auditLogger.read(
+          AuditAction.APPLICATION_VIEWED,
+          userContext.getCurrentUser(),
+          "application",
+          String.valueOf(application.getId()),
+          userContext.getProviderFirmCode(),
+          application.getProviderOfficeCode(),
+          Map.of());
+    });
     return applicationOpt.map(applicationMapper::toApplication);
   }
 
@@ -617,14 +616,13 @@ public class ApplicationService {
             : objectMapper.createObjectNode();
     command
         .get()
-        .forEach(
-            (key, value) -> {
-              if (value == null) {
-                merged.remove(key);
-              } else {
-                merged.set(key, objectMapper.valueToTree(value));
-              }
-            });
+        .forEach((key, value) -> {
+          if (value == null) {
+            merged.remove(key);
+          } else {
+            merged.set(key, objectMapper.valueToTree(value));
+          }
+        });
     application.setScopingQuestions(merged);
   }
 

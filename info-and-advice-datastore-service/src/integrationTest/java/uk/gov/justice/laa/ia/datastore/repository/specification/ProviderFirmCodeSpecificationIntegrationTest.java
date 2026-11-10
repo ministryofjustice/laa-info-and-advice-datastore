@@ -20,15 +20,13 @@ public class ProviderFirmCodeSpecificationIntegrationTest extends BaseIntegratio
     // Arrange
     final String providerFirmCode = "123456";
     final ApplicationEntity applicationWithMatchingProviderFirmCode =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails().providerFirmCode(providerFirmCode);
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails().providerFirmCode(providerFirmCode);
+        });
     final ApplicationEntity applicationWithDifferentProviderFirmCode =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails().providerFirmCode("654321");
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails().providerFirmCode("654321");
+        });
     applicationRepository.saveAndFlush(applicationWithMatchingProviderFirmCode);
     applicationRepository.saveAndFlush(applicationWithDifferentProviderFirmCode);
     clearCache();

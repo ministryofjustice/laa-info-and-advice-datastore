@@ -86,13 +86,12 @@ class DataRetentionDateResolverTaskTests {
     // Arrange
     final String ufn = "111111/1";
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .providerOfficeCode(OFFICE_CODE));
     when(applicationRepository.findAll(anySpecification())).thenReturn(List.of(application));
     when(claimsGateway.getClaims(OFFICE_CODE, ufn)).thenReturn(null);
 
@@ -108,13 +107,12 @@ class DataRetentionDateResolverTaskTests {
     // Arrange
     final String ufn = "222222/1";
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .providerOfficeCode(OFFICE_CODE));
     when(applicationRepository.findAll(anySpecification())).thenReturn(List.of(application));
     when(claimsGateway.getClaims(OFFICE_CODE, ufn))
         .thenReturn(ApplicationClaimResponse.builder().claims(null).build());
@@ -132,21 +130,19 @@ class DataRetentionDateResolverTaskTests {
     final String failingUfn = "333333/1";
     final String succeedingUfn = "444444/1";
     final ApplicationEntity failingApplication =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(failingUfn)
-                    .dataRetentionDate(null)
-                    .providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(failingUfn)
+                .dataRetentionDate(null)
+                .providerOfficeCode(OFFICE_CODE));
     final ApplicationEntity succeedingApplication =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(succeedingUfn)
-                    .dataRetentionDate(null)
-                    .providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(succeedingUfn)
+                .dataRetentionDate(null)
+                .providerOfficeCode(OFFICE_CODE));
     when(applicationRepository.findAll(anySpecification()))
         .thenReturn(List.of(failingApplication, succeedingApplication));
     when(claimsGateway.getClaims(OFFICE_CODE, failingUfn))
@@ -181,21 +177,19 @@ class DataRetentionDateResolverTaskTests {
     final String failingUfn = "555555/1";
     final String succeedingUfn = "666666/1";
     final ApplicationEntity failingApplication =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(failingUfn)
-                    .dataRetentionDate(null)
-                    .providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(failingUfn)
+                .dataRetentionDate(null)
+                .providerOfficeCode(OFFICE_CODE));
     final ApplicationEntity succeedingApplication =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(succeedingUfn)
-                    .dataRetentionDate(null)
-                    .providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(succeedingUfn)
+                .dataRetentionDate(null)
+                .providerOfficeCode(OFFICE_CODE));
     when(applicationRepository.findAll(anySpecification()))
         .thenReturn(List.of(failingApplication, succeedingApplication));
     final OffsetDateTime claimApprovedDate =
@@ -234,14 +228,13 @@ class DataRetentionDateResolverTaskTests {
   private static ApplicationEntity applicationWithResults(
       String ufn, Instant modifiedAt, EligibilityAssessmentEntity... results) {
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(null)
-                    .providerOfficeCode(OFFICE_CODE)
-                    .eligibilityAssessments(Set.of(results)));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(null)
+                .providerOfficeCode(OFFICE_CODE)
+                .eligibilityAssessments(Set.of(results)));
     application.setModifiedAt(modifiedAt);
     return application;
   }
@@ -352,13 +345,12 @@ class DataRetentionDateResolverTaskTests {
     final ApplicationEntity nullIndication =
         applicationWithResults("123123/1", modifiedAt, result(null, modifiedAt));
     final ApplicationEntity noResult =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn("456456/1")
-                    .dataRetentionDate(null)
-                    .providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn("456456/1")
+                .dataRetentionDate(null)
+                .providerOfficeCode(OFFICE_CODE));
     final UUID claimId = UUID.randomUUID();
     when(applicationRepository.findAll(anySpecification()))
         .thenReturn(List.of(nullIndication, noResult));

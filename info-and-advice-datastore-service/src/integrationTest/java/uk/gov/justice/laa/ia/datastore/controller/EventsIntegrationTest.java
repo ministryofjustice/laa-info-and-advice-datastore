@@ -187,12 +187,11 @@ public class EventsIntegrationTest extends BaseIntegrationTest {
   private UUID savedApplicationId() {
     return applicationRepository
         .saveAndFlush(
-            ApplicationEntityGenerator.createWithoutId(
-                builder ->
-                    builder
-                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                        .providerFirmCode(FIRM_CODE)
-                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+            ApplicationEntityGenerator.createWithoutId(builder ->
+                builder
+                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                    .providerFirmCode(FIRM_CODE)
+                    .providerOfficeCode(PROVIDER_OFFICE_CODE)))
         .getId();
   }
 }

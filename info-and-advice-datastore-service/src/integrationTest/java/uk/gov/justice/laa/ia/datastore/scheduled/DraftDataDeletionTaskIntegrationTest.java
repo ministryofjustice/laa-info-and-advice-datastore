@@ -212,16 +212,15 @@ public class DraftDataDeletionTaskIntegrationTest extends BaseIntegrationTest {
 
   private ApplicationEntity saveApplication(ApplicationState state, boolean deleted) {
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .modifiedBy("SYSTEM")
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                    .withDefaultClientDetails()
-                    .applicationState(state)
-                    .deleted(deleted)
-                    .deletedAt(deleted ? Instant.now() : null));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .modifiedBy("SYSTEM")
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                .withDefaultClientDetails()
+                .applicationState(state)
+                .deleted(deleted)
+                .deletedAt(deleted ? Instant.now() : null));
     return applicationRepository.saveAndFlush(application);
   }
 

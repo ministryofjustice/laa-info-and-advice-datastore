@@ -15,24 +15,22 @@ import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for filtering ApplicationEntity by status via ApplicationSpecification. */
-@WithMockUser()
+@WithMockUser
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ApplicationStateSpecificationIntegrationTest extends BaseIntegrationTest {
   @Test
   void whenStatusSpecificationIsUsed_thenReturnApplicationsWithMatchingStatus() {
     // Arrange
     final ApplicationEntity draftApplication =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails();
-              builder.applicationState(ApplicationState.DRAFT);
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails();
+          builder.applicationState(ApplicationState.DRAFT);
+        });
     final ApplicationEntity completedApplication =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails();
-              builder.applicationState(ApplicationState.COMPLETED);
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails();
+          builder.applicationState(ApplicationState.COMPLETED);
+        });
     applicationRepository.saveAndFlush(draftApplication);
     applicationRepository.saveAndFlush(completedApplication);
     clearCache();
@@ -54,17 +52,15 @@ public class ApplicationStateSpecificationIntegrationTest extends BaseIntegratio
   void whenStatusIsNull_thenReturnAllApplications() {
     // Arrange
     final ApplicationEntity draftApplication =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails();
-              builder.applicationState(ApplicationState.DRAFT);
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails();
+          builder.applicationState(ApplicationState.DRAFT);
+        });
     final ApplicationEntity completedApplication =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails();
-              builder.applicationState(ApplicationState.COMPLETED);
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails();
+          builder.applicationState(ApplicationState.COMPLETED);
+        });
     applicationRepository.saveAndFlush(draftApplication);
     applicationRepository.saveAndFlush(completedApplication);
     clearCache();

@@ -17,7 +17,7 @@ import uk.gov.justice.laa.ia.datastore.specification.ApplicationSpecification;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for ApplicationSpecification.findByExpiredDataRetentionDateAndStatus. */
-@WithMockUser()
+@WithMockUser
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ExpiredDataRetentionDateSpecificationIntegrationTest extends BaseIntegrationTest {
 
@@ -25,12 +25,11 @@ public class ExpiredDataRetentionDateSpecificationIntegrationTest extends BaseIn
   void whenCompletedAndDataRetentionDateHasExpired_thenReturned() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .applicationState(ApplicationState.COMPLETED)
-                    .dataRetentionDate(Instant.now().minus(1, ChronoUnit.DAYS)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .applicationState(ApplicationState.COMPLETED)
+                .dataRetentionDate(Instant.now().minus(1, ChronoUnit.DAYS)));
     applicationRepository.saveAndFlush(application);
     clearCache();
 
@@ -49,12 +48,11 @@ public class ExpiredDataRetentionDateSpecificationIntegrationTest extends BaseIn
   void whenCompletedAndDataRetentionDateIsInTheFuture_thenNotReturned() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .applicationState(ApplicationState.COMPLETED)
-                    .dataRetentionDate(Instant.now().plus(1, ChronoUnit.DAYS)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .applicationState(ApplicationState.COMPLETED)
+                .dataRetentionDate(Instant.now().plus(1, ChronoUnit.DAYS)));
     applicationRepository.saveAndFlush(application);
     clearCache();
 
@@ -72,12 +70,11 @@ public class ExpiredDataRetentionDateSpecificationIntegrationTest extends BaseIn
   void whenCompletedAndDataRetentionDateIsNull_thenNotReturned() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .applicationState(ApplicationState.COMPLETED)
-                    .dataRetentionDate(null));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .applicationState(ApplicationState.COMPLETED)
+                .dataRetentionDate(null));
     applicationRepository.saveAndFlush(application);
     clearCache();
 
@@ -95,12 +92,11 @@ public class ExpiredDataRetentionDateSpecificationIntegrationTest extends BaseIn
   void whenNotCompletedAndDataRetentionDateHasExpired_thenNotReturned() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .applicationState(ApplicationState.DRAFT)
-                    .dataRetentionDate(Instant.now().minus(1, ChronoUnit.DAYS)));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .applicationState(ApplicationState.DRAFT)
+                .dataRetentionDate(Instant.now().minus(1, ChronoUnit.DAYS)));
     applicationRepository.saveAndFlush(application);
     clearCache();
 
@@ -118,14 +114,13 @@ public class ExpiredDataRetentionDateSpecificationIntegrationTest extends BaseIn
   void whenCompletedExpiredAndAlreadyDeleted_thenNotReturned() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .applicationState(ApplicationState.COMPLETED)
-                    .dataRetentionDate(Instant.now().minus(1, ChronoUnit.DAYS))
-                    .deleted(true)
-                    .deletedAt(Instant.now()));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .applicationState(ApplicationState.COMPLETED)
+                .dataRetentionDate(Instant.now().minus(1, ChronoUnit.DAYS))
+                .deleted(true)
+                .deletedAt(Instant.now()));
     applicationRepository.saveAndFlush(application);
     clearCache();
 

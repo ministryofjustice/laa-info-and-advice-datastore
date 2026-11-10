@@ -18,23 +18,22 @@ import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
 /** Integration tests for the ApplicationRepository. */
-@WithMockUser()
+@WithMockUser
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldGetApplication() {
     final ApplicationEntity entity =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails();
-              builder.evidence(
-                  EvidenceEntity.builder()
-                      .evidenceExemptionCode("EXEMPT_01")
-                      .createdBy("TEST_USER")
-                      .modifiedBy("TEST_USER")
-                      .build());
-              builder.declaration(DeclarationEntityGenerator.createWithoutId(null));
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails();
+          builder.evidence(
+              EvidenceEntity.builder()
+                  .evidenceExemptionCode("EXEMPT_01")
+                  .createdBy("TEST_USER")
+                  .modifiedBy("TEST_USER")
+                  .build());
+          builder.declaration(DeclarationEntityGenerator.createWithoutId(null));
+        });
     final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
     clearCache();
     final ApplicationEntity getEntity =
@@ -55,13 +54,12 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
   @Test
   void shouldSaveDeclarationWhenSavingApplication() {
     final ApplicationEntity entity =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails();
-              builder.declaration(
-                  DeclarationEntityGenerator.createWithoutId(
-                      declarationBuilder -> declarationBuilder.declarationConfirmation(true)));
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails();
+          builder.declaration(
+              DeclarationEntityGenerator.createWithoutId(
+                  declarationBuilder -> declarationBuilder.declarationConfirmation(true)));
+        });
     final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
     clearCache();
     final ApplicationEntity getEntity =
@@ -79,10 +77,9 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
             .modifiedBy("TEST_USER")
             .build();
     final ApplicationEntity entity =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder.withDefaultClientDetails().evidence(evidence);
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder.withDefaultClientDetails().evidence(evidence);
+        });
     final ApplicationEntity savedEntity = applicationRepository.saveAndFlush(entity);
     clearCache();
     final ApplicationEntity getEntity =

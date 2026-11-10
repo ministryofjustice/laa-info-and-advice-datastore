@@ -174,14 +174,13 @@ public class IneligibleRetentionIntegrationTest extends BaseIntegrationTest {
   private ApplicationEntity saveCompletedApplication(boolean eligible, Instant modifiedAt) {
     final ApplicationEntity application =
         applicationRepository.saveAndFlush(
-            ApplicationEntityGenerator.createWithoutId(
-                builder ->
-                    builder
-                        .withDefaultClientDetails()
-                        .ufn(ClaimsGatewayStub.NO_CLAIMS_UFN)
-                        .dataRetentionDate(null)
-                        .applicationState(ApplicationState.COMPLETED)
-                        .providerOfficeCode(ClaimsGatewayStub.FIXTURE_OFFICE_CODE)));
+            ApplicationEntityGenerator.createWithoutId(builder ->
+                builder
+                    .withDefaultClientDetails()
+                    .ufn(ClaimsGatewayStub.NO_CLAIMS_UFN)
+                    .dataRetentionDate(null)
+                    .applicationState(ApplicationState.COMPLETED)
+                    .providerOfficeCode(ClaimsGatewayStub.FIXTURE_OFFICE_CODE)));
     final EligibilityAssessmentEntity result =
         EligibilityAssessmentEntityGenerator.createEligibilityAssessment(application.getId());
     result.setIndication(eligible);

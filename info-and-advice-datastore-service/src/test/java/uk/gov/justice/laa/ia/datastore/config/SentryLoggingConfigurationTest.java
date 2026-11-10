@@ -46,23 +46,20 @@ class SentryLoggingConfigurationTest {
     options.getLogs().setEnabled(true);
     options
         .getLogs()
-        .setBeforeSend(
-            event -> {
-              logs.add(new SentryPiiRedactor().execute(event));
-              return null;
-            });
-    options
-        .getMetrics()
-        .setBeforeSend(
-            (metric, hint) -> {
-              metrics.add(metric);
-              return null;
-            });
-    options.setBeforeSend(
-        (event, hint) -> {
-          errorEvents.incrementAndGet();
+        .setBeforeSend(event -> {
+          logs.add(new SentryPiiRedactor().execute(event));
           return null;
         });
+    options
+        .getMetrics()
+        .setBeforeSend((metric, hint) -> {
+          metrics.add(metric);
+          return null;
+        });
+    options.setBeforeSend((event, hint) -> {
+      errorEvents.incrementAndGet();
+      return null;
+    });
     Sentry.init(options);
     configuration.onApplicationEvent(mock(ContextRefreshedEvent.class));
   }

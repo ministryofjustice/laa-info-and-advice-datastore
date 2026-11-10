@@ -83,18 +83,17 @@ class DataDeletionTaskTests {
   void givenIneligibleApplication_thenDeleteWithoutCheckingClaims() {
     // Arrange
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn("101010/1")
-                    .providerOfficeCode(OFFICE_CODE)
-                    .eligibilityAssessments(
-                        Set.of(
-                            EligibilityAssessmentEntity.builder()
-                                .indication(false)
-                                .createdAt(Instant.now())
-                                .build())));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn("101010/1")
+                .providerOfficeCode(OFFICE_CODE)
+                .eligibilityAssessments(
+                    Set.of(
+                        EligibilityAssessmentEntity.builder()
+                            .indication(false)
+                            .createdAt(Instant.now())
+                            .build())));
     when(applicationRepository.findAll(anySpecification())).thenReturn(List.of(application));
 
     // Act
@@ -262,16 +261,11 @@ class DataDeletionTaskTests {
     final String failingUfn = "666666/1";
     final String succeedingUfn = "777777/1";
     final ApplicationEntity failingApplication =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder.withDefaultClientDetails().ufn(failingUfn).providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder.withDefaultClientDetails().ufn(failingUfn).providerOfficeCode(OFFICE_CODE));
     final ApplicationEntity succeedingApplication =
-        ApplicationEntityGenerator.createWithId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(succeedingUfn)
-                    .providerOfficeCode(OFFICE_CODE));
+        ApplicationEntityGenerator.createWithId(builder ->
+            builder.withDefaultClientDetails().ufn(succeedingUfn).providerOfficeCode(OFFICE_CODE));
     when(applicationRepository.findAll(anySpecification()))
         .thenReturn(List.of(failingApplication, succeedingApplication));
     when(claimsGateway.getClaims(OFFICE_CODE, failingUfn))

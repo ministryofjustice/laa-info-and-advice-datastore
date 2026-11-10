@@ -30,14 +30,13 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
   void shouldGetApplicationSuccessfully() throws Exception {
     // Arrange
     ApplicationEntity entity =
-        ApplicationEntityGenerator.createWithoutId(
-            builder -> {
-              builder
-                  .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                  .referenceNumber("L-ABC-123")
-                  .providerFirmCode(FIRM_CODE)
-                  .providerOfficeCode(PROVIDER_OFFICE_CODE);
-            });
+        ApplicationEntityGenerator.createWithoutId(builder -> {
+          builder
+              .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+              .referenceNumber("L-ABC-123")
+              .providerFirmCode(FIRM_CODE)
+              .providerOfficeCode(PROVIDER_OFFICE_CODE);
+        });
     ApplicationEntity savedEntity = applicationRepository.save(entity);
 
     clearCache();
@@ -66,20 +65,18 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
     // Arrange
     final JsonNode cfeResponse = EligibilityAssessmentEntityGenerator.createResultJson();
     ApplicationEntity entity =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE));
     ApplicationEntity savedEntity = applicationRepository.save(entity);
     eligibilityAssessmentRepository.saveAndFlush(
-        EligibilityAssessmentEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .applicationId(savedEntity.getId())
-                    .createdBy("SYSTEM")
-                    .resultJson(cfeResponse)));
+        EligibilityAssessmentEntityGenerator.createWithoutId(builder ->
+            builder
+                .applicationId(savedEntity.getId())
+                .createdBy("SYSTEM")
+                .resultJson(cfeResponse)));
 
     clearCache();
 
@@ -118,12 +115,11 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
   void shouldReturnForbidden_whenProviderOfficeCodeNotAuthorized() throws Exception {
     // Arrange
     ApplicationEntity entity =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(UUID.randomUUID().toString()));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(UUID.randomUUID().toString()));
     ApplicationEntity savedEntity = applicationRepository.save(entity);
     clearCache();
 
@@ -137,13 +133,12 @@ public class GetApplicationIntegrationTest extends BaseIntegrationTest {
   void shouldReturnGone_whenApplicationIsDeleted() throws Exception {
     // Arrange
     ApplicationEntity entity =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                    .providerFirmCode(FIRM_CODE)
-                    .providerOfficeCode(PROVIDER_OFFICE_CODE)
-                    .deleted(true));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(PROVIDER_OFFICE_CODE)
+                .deleted(true));
     ApplicationEntity savedEntity = applicationRepository.save(entity);
     clearCache();
 

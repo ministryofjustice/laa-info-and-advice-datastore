@@ -31,12 +31,11 @@ public class UpdateClientDetailsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -94,12 +93,11 @@ public class UpdateClientDetailsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -149,12 +147,11 @@ public class UpdateClientDetailsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 
@@ -179,12 +176,11 @@ public class UpdateClientDetailsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(UUID.randomUUID().toString())))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(UUID.randomUUID().toString())))
             .getId();
     clearCache();
 
@@ -219,12 +215,11 @@ public class UpdateClientDetailsIntegrationTest extends BaseIntegrationTest {
     final UUID applicationId =
         applicationRepository
             .saveAndFlush(
-                ApplicationEntityGenerator.createWithoutId(
-                    builder ->
-                        builder
-                            .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
-                            .providerFirmCode(FIRM_CODE)
-                            .providerOfficeCode(PROVIDER_OFFICE_CODE)))
+                ApplicationEntityGenerator.createWithoutId(builder ->
+                    builder
+                        .clientDetails(ClientDetailsEntityGenerator.createWithoutId(null))
+                        .providerFirmCode(FIRM_CODE)
+                        .providerOfficeCode(PROVIDER_OFFICE_CODE)))
             .getId();
     clearCache();
 

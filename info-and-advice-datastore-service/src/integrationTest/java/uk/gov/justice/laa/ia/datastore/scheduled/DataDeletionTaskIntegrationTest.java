@@ -56,14 +56,13 @@ public class DataDeletionTaskIntegrationTest extends BaseIntegrationTest {
     final String ufn = ClaimsGatewayStub.NO_CLAIMS_UFN;
     final Instant expiredRetentionDate = Instant.now().minus(1, ChronoUnit.DAYS);
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(expiredRetentionDate)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(expiredRetentionDate)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
     // Act
@@ -84,14 +83,13 @@ public class DataDeletionTaskIntegrationTest extends BaseIntegrationTest {
     final String ufn = ClaimsGatewayStub.OLD_CLAIM_UFN;
     final Instant expiredRetentionDate = Instant.now().minus(1, ChronoUnit.DAYS);
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(expiredRetentionDate)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(expiredRetentionDate)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
     // Act
@@ -123,14 +121,13 @@ public class DataDeletionTaskIntegrationTest extends BaseIntegrationTest {
             .plus(DATA_RETENTION_YEARS_OFFSET, ChronoUnit.YEARS)
             .toInstant();
     final ApplicationEntity application =
-        ApplicationEntityGenerator.createWithoutId(
-            builder ->
-                builder
-                    .withDefaultClientDetails()
-                    .ufn(ufn)
-                    .dataRetentionDate(expiredRetentionDate)
-                    .applicationState(ApplicationState.COMPLETED)
-                    .providerOfficeCode(officeCode));
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .ufn(ufn)
+                .dataRetentionDate(expiredRetentionDate)
+                .applicationState(ApplicationState.COMPLETED)
+                .providerOfficeCode(officeCode));
     applicationRepository.saveAndFlush(application);
 
     // Act
