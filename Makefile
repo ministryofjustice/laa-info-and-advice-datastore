@@ -1,4 +1,4 @@
-.PHONY: docker-up docker-up-entra docker-down
+.PHONY: docker-up docker-up-entra docker-down test-backups
 
 # Fail each recipe line on any error, including within pipelines.
 SHELL := /bin/bash
@@ -16,7 +16,11 @@ docker-up-entra:
 bruno:
 	cd bruno-collections/info-and-advice-datastore-api-tests && bru run --env=local
 
-full-test:
+test-backups:
+	sh -n deploy/laa-info-and-advice-datastore/files/rds-backup.sh
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/tests -p 'test_rds_backup.py' -v
+
+full-test: test-backups
 	./gradlew checkStyleAll
 	./gradlew clean build integrationTest
 	docker compose down
