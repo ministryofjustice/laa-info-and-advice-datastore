@@ -1,9 +1,9 @@
 # RDS snapshot lifecycle
 
-[`rds-backup.sh`](../laa-info-and-advice-datastore/files/rds-backup.sh) is the
+[`rds-backup.py`](../laa-info-and-advice-datastore/files/rds-backup.py) is the
 shared AWS CLI entrypoint for MEM-1679. It does not install or enable any Kubernetes
 resources; ConfigMap mounting, schedules, networking and deployment gates belong
-to MEM-1680. It needs `/bin/sh`, Python 3.9+, AWS CLI v2, `date`, `sleep` and the
+to MEM-1680. It needs Python 3.9+, AWS CLI v2, `date`, `sleep` and the
 environment's dedicated backup IRSA identity, not SQL access or database credentials.
 
 Run the retained offline tests with `make test-backups` **from the repository
@@ -17,7 +17,7 @@ Example for **UAT prune-only**, which deletes expired managed hourly snapshots.
 Run from the repository root:
 
 ```sh
-sh deploy/laa-info-and-advice-datastore/files/rds-backup.sh \
+python3 deploy/laa-info-and-advice-datastore/files/rds-backup.py \
   --db-instance-identifier laa-info-and-advice-datastore-uat \
   --region eu-west-2 \
   --service laa-info-and-advice-datastore \
@@ -94,7 +94,7 @@ ministryofjustice/cloud-platform-tools:2.12.0@sha256:0e6f63db6144437b9daf755653d
 
 Its registry config/history was inspected without executing it: Linux/amd64,
 Python 3 and coreutils installation, AWS CLI copied into `/usr/local`, and a
-shell command. Override that command with `/bin/sh` and the mounted script.
+shell command. Override that command with `python3` and the mounted `.py` script.
 The script has no pip dependencies or installation step.
 
 **Deferred by agreement:** actual image/tool versions and execution under the

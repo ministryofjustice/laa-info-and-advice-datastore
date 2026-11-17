@@ -2,11 +2,12 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "laa-info-and-advice-datastore/files/rds-backup.sh"
+SCRIPT = Path(__file__).resolve().parents[1] / "laa-info-and-advice-datastore/files/rds-backup.py"
 DB = "laa-info-and-advice-datastore-uat"
 ARN_PREFIX = "arn:aws:rds:eu-west-2:123456789012"
 
@@ -113,7 +114,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
         }
         args = [part for key, value in options.items() for part in ("--" + key, value)]
         return subprocess.run(
-            ["sh", str(SCRIPT), *args],
+            [sys.executable, str(SCRIPT), *args],
             env=self.env,
             text=True,
             capture_output=True,

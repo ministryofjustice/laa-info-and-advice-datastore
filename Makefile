@@ -17,7 +17,6 @@ bruno:
 	cd bruno-collections/info-and-advice-datastore-api-tests && bru run --env=local
 
 test-backups:
-	sh -n deploy/laa-info-and-advice-datastore/files/rds-backup.sh
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/tests -p 'test_rds_backup.py' -v
 
 full-test: test-backups

@@ -1,7 +1,4 @@
-#!/bin/sh
-set -eu
-
-exec python3 - "$@" <<'PY'
+#!/usr/bin/env python3
 import argparse
 from datetime import datetime, timedelta
 import hashlib
@@ -351,4 +348,3 @@ if __name__ == "__main__":
         log("failed", reason=str(error), duration_seconds=round(time.monotonic() - STARTED, 3))
         print(f"backup failed: {error}", file=sys.stderr)
         sys.exit(1)
-PY
