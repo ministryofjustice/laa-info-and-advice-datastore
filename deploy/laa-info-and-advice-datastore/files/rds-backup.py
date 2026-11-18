@@ -155,11 +155,16 @@ class Lifecycle:
             tags["source-snapshot"] = self.source["DBSnapshotIdentifier"]
         return tags
 
-    def by_name(self, name):
+    def run_snapshot(self, name):
         points = self.rds.describe_db_snapshots(DBSnapshotIdentifier=name)["DBSnapshots"]
         if len(points) != 1 or points[0]["DBSnapshotIdentifier"] != name or not self.owned(points[0]):
             raise BackupError("new/resumed snapshot does not match the owned run identity")
-        return points[0]
+        point = points[0]
+        tags = self.tags(point["DBSnapshotArn"])
+        if "incident-hold" in tags:
+            raise BackupError("current run snapshot is held")
+        self.verify_tags(tags, self.source)
+        return point
 
     def create(self):
         for attempt in range(1, 4):
@@ -233,11 +238,7 @@ class Lifecycle:
         existing = [p for p in self.snapshots("manual") if p["DBSnapshotIdentifier"] == name]
         platform_tags = self.tags(self.db_arn)
         if existing:
-            point = self.by_name(name)
-            tags = self.tags(point["DBSnapshotArn"])
-            if "incident-hold" in tags:
-                raise BackupError("current run snapshot is held")
-            self.verify_tags(tags, self.source)
+            self.run_snapshot(name)
         else:
             if not self.source and self.db["DBInstanceStatus"] != "available":
                 self.db["DBInstanceStatus"] = self.rds.describe_db_instances(
@@ -261,16 +262,12 @@ class Lifecycle:
         return name
 
     def verify_available(self, name):
-        point = self.by_name(name)
+        point = self.run_snapshot(name)
         if point["Status"] != "available":
             raise BackupError("snapshot waiter returned without an available point")
         if self.db.get("StorageEncrypted") and point.get("Encrypted") is not True:
             raise BackupError("new/resumed snapshot must remain encrypted")
         self.now = utc_now()
-        tags = self.tags(point["DBSnapshotArn"])
-        if "incident-hold" in tags:
-            raise BackupError("current run snapshot is held")
-        self.verify_tags(tags, self.source)
         recovery, expiry = self.recovery_times(point)
         if self.source and recovery != original_time(self.source):
             raise BackupError("copied snapshot recovery time conflicts with its source")

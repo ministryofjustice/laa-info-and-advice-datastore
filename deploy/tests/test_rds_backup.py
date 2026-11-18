@@ -223,6 +223,16 @@ class SnapshotLifecycleTests(unittest.TestCase):
                 self.assertNotIn("add-tags-to-resource", self.operations())
                 self.assertNotIn("delete-db-snapshot", self.operations())
 
+                self.state = json.loads(self.state_file.read_text())
+                previous_calls = len(self.operations())
+                result = self.run_script(**{"creation-enabled": "true"})
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(old, self.saved_snapshots())
+                resumed_operations = self.operations()[previous_calls:]
+                self.assertNotIn("wait", resumed_operations)
+                self.assertNotIn("add-tags-to-resource", resumed_operations)
+                self.assertNotIn("delete-db-snapshot", resumed_operations)
+
     def test_hourly_retry_resumes_inflight_run_and_retains_from_actual_aws_start_time(self):
         self.state["snapshots"] = [snapshot()]
         self.state["created_time"] = "2026-11-17T10:00:01Z"
@@ -386,6 +396,15 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(old, self.saved_snapshots())
         self.assertNotIn("delete-db-snapshot", self.operations())
+
+        self.state = json.loads(self.state_file.read_text())
+        previous_calls = len(self.operations())
+        result = self.run_script(tier="daily", **{"creation-enabled": "true"})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(old, self.saved_snapshots())
+        resumed_operations = self.operations()[previous_calls:]
+        self.assertNotIn("wait", resumed_operations)
+        self.assertNotIn("delete-db-snapshot", resumed_operations)
 
     def test_invalid_or_expired_aws_recovery_times_never_allow_pruning(self):
         cases = (
