@@ -11,10 +11,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.hibernate.Hibernate;
+import org.slf4j.MDC;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.EntityChangeEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EntityChangeEntity.Action;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
@@ -33,14 +36,18 @@ public class EntityChangeListener {
 
   private final EntityManager entityManager;
 
+  private final UserContext userContext;
+
   /** Defers persistence dependencies until after Hibernate has registered its listeners. */
   public EntityChangeListener(
       @Lazy EntitySnapshotRepository repository,
       @Lazy EntityChangeRepository changeRepository,
-      @Lazy EntityManager entityManager) {
+      @Lazy EntityManager entityManager,
+      @Lazy UserContext userContext) {
     this.repository = repository;
     this.changeRepository = changeRepository;
     this.entityManager = entityManager;
+    this.userContext = userContext;
   }
 
   /** Records creation after the generated identifier is available. */
@@ -115,6 +122,7 @@ public class EntityChangeListener {
     if (entity instanceof EventEntity) {
       return;
     }
+    boolean hasRequest = RequestContextHolder.getRequestAttributes() != null;
     EntityChangeEntity change =
         EntityChangeEntity.builder()
             .entityType(Hibernate.getClass(entity).getSimpleName())
@@ -126,6 +134,8 @@ public class EntityChangeListener {
                         .getIdentifier(entity))
             .action(action)
             .changedFields(changedFields)
+            .userId(hasRequest ? userContext.getCurrentUser() : "SYSTEM")
+            .correlationId(hasRequest ? userContext.getCorrelationId() : MDC.get("correlationId"))
             .build();
     if (action == Action.READ) {
       changeRepository.insertRead(change);

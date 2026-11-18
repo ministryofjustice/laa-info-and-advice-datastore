@@ -178,7 +178,10 @@ an isolated Hibernate persistence context on the same transaction/connection so
 pending in-memory edits are not mistaken for the original state.
 
 Each event writes a row to `entity_changes` with an action (`CREATE`, `READ`, `UPDATE` or
-`DELETE`), entity type, entity ID, sorted `changed_fields` list and `created_at`.
+`DELETE`), entity type, entity ID, user ID, correlation ID, sorted `changed_fields` list
+and `created_at`. Request identity and correlation ID come from `UserContext`. Outside
+a request, the user ID is `SYSTEM` and the correlation ID comes from the logging context
+(or is null when none is set). Older rows have null identity fields.
 For creates, the list contains non-null singular persistent fields present at the
 post-persist callback, excluding the entity ID; primitive fields are included even when
 their value is false or zero. For reads and deletes the list is empty. No old/new

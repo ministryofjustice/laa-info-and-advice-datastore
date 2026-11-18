@@ -47,6 +47,12 @@ public class EntityChangeEntity {
   @Column(name = "entity_id", nullable = false)
   private UUID entityId;
 
+  @Column(name = "user_id", columnDefinition = "text")
+  private String userId;
+
+  @Column(name = "correlation_id", columnDefinition = "text")
+  private String correlationId;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "action", nullable = false)
   private Action action;

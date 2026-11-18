@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityNotFoundException;
@@ -10,9 +11,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.EntityChangeEntity.Action;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
@@ -30,6 +37,68 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
 
   @Autowired private EntitySnapshotRepository snapshotRepository;
   @Autowired private PlatformTransactionManager transactionManager;
+  @Autowired private UserContext userContext;
+
+  @Test
+  void recordsRequestIdentityForEveryLifecycleAction() {
+    RequestAttributes previous = RequestContextHolder.getRequestAttributes();
+    RequestContextHolder.setRequestAttributes(
+        new ServletRequestAttributes(new MockHttpServletRequest()));
+    try {
+      when(userContext.getCurrentUser()).thenReturn("user-123");
+      when(userContext.getCorrelationId()).thenReturn("correlation-123");
+      ClientDetailsEntity client =
+          clientDetailsRepository.saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null));
+      final UUID id = client.getId();
+      client.setFirstName("updated");
+      entityManager.flush();
+      entityManager.clear();
+      client = clientDetailsRepository.findById(id).orElseThrow();
+      clientDetailsRepository.delete(client);
+      entityManager.flush();
+
+      assertThat(changesFor(id))
+          .extracting(EntityChangeEntity::getAction)
+          .containsExactly(Action.CREATE, Action.UPDATE, Action.READ, Action.DELETE);
+      assertThat(changesFor(id))
+          .allSatisfy(change -> {
+            assertThat(change.getUserId()).isEqualTo("user-123");
+            assertThat(change.getCorrelationId()).isEqualTo("correlation-123");
+          });
+    } finally {
+      RequestContextHolder.setRequestAttributes(previous);
+    }
+  }
+
+  @Test
+  void recordsSystemIdentityAndLoggingCorrelationOutsideRequest() {
+    RequestAttributes previous = RequestContextHolder.getRequestAttributes();
+    String previousCorrelationId = MDC.get("correlationId");
+    RequestContextHolder.resetRequestAttributes();
+    try {
+      MDC.put("correlationId", "scheduled-correlation");
+      ClientDetailsEntity client =
+          clientDetailsRepository.saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null));
+      assertThat(changesFor(client.getId()))
+          .singleElement()
+          .satisfies(change -> {
+            assertThat(change.getUserId()).isEqualTo("SYSTEM");
+            assertThat(change.getCorrelationId()).isEqualTo("scheduled-correlation");
+          });
+
+      MDC.remove("correlationId");
+      ClientDetailsEntity withoutCorrelation =
+          clientDetailsRepository.saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null));
+      assertThat(changesFor(withoutCorrelation.getId()).getFirst().getCorrelationId()).isNull();
+    } finally {
+      if (previousCorrelationId == null) {
+        MDC.remove("correlationId");
+      } else {
+        MDC.put("correlationId", previousCorrelationId);
+      }
+      RequestContextHolder.setRequestAttributes(previous);
+    }
+  }
 
   @Test
   void recordsCreationLoadAndRemovalWithoutEntityValues() {
