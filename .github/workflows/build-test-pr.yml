@@ -9,6 +9,13 @@ permissions:
   packages: write
 
 jobs:
+  snapshot-script-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test snapshot lifecycle without AWS credentials
+        run: make test-backups
+
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
