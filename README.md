@@ -172,7 +172,9 @@ A scheduled job (`DraftDataDeletionTask`) deletes the data of `DRAFT` applicatio
 ### Entity lifecycle auditing
 
 `EntityChangeListener` records creates, database loads, updates and deletes for the six
-entities configured with the listener; `EventEntity` is excluded. For updates it reads
+entities configured with the listener; `EventEntity` and `EntityChangeEntity` are excluded.
+A unit test scans JPA entities to enforce listener registration for all other entities.
+For updates it reads
 the stored entity through `EntitySnapshotRepository`, using
 an isolated Hibernate persistence context on the same transaction/connection so
 pending in-memory edits are not mistaken for the original state.
