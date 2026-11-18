@@ -1,20 +1,23 @@
 # RDS snapshot lifecycle
 
 [`rds-backup.py`](../laa-info-and-advice-datastore/files/rds-backup.py) is the
-shared AWS CLI entrypoint for MEM-1679. It does not install or enable any Kubernetes
-resources; ConfigMap mounting, schedules, networking and deployment gates belong
-to MEM-1680. It needs Python 3.9+, AWS CLI v2, `date`, `sleep` and the
+shared Python/boto3 entrypoint for MEM-1679. It does not install or enable any
+Kubernetes resources; ConfigMap mounting, schedules, networking and deployment gates belong
+to MEM-1680. It uses boto3's RDS client, paginators and waiter, with native Python
+UTC timestamps and delays. The pinned Linux runtime below includes Python and
+boto3; AWS CLI and shell helpers are not required. Live execution uses the
 environment's dedicated backup IRSA identity, not SQL access or database credentials.
 
 Run the retained offline tests with `make test-backups` **from the repository
-root**. These execute the real entrypoint against a fake AWS CLI and deterministic
-clock, with no AWS, Kubernetes or container execution. The same command runs in
-PR CI.
+root**, with Docker running. They run in the pinned SDK image, so no host Python
+or pip setup is needed. The CLI's `main()` runs in-process against a stubbed RDS
+client and fixed clock; request parameters are checked against the real SDK's
+model. No AWS or Kubernetes calls occur. The same command runs in PR CI.
 
 ## Invocation and safety controls
 
 Example for **UAT prune-only**, which deletes expired managed hourly snapshots.
-Run from the repository root:
+Run from the repository root in a Python environment with boto3:
 
 ```sh
 python3 deploy/laa-info-and-advice-datastore/files/rds-backup.py \
@@ -59,13 +62,17 @@ the destination's copy time. Hourly points use AWS's original snapshot time,
 falling back to `SnapshotCreateTime` when the original field is absent.
 
 Missing/late sources, source snapshot activity and create/copy busy or
-already-exists races get at most three attempts, 30 seconds apart. Each AWS call
-also has bounded standard retries and client timeouts. The availability waiter
-has a 1,900-second client bound; waiter exhaustion or timeout fails the run and
-**does not mean the AWS operation stopped**. Retry with the same run identity.
+already-exists races get at most three attempts, 30 seconds apart. RDS requests
+use SDK standard retries (three total attempts), a 10-second connect timeout and
+a 30-second read timeout. These are per-request limits, not the former CLI's
+90-second whole-process limit.
+The availability waiter polls at 30-second intervals for at most 60 attempts,
+with a separate 1,900-second elapsed-time limit enforced by a Linux/POSIX alarm.
+Waiter exhaustion or timeout fails the run and **does not mean the AWS operation
+stopped**. Retry with the same run identity.
 Quota, permission, throttling and terminal waiter failures remain failures.
 
-AWS CLI handles snapshot pagination automatically. Pruning remains
+Boto3 handles snapshot pagination automatically. Pruning remains
 source/tier-specific and limited to available manual
 snapshots under `<db>-scheduled-<tier>-` with matching ARN, complete ownership
 tags and valid AWS recovery timestamps. Expiry is calculated from that recovery
@@ -97,16 +104,17 @@ the lifecycle or cleanup is incomplete. Alert delivery belongs to MEM-1681.
 
 ## Selected runtime for MEM-1680
 
-Pin the existing Cloud Platform tools image, with no new image build pipeline:
+Pin the existing AWS Python image, with no custom build or startup installation:
 
 ```text
-ministryofjustice/cloud-platform-tools:2.12.0@sha256:0e6f63db6144437b9daf755653dbec9179a7197c58e38f7c33c87ee22ec165ae
+public.ecr.aws/lambda/python:3.13@sha256:eac388575a9ff5c116d32b9620675341f998def5fe224fc3752186986afa9a4a
 ```
 
-Its registry config/history was inspected without executing it: Linux/amd64,
-Python 3 and coreutils installation, AWS CLI copied into `/usr/local`, and a
-shell command. Override that command with `python3` and the mounted `.py` script.
-The script has no pip dependencies or installation step.
+The image includes Python 3.13.18 and boto3/botocore 1.42.97. Override its Lambda
+entrypoint with `command: ["python3"]` and pass the mounted script path and CLI
+arguments. This runs an ordinary Kubernetes Job, not a Lambda function.
+Set UID/GID 1000 explicitly; the image does not declare a non-root default user.
+Keep the dedicated IRSA role and make its projected token readable by that user.
 
 With Docker running, execute the opt-in image smoke test from the repository root:
 
@@ -114,28 +122,30 @@ With Docker running, execute the opt-in image smoke test from the repository roo
 make smoke-test-backups
 ```
 
-It runs the pinned Linux/amd64 image as UID/GID 1000, with all capabilities
-dropped, no privilege escalation, default seccomp, no networking and a read-only
+Both test targets run the pinned image as Linux/amd64 and UID/GID 1000, with all
+capabilities dropped, no privilege escalation, default seccomp, no networking and a read-only
 root filesystem. Only `/tmp` is explicitly writable (`TMPDIR` and `HOME` point
 there); the script and tests are mounted read-only. CPU, memory and process
 limits bound the container, which is removed when it exits. No host AWS
 credentials, Docker socket or Kubernetes configuration are mounted.
-The temporary filesystem permits execution so the tests can run their fake
-CLI helpers; the tests fail immediately if those helpers cannot take precedence
-over the real tools.
+The temporary filesystem is mounted `noexec`; SDK stubs and the fixed clock do
+not need executable helper files.
 
-The smoke test verifies these restrictions, reports the actual Python/AWS CLI
-versions, checks the real AWS CLI's offline snapshot output model includes
-`OriginalSnapshotCreateTime`, and runs the existing lifecycle tests with fake
-AWS responses. The initial image download needs registry access; test execution
-has networking disabled. This target is separate from the normal offline tests
-and does not run automatically in PR CI.
+The smoke test also verifies these restrictions, reports Python/SDK versions,
+checks the real SDK's snapshot model, paginator and waiter, and confirms its
+web-identity credential provider is selected with a dummy role/token. No STS
+exchange is attempted. A subprocess check exercises the actual script's help,
+production prune-only rejection and missing-credentials failure/exit status,
+alongside the in-process lifecycle tests.
+The initial image download needs registry access; test execution has networking
+disabled. The extra smoke checks are opt-in and do not run automatically in PR CI.
 
-Verified locally: `make smoke-test-backups` passed all 25 tests
-(two runtime checks plus the 23 lifecycle tests), using amd64 emulation on
-Docker Desktop's ARM64 engine. The image contains Python 3.10.14 and AWS CLI
-2.7.20; the snapshot output model includes `OriginalSnapshotCreateTime`.
+Verified locally on 2026-11-18: `make smoke-test-backups` passed all 26 tests
+(three runtime/entrypoint checks plus the 23 lifecycle tests), using amd64
+emulation on Docker Desktop's ARM64 engine.
 
-Before deployment, MEM-1680 must also ensure the IRSA token is readable and
-schedule on amd64 nodes. Live identity/network access and snapshot permissions
-are exercised during controlled enablement, not by these offline tests.
+Before deployment, MEM-1680 must also check Cloud Platform registry/admission
+compatibility, image vulnerabilities and IRSA token readability, and schedule on
+the tested amd64 architecture (or separately smoke-test arm64). Live
+identity/network access and snapshot permissions are exercised during controlled
+enablement, not by these offline tests.

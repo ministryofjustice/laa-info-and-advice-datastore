@@ -1,11 +1,16 @@
+from contextlib import redirect_stderr, redirect_stdout
+from datetime import datetime
+import importlib.util
+import io
 import json
-import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+
+from fake_rds import RDSStub
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "laa-info-and-advice-datastore/files/rds-backup.py"
@@ -67,15 +72,8 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.work = Path(self.directory.name)
         self.calls = self.work / "calls.jsonl"
-        aws = self.work / "aws"
-        aws.write_text((Path(__file__).parent / "fake_aws.py").read_text())
-        aws.chmod(0o755)
-        date = self.work / "date"
-        date.write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-17T10:00:00Z'\n")
-        date.chmod(0o755)
-        sleep = self.work / "sleep"
-        sleep.write_text("#!/bin/sh\nexit 0\n")
-        sleep.chmod(0o755)
+        self.now = "2026-11-17T10:00:00Z"
+        self.clock = lambda: datetime.fromisoformat(self.now.replace("Z", "+00:00"))
         self.state_file = self.work / "state.json"
         self.state = {
             "instance": {
@@ -86,21 +84,8 @@ class SnapshotLifecycleTests(unittest.TestCase):
             },
             "snapshots": [],
         }
-        self.env = {
-            **os.environ,
-            "PATH": str(self.work) + os.pathsep + os.environ["PATH"],
-            "FAKE_CALLS": str(self.calls),
-            "FAKE_STATE": str(self.state_file),
-            "AWS_EC2_METADATA_DISABLED": "true",
-        }
-        for executable in (aws, date, sleep):
-            self.assertEqual(
-                shutil.which(executable.name, path=self.env["PATH"]), str(executable),
-                "Fake tools must be executable; refusing to fall back to real AWS/date/sleep",
-            )
 
     def run_script(self, **overrides):
-        self.state_file.write_text(json.dumps(self.state))
         options = {
             "db-instance-identifier": "laa-info-and-advice-datastore-uat",
             "region": "eu-west-2",
@@ -111,13 +96,25 @@ class SnapshotLifecycleTests(unittest.TestCase):
             **overrides,
         }
         args = [part for key, value in options.items() for part in ("--" + key, value)]
-        return subprocess.run(
-            [sys.executable, str(SCRIPT), *args],
-            env=self.env,
-            text=True,
-            capture_output=True,
-            timeout=20,
-        )
+        spec = importlib.util.spec_from_file_location("rds_backup", SCRIPT)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        rds = RDSStub(self.state, self.calls)
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with (
+            patch("boto3.client", return_value=rds),
+            patch.object(module, "utc_now", side_effect=self.clock),
+            patch.object(module.time, "sleep"),
+            patch.object(sys, "argv", [str(SCRIPT), *args]),
+            redirect_stdout(stdout),
+            redirect_stderr(stderr),
+        ):
+            try:
+                code = module.main()
+            except SystemExit as error:
+                code = error.code
+        self.state_file.write_text(json.dumps(rds.state))
+        return subprocess.CompletedProcess(args, code, stdout.getvalue(), stderr.getvalue())
 
     def operations(self):
         if not self.calls.exists():
@@ -233,18 +230,18 @@ class SnapshotLifecycleTests(unittest.TestCase):
         result = self.run_script(**{"creation-enabled": "true"})
         self.assertNotEqual(result.returncode, 0)
         self.state = json.loads(self.state_file.read_text())
-        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-17T10:01:00Z'\n")
+        self.now = "2026-11-17T10:01:00Z"
         result = self.run_script(**{"creation-enabled": "true"})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.operations().count("create-db-snapshot"), 1)
         self.assertEqual(len(self.saved_snapshots()), 1)
         self.state = json.loads(self.state_file.read_text())
-        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-18T10:00:00Z'\n")
+        self.now = "2026-11-18T10:00:00Z"
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(self.saved_snapshots()), 1)
         self.state = json.loads(self.state_file.read_text())
-        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-18T10:00:01Z'\n")
+        self.now = "2026-11-18T10:00:01Z"
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.saved_snapshots(), [])
@@ -263,7 +260,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
         copies = [call for call in calls if call[1] == "copy-db-snapshot"]
         self.assertEqual(len(copies), 1)
         self.assertEqual(
-            copies[0][copies[0].index("--source-db-snapshot-identifier") + 1],
+            copies[0][2]["SourceDBSnapshotIdentifier"],
             automated()["DBSnapshotArn"],
         )
         self.assertIn("retry", result.stdout)
@@ -338,6 +335,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
             {"create-db-snapshot": ["SnapshotQuotaExceeded"]},
             {"create-db-snapshot": ["AccessDenied"]},
             {"create-db-snapshot": ["Throttling"]},
+            {"create-db-snapshot": ["ReadTimeout"]},
             {"wait": ["WaiterTerminalFailure"]},
             {"list-tags-for-resource": [None, "AccessDenied"]},
         )
@@ -370,12 +368,12 @@ class SnapshotLifecycleTests(unittest.TestCase):
         available = next(event for event in events if event["event"] == "available")
         self.assertEqual(available["recovery_point_time"], "2026-11-17T02:01:42Z")
         self.state = json.loads(self.state_file.read_text())
-        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-24T02:01:41Z'\n")
+        self.now = "2026-11-24T02:01:41Z"
         result = self.run_script(tier="daily")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(point, self.saved_snapshots())
         self.state = json.loads(self.state_file.read_text())
-        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-24T02:01:42Z'\n")
+        self.now = "2026-11-24T02:01:42Z"
         result = self.run_script(tier="daily")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn(point, self.saved_snapshots())
@@ -417,15 +415,15 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.state["snapshots"] = [automated("16")]
         self.state["late_source"] = source
         self.state["created_time"] = "2026-11-17T10:01:00Z"
-        (self.work / "date").write_text(
-            "#!/bin/sh\n"
-            "if [ -f \"$FAKE_STATE.clock\" ]; then\n"
-            "  echo '2026-11-17T10:01:00Z'\n"
-            "else\n"
-            "  touch \"$FAKE_STATE.clock\"\n"
-            "  echo '2026-11-17T10:00:00Z'\n"
-            "fi\n"
-        )
+        times = iter([
+            datetime.fromisoformat(value) for value in (
+                "2026-11-17T10:00:00+00:00",
+                "2026-11-17T10:01:00+00:00",
+                "2026-11-17T10:01:00+00:00",
+                "2026-11-17T10:01:00+00:00",
+            )
+        ])
+        self.clock = lambda: next(times)
         result = self.run_script(tier="daily", **{"creation-enabled": "true"})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.operations().count("copy-db-snapshot"), 1)
@@ -468,13 +466,12 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.assertEqual(self.operations().count("create-db-snapshot"), 1)
         self.assertEqual(len(self.saved_snapshots()), 1)
 
-    def test_pruning_gets_all_snapshot_pages_in_one_aws_cli_call(self):
+    def test_pruning_includes_all_pages_from_the_sdk_paginator(self):
         self.state["snapshots"] = [snapshot("one"), snapshot("two")]
         self.state["page_size"] = 1
         result = self.run_script()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.saved_snapshots(), [])
-        self.assertEqual(self.operations().count("describe-db-snapshots"), 1)
 
     def test_unreadable_tags_or_failed_delete_leave_expired_point_and_report_failure(self):
         for operation in ("list-tags-for-resource", "delete-db-snapshot"):
