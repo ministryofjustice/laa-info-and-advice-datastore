@@ -54,7 +54,8 @@ manual copies are never fallbacks. Expiry is seven days from the source's
 destination's copy time; `SnapshotDatabaseTime` is not used.
 The copied destination must expose `OriginalSnapshotCreateTime` for authoritative
 verification; otherwise it is retained and the run fails rather than trusting
-retention tags alone.
+the destination's copy time. Hourly points use AWS's original snapshot time,
+falling back to `SnapshotCreateTime` when the original field is absent.
 
 Missing/late sources, source snapshot activity and create/copy busy or
 already-exists races get at most three attempts, 30 seconds apart. Each AWS call
@@ -65,17 +66,25 @@ Quota, permission, throttling and terminal waiter failures remain failures.
 
 Pruning is paginated, source/tier-specific and limited to available manual
 snapshots under `<db>-scheduled-<tier>-` with matching ARN, complete ownership
-tags and a valid recovery/retention/expiry relationship. Foreign, pre-change,
+tags and valid AWS recovery timestamps. Expiry is calculated from that recovery
+time plus the fixed tier retention, never from mutable timestamp tags. Foreign, pre-change,
 final, restore-test and other-tier snapshots are excluded. Missing, conflicting,
 unreadable or invalid metadata is not adopted: it is skipped and the job fails
 for operator attention. Successful new points retain platform tags from the DB;
 backup metadata is explicitly overwritten rather than relying on copy-tags.
 
-The additional `backup-state=pending` tag identifies a complete initial creation
-request. Only the exact run identity can finish its timestamp handoff to AWS's
-actual original time and mark it `available`. Pending points cannot be pruned.
-This permits a replacement pod to resume after a waiter failure without
-adopting unowned or incompletely tagged snapshots.
+Creation/copy requests carry the owner, tier and retention tags, plus
+`source-snapshot` for daily copies. There is no post-creation retagging or
+`backup-state` handshake: AWS's availability and timestamps are authoritative.
+Legacy `recovery-point-time`, `expires-at` and `backup-state` tags are ignored,
+not removed. A replacement pod resumes only the exact, fully owned run identity;
+creating/copying points are never pruned.
+
+**Deployment prerequisite:** apply the matching backup IAM policy changes in
+`cloud-platform-environments` before using this version. The previously deployed
+policies require timestamp tags on creation/tagging/deletion; the updated policies
+retain ownership, tier, retention and daily-source conditions without requiring
+the removed timestamp tags. No IAM deployment is performed by these tests.
 
 To hold incident evidence, add an `incident-hold` tag to the snapshot. **Any tag
 value, including `false`, holds it.** Remove the tag using an authorised operator
@@ -97,11 +106,34 @@ Python 3 and coreutils installation, AWS CLI copied into `/usr/local`, and a
 shell command. Override that command with `python3` and the mounted `.py` script.
 The script has no pip dependencies or installation step.
 
-**Deferred by agreement:** actual image/tool versions and execution under the
-non-root, read-only security context have not been verified. Before deployment,
-MEM-1680 must smoke-test this digest with fake AWS responses, a numeric non-root
-UID, dropped capabilities, no privilege escalation and a read-only root
-filesystem. Supply only an explicitly writable `/tmp` (`TMPDIR` and `HOME`
-pointing there), ensure the IRSA token is readable, and schedule on amd64 nodes.
-Live snapshot permissions are exercised during controlled enablement, not by
-these offline tests.
+With Docker running, execute the opt-in image smoke test from the repository root:
+
+```sh
+make smoke-test-backups
+```
+
+It runs the pinned Linux/amd64 image as UID/GID 1000, with all capabilities
+dropped, no privilege escalation, default seccomp, no networking and a read-only
+root filesystem. Only `/tmp` is explicitly writable (`TMPDIR` and `HOME` point
+there); the script and tests are mounted read-only. CPU, memory and process
+limits bound the container, which is removed when it exits. No host AWS
+credentials, Docker socket or Kubernetes configuration are mounted.
+The temporary filesystem permits execution so the tests can run their fake
+CLI helpers; the tests fail immediately if those helpers cannot take precedence
+over the real tools.
+
+The smoke test verifies these restrictions, reports the actual Python/AWS CLI
+versions, checks the real AWS CLI's offline snapshot output model includes
+`OriginalSnapshotCreateTime`, and runs the existing lifecycle tests with fake
+AWS responses. The initial image download needs registry access; test execution
+has networking disabled. This target is separate from the normal offline tests
+and does not run automatically in PR CI.
+
+Verified locally: `make smoke-test-backups` passed all 25 tests
+(two runtime checks plus the 23 lifecycle tests), using amd64 emulation on
+Docker Desktop's ARM64 engine. The image contains Python 3.10.14 and AWS CLI
+2.7.20; the snapshot output model includes `OriginalSnapshotCreateTime`.
+
+Before deployment, MEM-1680 must also ensure the IRSA token is readable and
+schedule on amd64 nodes. Live identity/network access and snapshot permissions
+are exercised during controlled enablement, not by these offline tests.

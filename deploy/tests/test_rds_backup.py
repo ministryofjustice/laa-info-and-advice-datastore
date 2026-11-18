@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -14,11 +15,7 @@ ARN_PREFIX = "arn:aws:rds:eu-west-2:123456789012"
 
 def snapshot(suffix="old", tier="hourly", **overrides):
     name = f"{DB}-scheduled-{tier}-{suffix}"
-    recovery, expiry = (
-        ("2026-11-16T09:00:00Z", "2026-11-17T09:00:00Z")
-        if tier == "hourly"
-        else ("2026-11-01T02:00:00Z", "2026-11-08T02:00:00Z")
-    )
+    recovery = "2026-11-16T09:00:00Z" if tier == "hourly" else "2026-11-01T02:00:00Z"
     tags = {
         "service": "laa-info-and-advice-datastore",
         "env": "uat",
@@ -26,8 +23,6 @@ def snapshot(suffix="old", tier="hourly", **overrides):
         "backup-tier": tier,
         "retention-hours": "24" if tier == "hourly" else "168",
         "managed-by": "datastore-backup-automation",
-        "recovery-point-time": recovery,
-        "expires-at": expiry,
     }
     if tier == "daily":
         tags["source-snapshot"] = "rds:" + DB + "-2026-11-01-02-00"
@@ -98,6 +93,11 @@ class SnapshotLifecycleTests(unittest.TestCase):
             "FAKE_STATE": str(self.state_file),
             "AWS_EC2_METADATA_DISABLED": "true",
         }
+        for executable in (aws, date, sleep):
+            self.assertEqual(
+                shutil.which(executable.name, path=self.env["PATH"]), str(executable),
+                "Fake tools must be executable; refusing to fall back to real AWS/date/sleep",
+            )
 
     def run_script(self, **overrides):
         self.state_file.write_text(json.dumps(self.state))
@@ -147,6 +147,28 @@ class SnapshotLifecycleTests(unittest.TestCase):
                 self.assertNotIn("create-db-snapshot", self.operations())
                 self.assertNotIn("copy-db-snapshot", self.operations())
 
+    def test_pruning_uses_aws_recovery_times_not_legacy_timestamp_or_state_tags(self):
+        for tier, retention in (("hourly", "24"), ("daily", "168")):
+            with self.subTest(tier=tier):
+                expired = tagged(snapshot("expired", tier), **{
+                    "recovery-point-time": None, "expires-at": None, "backup-state": "pending",
+                })
+                recent = tagged(
+                    snapshot(
+                        "recent", tier, SnapshotCreateTime="2026-11-17T09:30:00Z",
+                        OriginalSnapshotCreateTime="2026-11-17T09:30:00Z",
+                    ),
+                    **{
+                        "recovery-point-time": "invalid", "expires-at": "2000-01-01T00:00:00Z",
+                        "backup-state": "pending",
+                        **({"source-snapshot": f"rds:{DB}-2026-11-17-09-30"} if tier == "daily" else {}),
+                    },
+                )
+                self.state["snapshots"] = [expired, recent]
+                result = self.run_script(tier=tier, **{"retention-hours": retention})
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.saved_snapshots(), [recent])
+
     def test_hourly_creates_and_verifies_a_tagged_point_before_pruning(self):
         self.state["snapshots"] = [snapshot()]
         self.state["db_tags"] = [{"Key": "business-unit", "Value": "LAA"}]
@@ -157,9 +179,10 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.assertTrue(remaining[0]["DBSnapshotIdentifier"].startswith(DB + "-scheduled-hourly-"))
         self.assertEqual(remaining[0]["Status"], "available")
         tags = {tag["Key"]: tag["Value"] for tag in remaining[0]["TagList"]}
-        self.assertEqual(tags["recovery-point-time"], "2026-11-17T10:00:00Z")
-        self.assertEqual(tags["expires-at"], "2026-11-18T10:00:00Z")
+        self.assertFalse({"recovery-point-time", "expires-at", "backup-state"} & tags.keys())
+        self.assertEqual(tags["retention-hours"], "24")
         self.assertEqual(tags["business-unit"], "LAA")
+        self.assertNotIn("add-tags-to-resource", self.operations())
         self.assertLess(self.operations().index("create-db-snapshot"), self.operations().index("wait"))
         self.assertLess(self.operations().index("wait"), self.operations().index("delete-db-snapshot"))
 
@@ -174,9 +197,8 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.assertEqual(len(copies), 1)
         tags = {tag["Key"]: tag["Value"] for tag in copies[0]["TagList"]}
         self.assertEqual(tags["source-snapshot"], source["DBSnapshotIdentifier"])
-        self.assertEqual(tags["recovery-point-time"], "2026-11-17T02:00:00Z")
-        self.assertEqual(tags["expires-at"], "2026-11-24T02:00:00Z")
-        self.assertNotEqual(copies[0]["SnapshotCreateTime"], tags["recovery-point-time"])
+        self.assertFalse({"recovery-point-time", "expires-at", "backup-state"} & tags.keys())
+        self.assertNotIn("add-tags-to-resource", self.operations())
         self.state = json.loads(self.state_file.read_text())
         result = self.run_script(
             tier="daily",
@@ -208,7 +230,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
                 self.assertNotIn("add-tags-to-resource", self.operations())
                 self.assertNotIn("delete-db-snapshot", self.operations())
 
-    def test_hourly_retry_resumes_pending_run_even_when_aws_start_time_differs(self):
+    def test_hourly_retry_resumes_inflight_run_and_retains_from_actual_aws_start_time(self):
         self.state["snapshots"] = [snapshot()]
         self.state["created_time"] = "2026-11-17T10:00:01Z"
         self.state["failures"] = {"wait": ["WaiterTimeout"]}
@@ -220,9 +242,16 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.operations().count("create-db-snapshot"), 1)
         self.assertEqual(len(self.saved_snapshots()), 1)
-        tags = {tag["Key"]: tag["Value"] for tag in self.saved_snapshots()[0]["TagList"]}
-        self.assertEqual(tags["recovery-point-time"], "2026-11-17T10:00:01Z")
-        self.assertEqual(tags["expires-at"], "2026-11-18T10:00:01Z")
+        self.state = json.loads(self.state_file.read_text())
+        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-18T10:00:00Z'\n")
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.saved_snapshots()), 1)
+        self.state = json.loads(self.state_file.read_text())
+        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-18T10:00:01Z'\n")
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.saved_snapshots(), [])
 
     def test_daily_waits_boundedly_for_current_cycle_and_never_uses_manual_source(self):
         manual = snapshot(
@@ -293,7 +322,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
                     tagged(snapshot("missing", tier), env=None),
                     tagged(snapshot("foreign-env", tier), env="staging"),
                     tagged(snapshot("wrong-retention", tier), **{"retention-hours": "1"}),
-                    tagged(snapshot("bad-time", tier), **{"recovery-point-time": "yesterday"}),
+                    snapshot("bad-time", tier, OriginalSnapshotCreateTime="yesterday"),
                     snapshot("busy", tier, Status="creating"),
                     snapshot("another-db", tier, DBInstanceIdentifier=DB + "-metabase"),
                     snapshot("foreign-arn", tier, DBSnapshotArn="arn:aws:rds:eu-west-2:999999999999:snapshot:other"),
@@ -323,8 +352,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
             {"create-db-snapshot": ["AccessDenied"]},
             {"create-db-snapshot": ["Throttling"]},
             {"wait": ["WaiterTerminalFailure"]},
-            {"add-tags-to-resource": ["AccessDenied"]},
-            {"list-tags-for-resource": [None, None, "AccessDenied"]},
+            {"list-tags-for-resource": [None, "AccessDenied"]},
         )
         for failure in failures:
             with self.subTest(failure=failure):
@@ -353,20 +381,54 @@ class SnapshotLifecycleTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         point = next(s for s in self.saved_snapshots() if s["SnapshotType"] == "manual")
-        tags = {tag["Key"]: tag["Value"] for tag in point["TagList"]}
-        self.assertEqual(tags["recovery-point-time"], "2026-11-17T02:01:42Z")
-        self.assertEqual(tags["expires-at"], "2026-11-24T02:01:42Z")
+        events = [json.loads(line) for line in result.stdout.splitlines()]
+        available = next(event for event in events if event["event"] == "available")
+        self.assertEqual(available["recovery_point_time"], "2026-11-17T02:01:42Z")
+        self.state = json.loads(self.state_file.read_text())
+        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-24T02:01:41Z'\n")
+        result = self.run_script(tier="daily", **{"retention-hours": "168"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(point, self.saved_snapshots())
+        self.state = json.loads(self.state_file.read_text())
+        (self.work / "date").write_text("#!/bin/sh\nprintf '%s\\n' '2026-11-24T02:01:42Z'\n")
+        result = self.run_script(tier="daily", **{"retention-hours": "168"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn(point, self.saved_snapshots())
 
     def test_daily_verifies_persisted_source_identity_before_pruning(self):
         old = snapshot(tier="daily")
         self.state["snapshots"] = [old, automated()]
-        self.state["tag_changes_after_add"] = {"source-snapshot": automated("16")["DBSnapshotIdentifier"]}
+        self.state["wait_tag_changes"] = {"source-snapshot": automated("16")["DBSnapshotIdentifier"]}
         result = self.run_script(
             tier="daily", **{"retention-hours": "168", "creation-enabled": "true"}
         )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(old, self.saved_snapshots())
         self.assertNotIn("delete-db-snapshot", self.operations())
+
+    def test_invalid_or_expired_aws_recovery_times_never_allow_pruning(self):
+        cases = (
+            ("hourly", {"created_time": "2026-11-18T10:00:00Z"}),
+            ("hourly", {"created_time": "2026-11-16T09:00:00Z"}),
+            ("daily", {"wait_snapshot_changes": {"OriginalSnapshotCreateTime": None}}),
+            ("daily", {"wait_snapshot_changes": {"OriginalSnapshotCreateTime": "yesterday"}}),
+            ("daily", {"wait_snapshot_changes": {"OriginalSnapshotCreateTime": "2026-11-17T03:00:00Z"}}),
+        )
+        for tier, scenario in cases:
+            with self.subTest(tier=tier, scenario=scenario):
+                old = snapshot(tier=tier)
+                self.state = {
+                    "instance": self.state["instance"],
+                    "snapshots": [old, automated()],
+                    **scenario,
+                }
+                result = self.run_script(tier=tier, **{
+                    "retention-hours": "24" if tier == "hourly" else "168",
+                    "creation-enabled": "true",
+                })
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(old, self.saved_snapshots())
+                self.assertNotIn("delete-db-snapshot", self.operations())
 
     def test_source_retry_refreshes_the_clock_instead_of_rejecting_newer_points(self):
         source = automated()
@@ -462,7 +524,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(self.operations(), [])
 
-    def test_metadata_cannot_authorise_deletion_without_consistent_aws_recovery_time(self):
+    def test_only_hourly_points_can_fall_back_to_aws_snapshot_create_time(self):
         for tier in ("hourly", "daily"):
             with self.subTest(tier=tier):
                 point = snapshot(
@@ -473,7 +535,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
                 result = self.run_script(
                     tier=tier, **{"retention-hours": "24" if tier == "hourly" else "168"}
                 )
-                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(result.returncode, 0 if tier == "hourly" else 1, result.stderr)
                 self.assertEqual(self.saved_snapshots(), [point])
                 self.assertNotIn("delete-db-snapshot", self.operations())
 

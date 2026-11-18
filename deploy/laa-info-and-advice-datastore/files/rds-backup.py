@@ -139,45 +139,32 @@ class Lifecycle:
             and point["DBSnapshotArn"] == self.snapshot_arn_prefix + point["DBSnapshotIdentifier"]
         )
 
-    def verify_tags(self, point, tags, pending=False):
+    def verify_tags(self, tags, source=None):
         if any(tags.get(key) != value for key, value in self.owner.items()):
             raise BackupError("missing or conflicting ownership tags")
-        if tags.get("backup-state") not in (None, "available") and not pending:
-            raise BackupError("snapshot metadata has not been finalised")
-        recovery = timestamp(tags.get("recovery-point-time"))
-        expiry = timestamp(tags.get("expires-at"))
-        if recovery > self.now or expiry != recovery + self.retention:
-            raise BackupError("invalid recovery-point/expiry relationship")
         if self.args.tier == "daily":
-            source = re.fullmatch(
+            valid_source = re.fullmatch(
                 rf"rds:{re.escape(self.args.db_instance_identifier)}-(\d{{4}}-\d{{2}}-\d{{2}}-\d{{2}}-\d{{2}})",
                 tags.get("source-snapshot", ""),
             )
-            if not source:
+            if not valid_source or (source and tags["source-snapshot"] != source["DBSnapshotIdentifier"]):
                 raise BackupError("missing or conflicting daily source identity")
-        original = point.get("OriginalSnapshotCreateTime")
-        if self.args.tier == "daily" and not original:
-            raise BackupError("AWS original snapshot time unavailable; refusing to trust copy time or tags")
-        if self.args.tier == "hourly" and not original:
-            original = point["SnapshotCreateTime"]
-        if original and not pending and timestamp(original) != recovery:
-            raise BackupError("recovery-point tag conflicts with AWS snapshot time")
-        if timestamp(point["SnapshotCreateTime"]) < recovery:
-            raise BackupError("snapshot predates its claimed recovery point")
-        return recovery, expiry
 
-    def destination_tags(self, platform_tags, recovery):
+    def recovery_times(self, point):
+        if self.args.tier == "daily" and not point.get("OriginalSnapshotCreateTime"):
+            raise BackupError("AWS original snapshot time unavailable; refusing to trust copy time or tags")
+        recovery = original_time(point)
+        if recovery > self.now or timestamp(point["SnapshotCreateTime"]) < recovery:
+            raise BackupError("invalid AWS recovery-point time")
+        return recovery, recovery + self.retention
+
+    def destination_tags(self, platform_tags):
         inherited = {
             key: value for key, value in platform_tags.items()
             if not key.startswith("aws:")
             and key not in {*self.owner, "recovery-point-time", "expires-at", "source-snapshot", "incident-hold", "backup-state"}
         }
-        tags = {
-            **inherited, **self.owner,
-            "recovery-point-time": utc(recovery),
-            "expires-at": utc(recovery + self.retention),
-            "backup-state": "available",
-        }
+        tags = {**inherited, **self.owner}
         if self.source:
             tags["source-snapshot"] = self.source["DBSnapshotIdentifier"]
         return tags
@@ -235,7 +222,7 @@ class Lifecycle:
             tags = self.tags(point["DBSnapshotArn"])
             if "incident-hold" in tags:
                 raise BackupError("current run snapshot is held")
-            self.verify_tags(point, tags, pending=tags.get("backup-state") == "pending")
+            self.verify_tags(tags, self.source)
         else:
             if not self.source and self.db["DBInstanceStatus"] != "available":
                 self.db["DBInstanceStatus"] = self.aws(
@@ -245,9 +232,7 @@ class Lifecycle:
                     raise RetryableError("source database is not available for a fresh snapshot")
             if any(p["Status"] in ("creating", "copying") for p in self.snapshots()):
                 raise RetryableError("source database has snapshot activity")
-            recovery = original_time(self.source) if self.source else self.now
-            tags = self.destination_tags(platform_tags, recovery)
-            tags["backup-state"] = "pending"
+            tags = self.destination_tags(platform_tags)
             operation, options = (
                 ("copy-db-snapshot", [
                     "--source-db-snapshot-identifier", self.source["DBSnapshotArn"],
@@ -265,25 +250,18 @@ class Lifecycle:
         point = self.by_name(name)
         if point["Status"] != "available":
             raise BackupError("snapshot waiter returned without an available point")
-        observed = self.tags(point["DBSnapshotArn"])
-        contract = {*self.owner, "recovery-point-time", "expires-at", "source-snapshot", "backup-state"}
-        if "incident-hold" in observed or any(observed.get(key) != tags.get(key) for key in contract):
-            raise BackupError("snapshot metadata changed or is incomplete/held; refusing to retag or prune")
-        recovery = original_time(self.source or point)
         if self.db.get("StorageEncrypted") and point.get("Encrypted") is not True:
             raise BackupError("new/resumed snapshot must remain encrypted")
-        tags = self.destination_tags(platform_tags, recovery)
-        self.aws(
-            "add-tags-to-resource", "--resource-name", point["DBSnapshotArn"], "--tags",
-            json.dumps([{"Key": key, "Value": value} for key, value in tags.items()]),
-        )
         self.now = timestamp(subprocess.check_output(
             ["date", "-u", "+%Y-%m-%dT%H:%M:%SZ"], text=True
         ).strip())
-        verified = self.tags(point["DBSnapshotArn"])
-        if "incident-hold" in verified or any(verified.get(key) != tags.get(key) for key in contract):
-            raise BackupError("snapshot tag verification failed or snapshot is held")
-        _, expiry = self.verify_tags(point, verified)
+        tags = self.tags(point["DBSnapshotArn"])
+        if "incident-hold" in tags:
+            raise BackupError("current run snapshot is held")
+        self.verify_tags(tags, self.source)
+        recovery, expiry = self.recovery_times(point)
+        if self.source and recovery != original_time(self.source):
+            raise BackupError("copied snapshot recovery time conflicts with its source")
         if expiry <= self.now:
             raise BackupError("run snapshot is already expired; retaining previous points")
         log("available", snapshot=name, recovery_point_time=utc(recovery),
@@ -299,12 +277,13 @@ class Lifecycle:
                 if "incident-hold" in tags:
                     log("held", snapshot=point["DBSnapshotIdentifier"])
                     continue
-                recovery, expiry = self.verify_tags(point, tags)
+                self.verify_tags(tags)
+                recovery, expiry = self.recovery_times(point)
                 if expiry > self.now:
                     continue
                 self.aws("delete-db-snapshot", "--db-snapshot-identifier", point["DBSnapshotIdentifier"])
                 log("deleted", snapshot=point["DBSnapshotIdentifier"],
-                    recovery_point_time=tags["recovery-point-time"], expires_at=tags["expires-at"])
+                    recovery_point_time=utc(recovery), expires_at=utc(expiry))
             except BackupError as error:
                 failed = True
                 log("cleanup-failed", snapshot=point["DBSnapshotIdentifier"], reason=str(error))

@@ -91,6 +91,7 @@ elif operation == "wait":
     name = option("--db-snapshot-identifier")
     point = next(s for s in state["snapshots"] if s["DBSnapshotIdentifier"] == name)
     point["Status"] = "available"
+    point.update(state.get("wait_snapshot_changes", {}))
     tags = {tag["Key"]: tag["Value"] for tag in point["TagList"]}
     for key, value in state.get("wait_tag_changes", {}).items():
         if value is None:
@@ -98,15 +99,6 @@ elif operation == "wait":
         else:
             tags[key] = value
     point["TagList"] = [{"Key": key, "Value": value} for key, value in tags.items()]
-elif operation == "add-tags-to-resource":
-    arn = option("--resource-name")
-    point = next(s for s in state["snapshots"] if s["DBSnapshotArn"] == arn)
-    tags = {tag["Key"]: tag["Value"] for tag in point["TagList"]}
-    tags.update({tag["Key"]: tag["Value"] for tag in json.loads(option("--tags"))})
-    tags.update(state.get("tag_changes_after_add", {}))
-    point["TagList"] = [
-        {"Key": key, "Value": value} for key, value in tags.items() if value is not None
-    ]
 else:
     raise SystemExit("Unexpected AWS operation: " + operation)
 
