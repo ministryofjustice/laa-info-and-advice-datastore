@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 import re
-import signal
 import sys
 import time
 
@@ -45,10 +44,6 @@ def failure_reason(error):
     if isinstance(error, BotoCoreError):
         return type(error).__name__
     return str(error)
-
-
-def waiter_timeout(signum, frame):
-    raise BackupError("snapshot waiter timed out; AWS operation may still be running")
 
 
 def log(event, **fields):
@@ -196,9 +191,6 @@ class Lifecycle:
         self.verify_available(name)
 
     def wait_available(self, name):
-        # Bound elapsed time as well as the SDK waiter's polling attempts.
-        previous = signal.signal(signal.SIGALRM, waiter_timeout)
-        signal.alarm(1900)
         try:
             self.rds.get_waiter("db_snapshot_available").wait(
                 DBSnapshotIdentifier=name, WaiterConfig={"Delay": 30, "MaxAttempts": 60},
@@ -206,9 +198,6 @@ class Lifecycle:
         except WaiterError as error:
             reason = "waiter exhausted" if "Max attempts exceeded" in error.kwargs["reason"] else "waiter failed"
             raise BackupError(f"{reason}; AWS operation may still be running") from None
-        finally:
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, previous)
 
     def select_daily_source(self):
         sources = [

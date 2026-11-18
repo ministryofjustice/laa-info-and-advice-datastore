@@ -66,10 +66,16 @@ already-exists races get at most three attempts, 30 seconds apart. RDS requests
 use SDK standard retries (three total attempts), a 10-second connect timeout and
 a 30-second read timeout. These are per-request limits, not the former CLI's
 90-second whole-process limit.
-The availability waiter polls at 30-second intervals for at most 60 attempts,
-with a separate 1,900-second elapsed-time limit enforced by a Linux/POSIX alarm.
-Waiter exhaustion or timeout fails the run and **does not mean the AWS operation
-stopped**. Retry with the same run identity.
+The availability waiter polls at 30-second intervals for at most 60 attempts.
+Elapsed time is owned by Kubernetes, not a Python alarm: both CronJobs must set
+`spec.jobTemplate.spec.activeDeadlineSeconds: 1900` in MEM-1680. This is a
+whole-Job budget, including retries, creation, waiting and cleanup, not a fresh
+1,900 seconds for each wait or pod. The CronJobs are not implemented yet; direct
+CLI execution has no overall elapsed-time limit.
+Waiter exhaustion fails the run; an expired Job deadline terminates its pods.
+**Neither means the AWS operation stopped.** Retry with the same run identity.
+Deadline termination can interrupt cleanup and omit the script's final JSON log;
+monitor the Job's `DeadlineExceeded` failure, not just application logs.
 Quota, permission, throttling and terminal waiter failures remain failures.
 
 Boto3 handles snapshot pagination automatically. Pruning remains

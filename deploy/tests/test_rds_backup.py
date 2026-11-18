@@ -200,7 +200,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.operations().count("copy-db-snapshot"), 1)
 
-    def test_waiter_timeout_retains_previous_point_and_reports_operation_may_continue(self):
+    def test_waiter_exhaustion_retains_previous_point_and_reports_operation_may_continue(self):
         old = snapshot()
         self.state["snapshots"] = [old]
         self.state["failures"] = {"wait": ["WaiterTimeout"]}
