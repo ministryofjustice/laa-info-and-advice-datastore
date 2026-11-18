@@ -169,21 +169,26 @@ A scheduled job (`DraftDataDeletionTask`) deletes the data of `DRAFT` applicatio
 
 ## Audit logging
 
-### Entity update comparisons
+### Entity lifecycle auditing
 
-`EntityChangeListener` runs before JPA updates for every current entity except
-`EventEntity`. It reads the stored entity through `EntitySnapshotRepository`, using
+`EntityChangeListener` records creates, database loads, updates and deletes for the six
+entities configured with the listener; `EventEntity` is excluded. For updates it reads
+the stored entity through `EntitySnapshotRepository`, using
 an isolated Hibernate persistence context on the same transaction/connection so
 pending in-memory edits are not mistaken for the original state.
 
-The INFO entry has action `entity.preUpdate`, the entity type/ID, and a sorted
-`labels.changedFields` list. No old/new values are logged, including JSON values,
-to avoid leaking personal data. Singular relationships are compared by ID; changes
-within related entities are logged by their own listeners. Collection-only changes,
-bulk SQL/JPQL updates, and inserts/deletes do not trigger this listener. Generated
-timestamps/version increments applied after the callback are not included. These
-are pending-update diagnostics, not proof of a successful commit; existing domain
-audit logs and durable events remain unchanged.
+Each event writes a row to `entity_changes` with an action (`CREATE`, `READ`, `UPDATE` or
+`DELETE`), entity type, entity ID, sorted `changed_fields` list and `created_at`.
+The list is empty for events other than updates. No old/new
+values are stored, including JSON values, to avoid leaking personal data. Singular
+relationships are compared by ID; changes within related entities get their own rows.
+Collection-only changes and bulk SQL/JPQL operations do not trigger the listener.
+Generated timestamps/version increments applied after the update callback are not
+included. Mutation rows commit or roll back with the mutation. Reads use an independent
+writable transaction, so they also work in read-only transactions and remain recorded if
+the caller later rolls back. Reads reflect JPA entity loads, not cache hits, and exclude
+the internal snapshot reads used for comparisons. Existing domain audit logs and durable
+`events` remain unchanged.
 
 ### Domain and security events
 

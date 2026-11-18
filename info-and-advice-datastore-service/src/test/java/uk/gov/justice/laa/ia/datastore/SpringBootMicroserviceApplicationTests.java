@@ -18,6 +18,7 @@ import uk.gov.justice.laa.ia.datastore.gateway.ClaimsGateway;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
 import uk.gov.justice.laa.ia.datastore.repository.ClientDetailsRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EligibilityAssessmentRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EntityChangeRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EntitySnapshotRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EvidenceRepository;
@@ -41,6 +42,7 @@ class SpringBootMicroserviceApplicationTests {
   @MockitoBean private ClaimsGateway claimsGateway;
   @MockitoBean private LockProvider lockProvider;
   @MockitoBean private EntitySnapshotRepository entitySnapshotRepository;
+  @MockitoBean private EntityChangeRepository entityChangeRepository;
 
   @Test
   void contextLoads() {

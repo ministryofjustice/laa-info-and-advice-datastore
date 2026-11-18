@@ -3,22 +3,17 @@ package uk.gov.justice.laa.ia.datastore.entity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import uk.gov.justice.laa.ia.datastore.entity.listener.EntityChangeListener;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import uk.gov.justice.laa.ia.datastore.entity.EntityChangeEntity.Action;
 import uk.gov.justice.laa.ia.datastore.generator.AddressEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
@@ -28,28 +23,96 @@ import uk.gov.justice.laa.ia.datastore.generator.EligibilityAssessmentEntityGene
 import uk.gov.justice.laa.ia.datastore.repository.EntitySnapshotRepository;
 import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 
-/** Exercises callbacks and original-state reads against a real persistence context. */
+/**
+ * Exercises callbacks, original-state reads and change records against a real persistence context.
+ */
 class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
 
-  private final Logger logger = (Logger) LoggerFactory.getLogger(EntityChangeListener.class);
-  private final ListAppender<ILoggingEvent> appender = new ListAppender<>();
-
   @Autowired private EntitySnapshotRepository snapshotRepository;
+  @Autowired private PlatformTransactionManager transactionManager;
 
-  @BeforeEach
-  void attachLogger() {
-    appender.start();
-    logger.addAppender(appender);
-  }
+  @Test
+  void recordsCreationLoadAndRemovalWithoutEntityValues() {
+    ClientDetailsEntity client =
+        clientDetailsRepository.saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null));
+    UUID id = client.getId();
+    assertThat(changesFor(id))
+        .singleElement()
+        .satisfies(change -> assertEvent(change, Action.CREATE));
 
-  @AfterEach
-  void detachLogger() {
-    logger.detachAppender(appender);
-    appender.stop();
+    entityManager.clear();
+    client = clientDetailsRepository.findById(id).orElseThrow();
+    assertThat(changesFor(id))
+        .extracting(EntityChangeEntity::getAction)
+        .containsExactly(Action.CREATE, Action.READ);
+    assertEvent(changesFor(id).getLast(), Action.READ);
+
+    clientDetailsRepository.delete(client);
+    entityManager.flush();
+    assertThat(changesFor(id))
+        .extracting(EntityChangeEntity::getAction)
+        .containsExactly(Action.CREATE, Action.READ, Action.DELETE);
+    assertEvent(changesFor(id).getLast(), Action.DELETE);
   }
 
   @Test
-  void logsChangesForAllSixEntitiesWithoutLoggingValues() {
+  @Transactional(Transactional.TxType.NOT_SUPPORTED)
+  void recordsReadsInReadOnlyTransaction() {
+    TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+    UUID id =
+        transaction.execute(status ->
+            clientDetailsRepository
+                .saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null))
+                .getId());
+    try {
+      TransactionTemplate readOnly = new TransactionTemplate(transactionManager);
+      readOnly.setReadOnly(true);
+      readOnly.executeWithoutResult(status -> {
+        assertThat(clientDetailsRepository.findById(id)).isPresent();
+        status.setRollbackOnly();
+      });
+      assertThat(changesFor(id))
+          .extracting(EntityChangeEntity::getAction)
+          .containsExactly(Action.CREATE, Action.READ);
+      transaction.executeWithoutResult(status -> {
+        clientDetailsRepository.deleteById(id);
+        clientDetailsRepository.flush();
+        status.setRollbackOnly();
+      });
+      assertThat(changesFor(id))
+          .extracting(EntityChangeEntity::getAction)
+          .containsExactly(Action.CREATE, Action.READ, Action.READ);
+    } finally {
+      transaction.executeWithoutResult(status -> {
+        clientDetailsRepository.deleteById(id);
+        clientDetailsRepository.flush();
+        entityManager
+            .createQuery("delete from EntityChangeEntity c where c.entityId = :id")
+            .setParameter("id", id)
+            .executeUpdate();
+      });
+    }
+  }
+
+  @Test
+  @Transactional(Transactional.TxType.NOT_SUPPORTED)
+  void rollsBackCreationAuditWithTheEntity() {
+    TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+    UUID id =
+        transaction.execute(status -> {
+          UUID createdId =
+              clientDetailsRepository
+                  .saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null))
+                  .getId();
+          status.setRollbackOnly();
+          return createdId;
+        });
+    assertThat(changesFor(id)).isEmpty();
+    assertThat(clientDetailsRepository.findById(id)).isEmpty();
+  }
+
+  @Test
+  void recordsChangedFieldNamesForAllSixEntitiesWithoutValues() {
     ApplicationEntity application =
         ApplicationEntityGenerator.createWithoutId(builder -> {
           ApplicationEntityBuilderExtensions.withDefaultClientDetails(builder);
@@ -61,9 +124,24 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
     EligibilityAssessmentEntity assessment =
         eligibilityAssessmentRepository.saveAndFlush(
             EligibilityAssessmentEntityGenerator.createEligibilityAssessment(application.getId()));
+    assertThat(
+            entityManager
+                .createQuery(
+                    "select c.entityType from EntityChangeEntity c where c.action = :action",
+                    String.class)
+                .setParameter("action", Action.CREATE)
+                .getResultList())
+        .containsExactlyInAnyOrder(
+            "ApplicationEntity",
+            "ClientDetailsEntity",
+            "AddressEntity",
+            "DeclarationEntity",
+            "EvidenceEntity",
+            "EligibilityAssessmentEntity");
     entityManager.refresh(application);
     entityManager.refresh(assessment);
-    assertThat(appender.list).isEmpty();
+    assertThat(changes()).isEmpty();
+    final long readsBeforeUpdate = readCount();
 
     application.setScopingQuestions(objectMapper.createObjectNode().put("private", "sensitive"));
     application.getClientDetails().setFirstName(null);
@@ -80,14 +158,10 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
     assertChanged("DeclarationEntity", "dateSigned");
     assertChanged("EvidenceEntity", "evidenceExemptionReason");
     assertChanged("EligibilityAssessmentEntity", "data");
-    assertThat(appender.list).hasSize(6);
-    for (ILoggingEvent event : appender.list) {
-      assertThat(event.getFormattedMessage()).isEqualTo("Entity update pending");
-      assertThat(fields(event))
-          .containsEntry("event.action", "entity.preUpdate")
-          .containsKey("resource.id")
-          .hasSize(4);
-    }
+    assertThat(changes())
+        .hasSize(6)
+        .allSatisfy(change -> assertThat(change.getEntityId()).isNotNull());
+    assertThat(readCount()).isEqualTo(readsBeforeUpdate);
 
     clearCache();
     assertThat(
@@ -104,14 +178,13 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
     entityManager.flush();
     assertChanged("ClientDetailsEntity", "firstName");
     entityManager.refresh(client);
-    appender.list.clear();
 
     client.setFirstName("Joe");
     client.setLastName(null);
     entityManager.flush();
 
-    assertChanged("ClientDetailsEntity", "firstName", "lastName");
-    assertThat(appender.list).hasSize(1);
+    assertThat(changes()).hasSize(2);
+    assertThat(changes().getLast().getChangedFields()).containsExactly("firstName", "lastName");
     clearCache();
     ClientDetailsEntity stored = clientDetailsRepository.findById(client.getId()).orElseThrow();
     assertThat(stored.getFirstName()).isEqualTo("Joe");
@@ -131,11 +204,10 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
     clientDetailsRepository.saveAndFlush(client);
 
     assertChanged("ClientDetailsEntity", "address");
-    assertThat(appender.list).hasSize(1);
   }
 
   @Test
-  void doesNotLogUnchangedEntitiesOrEventUpdates() {
+  void doesNotRecordUnchangedEntitiesOrEventUpdates() {
     clientDetailsRepository.saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null));
     EventEntity event =
         eventRepository.saveAndFlush(
@@ -148,7 +220,7 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
     event.setPayload(objectMapper.createObjectNode().put("private", "sensitive"));
     entityManager.flush();
 
-    assertThat(appender.list).isEmpty();
+    assertThat(changes()).isEmpty();
     assertThat(EventEntity.class.getAnnotation(jakarta.persistence.EntityListeners.class)).isNull();
   }
 
@@ -159,18 +231,43 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
         .hasRootCauseInstanceOf(EntityNotFoundException.class);
   }
 
-  private void assertChanged(String entityType, String... expectedFields) {
-    List<Map<String, Object>> entries =
-        appender.list.stream()
-            .map(this::fields)
-            .filter(entry -> entityType.equals(entry.get("resource.type")))
-            .toList();
-    assertThat(entries).hasSize(1);
-    assertThat(entries.getFirst().get("labels.changedFields")).isEqualTo(List.of(expectedFields));
+  private List<EntityChangeEntity> changes() {
+    return entityManager
+        .createQuery(
+            "select c from EntityChangeEntity c where c.action = :action order by c.id",
+            EntityChangeEntity.class)
+        .setParameter("action", Action.UPDATE)
+        .getResultList();
   }
 
-  private Map<String, Object> fields(ILoggingEvent event) {
-    return event.getKeyValuePairs().stream()
-        .collect(Collectors.toMap(pair -> pair.key, pair -> pair.value));
+  private List<EntityChangeEntity> changesFor(UUID id) {
+    return entityManager
+        .createQuery(
+            "select c from EntityChangeEntity c where c.entityId = :id order by c.id",
+            EntityChangeEntity.class)
+        .setParameter("id", id)
+        .getResultList();
+  }
+
+  private long readCount() {
+    return entityManager
+        .createQuery(
+            "select count(c) from EntityChangeEntity c where c.action = :action", Long.class)
+        .setParameter("action", Action.READ)
+        .getSingleResult();
+  }
+
+  private void assertEvent(EntityChangeEntity change, Action action) {
+    assertThat(change.getAction()).isEqualTo(action);
+    assertThat(change.getEntityType()).isEqualTo("ClientDetailsEntity");
+    assertThat(change.getChangedFields()).isEmpty();
+    assertThat(change.getCreatedAt()).isNotNull();
+  }
+
+  private void assertChanged(String entityType, String... expectedFields) {
+    List<EntityChangeEntity> entries =
+        changes().stream().filter(change -> entityType.equals(change.getEntityType())).toList();
+    assertThat(entries).hasSize(1);
+    assertThat(entries.getFirst().getChangedFields()).isEqualTo(List.of(expectedFields));
   }
 }

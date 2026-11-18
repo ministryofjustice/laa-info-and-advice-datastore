@@ -2,32 +2,65 @@ package uk.gov.justice.laa.ia.datastore.entity.listener;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceUnitUtil;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PreRemove;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.metamodel.SingularAttribute;
+import java.util.List;
 import java.util.Objects;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
 import org.hibernate.Hibernate;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import uk.gov.justice.laa.ia.datastore.entity.EntityChangeEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EntityChangeEntity.Action;
 import uk.gov.justice.laa.ia.datastore.entity.EventEntity;
+import uk.gov.justice.laa.ia.datastore.repository.EntityChangeRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EntitySnapshotRepository;
 
-/** Logs changed persistent field names only; entity values may contain personal data. */
+/** Records lifecycle events and changed field names, never entity values. */
 @Component
-@Slf4j
 public class EntityChangeListener {
 
+  private static final ThreadLocal<Boolean> READING_SNAPSHOT = new ThreadLocal<>();
+
   private final EntitySnapshotRepository repository;
+
+  private final EntityChangeRepository changeRepository;
 
   private final EntityManager entityManager;
 
   /** Defers persistence dependencies until after Hibernate has registered its listeners. */
   public EntityChangeListener(
-      @Lazy EntitySnapshotRepository repository, @Lazy EntityManager entityManager) {
+      @Lazy EntitySnapshotRepository repository,
+      @Lazy EntityChangeRepository changeRepository,
+      @Lazy EntityManager entityManager) {
     this.repository = repository;
+    this.changeRepository = changeRepository;
     this.entityManager = entityManager;
+  }
+
+  /** Records creation after the generated identifier is available. */
+  @PostPersist
+  public void postPersist(Object entity) {
+    record(entity, Action.CREATE, List.of());
+  }
+
+  /** Records database loads, excluding internal reads used for update comparisons. */
+  @PostLoad
+  public void postLoad(Object entity) {
+    if (!Boolean.TRUE.equals(READING_SNAPSHOT.get())) {
+      record(entity, Action.READ, List.of());
+    }
+  }
+
+  /** Records removal in the same transaction as the entity. */
+  @PreRemove
+  public void preRemove(Object entity) {
+    record(entity, Action.DELETE, List.of());
   }
 
   /** Compares the pending update with its stored state before Hibernate writes it. */
@@ -41,7 +74,14 @@ public class EntityChangeListener {
     PersistenceUnitUtil persistenceUnitUtil =
         entityManager.getEntityManagerFactory().getPersistenceUnitUtil();
     Object id = persistenceUnitUtil.getIdentifier(entity);
-    BeanWrapper original = new BeanWrapperImpl(repository.findOriginal(entityType, id));
+    Object snapshot;
+    READING_SNAPSHOT.set(true);
+    try {
+      snapshot = repository.findOriginal(entityType, id);
+    } finally {
+      READING_SNAPSHOT.remove();
+    }
+    BeanWrapper original = new BeanWrapperImpl(snapshot);
     BeanWrapper updated = new BeanWrapperImpl(entity);
     var changedFields =
         entityManager.getMetamodel().entity(entityType).getSingularAttributes().stream()
@@ -52,12 +92,30 @@ public class EntityChangeListener {
             .toList();
 
     if (!changedFields.isEmpty()) {
-      log.atInfo()
-          .addKeyValue("event.action", "entity.preUpdate")
-          .addKeyValue("resource.type", entityType.getSimpleName())
-          .addKeyValue("resource.id", id)
-          .addKeyValue("labels.changedFields", changedFields)
-          .log("Entity update pending");
+      record(entity, Action.UPDATE, changedFields);
+    }
+  }
+
+  private void record(Object entity, Action action, List<String> changedFields) {
+    if (entity instanceof EventEntity) {
+      return;
+    }
+    EntityChangeEntity change =
+        EntityChangeEntity.builder()
+            .entityType(Hibernate.getClass(entity).getSimpleName())
+            .entityId(
+                (UUID)
+                    entityManager
+                        .getEntityManagerFactory()
+                        .getPersistenceUnitUtil()
+                        .getIdentifier(entity))
+            .action(action)
+            .changedFields(changedFields)
+            .build();
+    if (action == Action.READ) {
+      changeRepository.insertRead(change);
+    } else {
+      changeRepository.insert(change);
     }
   }
 
