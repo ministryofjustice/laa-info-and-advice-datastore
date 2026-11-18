@@ -179,7 +179,9 @@ pending in-memory edits are not mistaken for the original state.
 
 Each event writes a row to `entity_changes` with an action (`CREATE`, `READ`, `UPDATE` or
 `DELETE`), entity type, entity ID, sorted `changed_fields` list and `created_at`.
-The list is empty for events other than updates. No old/new
+For creates, the list contains non-null singular persistent fields present at the
+post-persist callback, excluding the entity ID; primitive fields are included even when
+their value is false or zero. For reads and deletes the list is empty. No old/new
 values are stored, including JSON values, to avoid leaking personal data. Singular
 relationships are compared by ID; changes within related entities get their own rows.
 Collection-only changes and bulk SQL/JPQL operations do not trigger the listener.

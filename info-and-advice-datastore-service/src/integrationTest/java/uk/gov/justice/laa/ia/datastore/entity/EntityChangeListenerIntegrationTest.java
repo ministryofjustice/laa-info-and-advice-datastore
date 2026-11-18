@@ -34,11 +34,27 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
   @Test
   void recordsCreationLoadAndRemovalWithoutEntityValues() {
     ClientDetailsEntity client =
-        clientDetailsRepository.saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null));
+        clientDetailsRepository.saveAndFlush(
+            ClientDetailsEntityGenerator.createWithoutId(builder ->
+                builder.lastName(null).address(AddressEntityGenerator.createWithoutId(null))));
     UUID id = client.getId();
     assertThat(changesFor(id))
         .singleElement()
-        .satisfies(change -> assertEvent(change, Action.CREATE));
+        .satisfies(change -> {
+          assertEvent(change, Action.CREATE);
+          assertThat(change.getChangedFields())
+              .containsExactly(
+                  "address",
+                  "createdAt",
+                  "createdBy",
+                  "dateOfBirth",
+                  "etag",
+                  "firstName",
+                  "modifiedAt",
+                  "modifiedBy",
+                  "niNumber",
+                  "noFixedAbode");
+        });
 
     entityManager.clear();
     client = clientDetailsRepository.findById(id).orElseThrow();
@@ -119,9 +135,10 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
           builder.declaration(DeclarationEntityGenerator.createWithoutId(null));
           builder.evidence(
               EvidenceEntity.builder().createdBy("SYSTEM").modifiedBy("SYSTEM").build());
+          builder.scopingQuestions(objectMapper.createObjectNode().put("private", "sensitive"));
         });
     applicationRepository.saveAndFlush(application);
-    EligibilityAssessmentEntity assessment =
+    final EligibilityAssessmentEntity assessment =
         eligibilityAssessmentRepository.saveAndFlush(
             EligibilityAssessmentEntityGenerator.createEligibilityAssessment(application.getId()));
     assertThat(
@@ -138,12 +155,16 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
             "DeclarationEntity",
             "EvidenceEntity",
             "EligibilityAssessmentEntity");
+    assertThat(changesFor(application.getId()).getFirst().getChangedFields())
+        .contains("clientDetails", "scopingQuestions")
+        .doesNotContain("id", "laaReference", "eligibilityAssessments", "sensitive");
     entityManager.refresh(application);
     entityManager.refresh(assessment);
     assertThat(changes()).isEmpty();
     final long readsBeforeUpdate = readCount();
 
-    application.setScopingQuestions(objectMapper.createObjectNode().put("private", "sensitive"));
+    application.setScopingQuestions(
+        objectMapper.createObjectNode().put("private", "updated sensitive"));
     application.getClientDetails().setFirstName(null);
     application.getClientDetails().setNoFixedAbode(true);
     application.getClientDetails().getAddress().setAddressLine1("sensitive address");
@@ -260,7 +281,9 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
   private void assertEvent(EntityChangeEntity change, Action action) {
     assertThat(change.getAction()).isEqualTo(action);
     assertThat(change.getEntityType()).isEqualTo("ClientDetailsEntity");
-    assertThat(change.getChangedFields()).isEmpty();
+    if (action != Action.CREATE) {
+      assertThat(change.getChangedFields()).isEmpty();
+    }
     assertThat(change.getCreatedAt()).isNotNull();
   }
 

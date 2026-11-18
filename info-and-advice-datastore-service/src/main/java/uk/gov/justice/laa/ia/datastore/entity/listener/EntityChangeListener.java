@@ -46,7 +46,22 @@ public class EntityChangeListener {
   /** Records creation after the generated identifier is available. */
   @PostPersist
   public void postPersist(Object entity) {
-    record(entity, Action.CREATE, List.of());
+    if (entity instanceof EventEntity) {
+      return;
+    }
+    BeanWrapper created = new BeanWrapperImpl(entity);
+    var changedFields =
+        entityManager
+            .getMetamodel()
+            .entity(Hibernate.getClass(entity))
+            .getSingularAttributes()
+            .stream()
+            .filter(attribute -> !attribute.isId())
+            .filter(attribute -> created.getPropertyValue(attribute.getName()) != null)
+            .map(SingularAttribute::getName)
+            .sorted()
+            .toList();
+    record(entity, Action.CREATE, changedFields);
   }
 
   /** Records database loads, excluding internal reads used for update comparisons. */
