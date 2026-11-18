@@ -22,10 +22,6 @@ class BackupError(Exception):
     pass
 
 
-class RetryableError(BackupError):
-    pass
-
-
 def utc_now():
     return datetime.now(timezone.utc)
 
@@ -162,28 +158,7 @@ class Lifecycle:
         return point
 
     def create(self):
-        for attempt in range(1, 4):
-            try:
-                self.create_attempt()
-                return
-            except (RetryableError, ClientError) as error:
-                if isinstance(error, ClientError) and (
-                    error.operation_name not in ("CreateDBSnapshot", "CopyDBSnapshot")
-                    or error.response.get("Error", {}).get("Code") not in (
-                        "InvalidDBInstanceState", "InvalidDBInstanceStateFault",
-                        "InvalidDBSnapshotState", "InvalidDBSnapshotStateFault",
-                        "DBSnapshotAlreadyExists", "DBSnapshotAlreadyExistsFault",
-                    )
-                ):
-                    raise
-                if attempt == 3:
-                    raise BackupError(f"creation deferred after {attempt} attempts: {failure_reason(error)}") from None
-                log("retry", attempt=attempt, reason=failure_reason(error))
-                time.sleep(30)
-
-    def create_attempt(self):
         self.now = utc_now()
-        self.source = None
         if self.args.tier == "daily":
             self.source = self.select_daily_source()
         name = self.create_or_resume()
@@ -215,7 +190,7 @@ class Lifecycle:
             )
         ]
         if not sources:
-            raise RetryableError("no available automated snapshot in the current UTC backup cycle")
+            raise BackupError("no available automated snapshot in the current UTC backup cycle")
         source = max(sources, key=original_time)
         log("source-selected", snapshot=source["DBSnapshotIdentifier"],
             recovery_point_time=utc(original_time(source)))
@@ -234,9 +209,9 @@ class Lifecycle:
                     DBInstanceIdentifier=self.args.db_instance_identifier
                 )["DBInstances"][0]["DBInstanceStatus"]
                 if self.db["DBInstanceStatus"] != "available":
-                    raise RetryableError("source database is not available for a fresh snapshot")
+                    raise BackupError("source database is not available for a fresh snapshot")
             if any(p["Status"] in ("creating", "copying") for p in self.snapshots()):
-                raise RetryableError("source database has snapshot activity")
+                raise BackupError("source database has snapshot activity")
             tags = [{"Key": key, "Value": value} for key, value in self.destination_tags(platform_tags).items()]
             if self.source:
                 self.rds.copy_db_snapshot(

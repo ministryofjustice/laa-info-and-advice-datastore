@@ -50,7 +50,8 @@ the last expired managed point**. Production rejects prune-only.
 The future chart's jobs-enabled switch is separate: PR/branch releases must
 deploy neither mode against shared UAT.
 
-The daily backup cycle is the UTC calendar day at process start. Sources must
+The daily backup cycle is the UTC calendar day at each process start; replacement
+pods re-evaluate it, including date changes across midnight. Sources must
 belong to this DB/account/Region, be automated and available, and have an original
 recovery time in that cycle, not in the future. Yesterday's point and existing
 manual copies are never fallbacks. Expiry is seven days from the source's
@@ -61,9 +62,16 @@ verification; otherwise it is retained and the run fails rather than trusting
 the destination's copy time. Hourly points use AWS's original snapshot time,
 falling back to `SnapshotCreateTime` when the original field is absent.
 
-Missing/late sources, source snapshot activity and create/copy busy or
-already-exists races get at most three attempts, 30 seconds apart. RDS requests
-use SDK standard retries (three total attempts), a 10-second connect timeout and
+Each process makes one lifecycle attempt. Missing/late sources, snapshot
+activity and create/copy errors fail that run without pruning. MEM-1680 must set
+Job-level `backoffLimit: 2` and pod-level `restartPolicy: Never` on both CronJobs,
+allowing an initial run and up to two replacement runs within the shared deadline.
+Kubernetes uses its own backoff, not a 30-second application delay, and retries
+all failed runs, including permission/quota and cleanup failures, rather than
+only selected source/busy errors. A replacement pod re-reads AWS state and resumes
+the same owned identity; it must not generate a new hourly run ID.
+RDS requests retain SDK standard retries (at most three total attempts),
+a 10-second connect timeout and
 a 30-second read timeout. These are per-request limits, not the former CLI's
 90-second whole-process limit.
 The availability waiter polls at 30-second intervals for at most 60 attempts.
@@ -71,11 +79,12 @@ Elapsed time is owned by Kubernetes, not a Python alarm: both CronJobs must set
 `spec.jobTemplate.spec.activeDeadlineSeconds: 1900` in MEM-1680. This is a
 whole-Job budget, including retries, creation, waiting and cleanup, not a fresh
 1,900 seconds for each wait or pod. The CronJobs are not implemented yet; direct
-CLI execution has no overall elapsed-time limit.
+CLI execution has neither whole-run retries nor an overall elapsed-time limit.
 Waiter exhaustion fails the run; an expired Job deadline terminates its pods.
 **Neither means the AWS operation stopped.** Retry with the same run identity.
 Deadline termination can interrupt cleanup and omit the script's final JSON log;
-monitor the Job's `DeadlineExceeded` failure, not just application logs.
+monitor the Job's `DeadlineExceeded` and exhausted-retry `BackoffLimitExceeded`
+failures, not just application logs.
 Quota, permission, throttling and terminal waiter failures remain failures.
 
 Boto3 handles snapshot pagination automatically. Pruning remains

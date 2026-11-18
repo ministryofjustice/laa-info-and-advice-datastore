@@ -104,7 +104,6 @@ class SnapshotLifecycleTests(unittest.TestCase):
         with (
             patch("boto3.client", return_value=rds),
             patch.object(module, "utc_now", side_effect=self.clock),
-            patch.object(module.time, "sleep"),
             patch.object(sys, "argv", [str(SCRIPT), *args]),
             redirect_stdout(stdout),
             redirect_stderr(stderr),
@@ -256,7 +255,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.saved_snapshots(), [])
 
-    def test_daily_waits_boundedly_for_current_cycle_and_never_uses_manual_source(self):
+    def test_replacement_run_accepts_late_source_but_never_manual_source(self):
         manual = snapshot(
             suffix="recent-copy", tier="daily",
             SnapshotCreateTime="2026-11-17T09:00:00Z",
@@ -264,6 +263,11 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.state["snapshots"] = [snapshot(tier="daily"), automated("16"), manual]
         self.state["late_source"] = automated()
         self.state["unfiltered_snapshots"] = True
+        result = self.run_script(tier="daily", **{"creation-enabled": "true"})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("copy-db-snapshot", self.operations())
+        self.assertNotIn("delete-db-snapshot", self.operations())
+        self.state = json.loads(self.state_file.read_text())
         result = self.run_script(tier="daily", **{"creation-enabled": "true"})
         self.assertEqual(result.returncode, 0, result.stderr)
         calls = [json.loads(line) for line in self.calls.read_text().splitlines()]
@@ -273,13 +277,17 @@ class SnapshotLifecycleTests(unittest.TestCase):
             copies[0][2]["SourceDBSnapshotIdentifier"],
             automated()["DBSnapshotArn"],
         )
-        self.assertIn("retry", result.stdout)
 
     def test_cross_tier_busy_races_retry_with_the_same_destination(self):
         for tier, operation in (("hourly", "create-db-snapshot"), ("daily", "copy-db-snapshot")):
             with self.subTest(tier=tier):
-                self.state["snapshots"] = [snapshot(tier=tier), automated()]
+                old = snapshot(tier=tier)
+                self.state["snapshots"] = [old, automated()]
                 self.state["failures"] = {operation: ["InvalidDBInstanceState", None]}
+                result = self.run_script(tier=tier, **{"creation-enabled": "true"})
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(old, self.saved_snapshots())
+                self.state = json.loads(self.state_file.read_text())
                 result = self.run_script(tier=tier, **{"creation-enabled": "true"})
                 self.assertEqual(result.returncode, 0, result.stderr)
                 calls = [json.loads(line) for line in self.calls.read_text().splitlines()]
@@ -427,27 +435,23 @@ class SnapshotLifecycleTests(unittest.TestCase):
                 self.assertIn(old, self.saved_snapshots())
                 self.assertNotIn("delete-db-snapshot", self.operations())
 
-    def test_source_retry_refreshes_the_clock_instead_of_rejecting_newer_points(self):
+    def test_replacement_run_uses_current_clock_for_newer_sources(self):
         source = automated()
         source["SnapshotCreateTime"] = "2026-11-17T10:00:30Z"
         source["OriginalSnapshotCreateTime"] = "2026-11-17T10:00:30Z"
         self.state["snapshots"] = [automated("16")]
         self.state["late_source"] = source
         self.state["created_time"] = "2026-11-17T10:01:00Z"
-        times = iter([
-            datetime.fromisoformat(value) for value in (
-                "2026-11-17T10:00:00+00:00",
-                "2026-11-17T10:01:00+00:00",
-                "2026-11-17T10:01:00+00:00",
-                "2026-11-17T10:01:00+00:00",
-            )
-        ])
-        self.clock = lambda: next(times)
+        result = self.run_script(tier="daily", **{"creation-enabled": "true"})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("copy-db-snapshot", self.operations())
+        self.state = json.loads(self.state_file.read_text())
+        self.now = "2026-11-17T10:01:00Z"
         result = self.run_script(tier="daily", **{"creation-enabled": "true"})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.operations().count("copy-db-snapshot"), 1)
 
-    def test_missing_stale_manual_or_foreign_sources_fail_after_three_attempts(self):
+    def test_missing_stale_manual_or_foreign_sources_fail_without_in_process_retry(self):
         for sources in (
             [],
             [automated("16")],
@@ -462,8 +466,8 @@ class SnapshotLifecycleTests(unittest.TestCase):
                 self.state["unfiltered_snapshots"] = True
                 result = self.run_script(tier="daily", **{"creation-enabled": "true"})
                 self.assertNotEqual(result.returncode, 0)
-                self.assertIn("after 3 attempts", result.stderr)
-                self.assertEqual(self.operations().count("describe-db-snapshots"), 3)
+                self.assertIn("no available automated snapshot", result.stderr)
+                self.assertEqual(self.operations().count("describe-db-snapshots"), 1)
                 self.assertNotIn("copy-db-snapshot", self.operations())
                 self.assertIn(old, self.saved_snapshots())
 
@@ -472,7 +476,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.state["snapshots"] = [old, snapshot("in-flight", tier="daily", Status="copying")]
         result = self.run_script(**{"creation-enabled": "true"})
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("after 3 attempts", result.stderr)
+        self.assertIn("source database has snapshot activity", result.stderr)
         self.assertEqual(self.saved_snapshots(), self.state["snapshots"])
         self.assertNotIn("create-db-snapshot", self.operations())
         self.assertNotIn("delete-db-snapshot", self.operations())
@@ -480,6 +484,10 @@ class SnapshotLifecycleTests(unittest.TestCase):
     def test_already_exists_race_resumes_the_owned_identity(self):
         self.state["snapshots"] = [snapshot()]
         self.state["creation_race"] = True
+        result = self.run_script(**{"creation-enabled": "true"})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("delete-db-snapshot", self.operations())
+        self.state = json.loads(self.state_file.read_text())
         result = self.run_script(**{"creation-enabled": "true"})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.operations().count("create-db-snapshot"), 1)
