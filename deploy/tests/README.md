@@ -20,10 +20,8 @@ Run from the repository root:
 python3 deploy/laa-info-and-advice-datastore/files/rds-backup.py \
   --db-instance-identifier laa-info-and-advice-datastore-uat \
   --region eu-west-2 \
-  --service laa-info-and-advice-datastore \
   --env uat \
   --tier hourly \
-  --retention-hours 24 \
   --creation-enabled false \
   --run-id '<stable-job-name>'
 ```
@@ -35,8 +33,11 @@ Do not generate a new hourly identity on every retry.
 
 | Tier | Creation enabled | Retention |
 |---|---|---|
-| `hourly` | Create a fresh manual snapshot | `--retention-hours 24` |
-| `daily` | Copy the latest available automated snapshot of this DB | `--retention-hours 168` |
+| `hourly` | Create a fresh manual snapshot | 24 hours |
+| `daily` | Copy the latest available automated snapshot of this DB | 168 hours (seven days) |
+
+The service is fixed to `laa-info-and-advice-datastore`, and retention is derived
+from the tier; neither is a CLI option.
 
 `--creation-enabled true` must create/resume, wait and verify the point's
 availability, encryption and persisted tags before pruning. Any failure stops

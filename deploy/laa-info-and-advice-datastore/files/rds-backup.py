@@ -10,6 +10,7 @@ import sys
 import time
 
 
+SERVICE = "laa-info-and-advice-datastore"
 CONTEXT = {}
 STARTED = time.monotonic()
 
@@ -51,14 +52,15 @@ class Lifecycle:
             ["date", "-u", "+%Y-%m-%dT%H:%M:%SZ"], text=True
         ).strip())
         self.cycle_start = self.now.replace(hour=0, minute=0, second=0, microsecond=0)
-        self.retention = timedelta(hours=args.retention_hours)
+        retention_hours = 24 if args.tier == "hourly" else 168
+        self.retention = timedelta(hours=retention_hours)
         self.prefix = f"{args.db_instance_identifier}-scheduled-{args.tier}-"
         self.owner = {
-            "service": args.service,
+            "service": SERVICE,
             "env": args.env,
             "backup-type": "scheduled",
             "backup-tier": args.tier,
-            "retention-hours": str(args.retention_hours),
+            "retention-hours": str(retention_hours),
             "managed-by": "datastore-backup-automation",
         }
         self.source = None
@@ -284,10 +286,8 @@ def main():
     parser = argparse.ArgumentParser(description="Create/copy and prune owned RDS snapshots")
     parser.add_argument("--db-instance-identifier", required=True)
     parser.add_argument("--region", required=True)
-    parser.add_argument("--service", required=True)
     parser.add_argument("--env", required=True, choices=("uat", "staging", "prod"))
     parser.add_argument("--tier", required=True, choices=("hourly", "daily"))
-    parser.add_argument("--retention-hours", required=True, type=int)
     parser.add_argument("--creation-enabled", required=True, choices=("true", "false"))
     parser.add_argument("--run-id", required=True)
     args = parser.parse_args()
@@ -295,9 +295,7 @@ def main():
         parser.error("scheduled-run identity must not be blank")
     if args.env == "prod" and args.creation_enabled == "false":
         parser.error("prune-only is not allowed in prod")
-    if args.retention_hours != (24 if args.tier == "hourly" else 168):
-        parser.error("retention must be 24 hours for hourly or 168 hours for daily")
-    if args.db_instance_identifier != f"{args.service}-{args.env}" or args.service != "laa-info-and-advice-datastore":
+    if args.db_instance_identifier != f"{SERVICE}-{args.env}":
         parser.error("database identifier must match the service and environment")
     CONTEXT.update(database=args.db_instance_identifier, env=args.env, tier=args.tier,
                    run_id=args.run_id, creation_enabled=args.creation_enabled)
