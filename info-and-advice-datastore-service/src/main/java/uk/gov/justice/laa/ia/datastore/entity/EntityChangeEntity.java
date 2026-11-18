@@ -53,6 +53,9 @@ public class EntityChangeEntity {
   @Column(name = "correlation_id", columnDefinition = "text")
   private String correlationId;
 
+  @Column(name = "url_path", columnDefinition = "text")
+  private String urlPath;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "action", nullable = false)
   private Action action;

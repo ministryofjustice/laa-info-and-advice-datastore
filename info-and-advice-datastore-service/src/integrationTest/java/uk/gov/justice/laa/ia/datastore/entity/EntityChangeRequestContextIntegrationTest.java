@@ -36,8 +36,9 @@ class EntityChangeRequestContextIntegrationTest {
   @Test
   void usesRequestScopeWhenPresentAndWorksWithoutIt() {
     RequestAttributes previous = RequestContextHolder.getRequestAttributes();
-    RequestContextHolder.setRequestAttributes(
-        new ServletRequestAttributes(new MockHttpServletRequest()));
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setRequestURI("/api/v1/client-details");
+    RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     try {
       userContext.setCurrentUser("request-user");
       userContext.setCorrelationId("request-correlation");
@@ -45,11 +46,13 @@ class EntityChangeRequestContextIntegrationTest {
           clientDetailsRepository.saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null));
       assertThat(changeFor(requested).getUserId()).isEqualTo("request-user");
       assertThat(changeFor(requested).getCorrelationId()).isEqualTo("request-correlation");
+      assertThat(changeFor(requested).getUrlPath()).isEqualTo("/api/v1/client-details");
 
       RequestContextHolder.resetRequestAttributes();
       ClientDetailsEntity scheduled =
           clientDetailsRepository.saveAndFlush(ClientDetailsEntityGenerator.createWithoutId(null));
       assertThat(changeFor(scheduled).getUserId()).isEqualTo("SYSTEM");
+      assertThat(changeFor(scheduled).getUrlPath()).isNull();
     } finally {
       RequestContextHolder.setRequestAttributes(previous);
     }

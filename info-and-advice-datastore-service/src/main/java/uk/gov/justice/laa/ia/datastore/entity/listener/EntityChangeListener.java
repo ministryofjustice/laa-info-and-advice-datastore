@@ -17,6 +17,7 @@ import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import uk.gov.justice.laa.ia.datastore.context.UserContext;
 import uk.gov.justice.laa.ia.datastore.entity.EntityChangeEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EntityChangeEntity.Action;
@@ -122,7 +123,12 @@ public class EntityChangeListener {
     if (entity instanceof EventEntity) {
       return;
     }
-    boolean hasRequest = RequestContextHolder.getRequestAttributes() != null;
+    var requestAttributes = RequestContextHolder.getRequestAttributes();
+    boolean hasRequest = requestAttributes != null;
+    String urlPath =
+        requestAttributes instanceof ServletRequestAttributes attributes
+            ? attributes.getRequest().getRequestURI()
+            : null;
     EntityChangeEntity change =
         EntityChangeEntity.builder()
             .entityType(Hibernate.getClass(entity).getSimpleName())
@@ -136,6 +142,7 @@ public class EntityChangeListener {
             .changedFields(changedFields)
             .userId(hasRequest ? userContext.getCurrentUser() : "SYSTEM")
             .correlationId(hasRequest ? userContext.getCorrelationId() : MDC.get("correlationId"))
+            .urlPath(urlPath)
             .build();
     if (action == Action.READ) {
       changeRepository.insertRead(change);
