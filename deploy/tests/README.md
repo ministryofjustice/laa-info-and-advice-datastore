@@ -64,7 +64,8 @@ has a 1,900-second client bound; waiter exhaustion or timeout fails the run and
 **does not mean the AWS operation stopped**. Retry with the same run identity.
 Quota, permission, throttling and terminal waiter failures remain failures.
 
-Pruning is paginated, source/tier-specific and limited to available manual
+AWS CLI handles snapshot pagination automatically. Pruning remains
+source/tier-specific and limited to available manual
 snapshots under `<db>-scheduled-<tier>-` with matching ARN, complete ownership
 tags and valid AWS recovery timestamps. Expiry is calculated from that recovery
 time plus the fixed tier retention, never from mutable timestamp tags. Foreign, pre-change,

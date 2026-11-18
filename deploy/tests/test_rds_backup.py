@@ -492,14 +492,13 @@ class SnapshotLifecycleTests(unittest.TestCase):
         self.assertEqual(self.operations().count("create-db-snapshot"), 1)
         self.assertEqual(len(self.saved_snapshots()), 1)
 
-    def test_repeated_pagination_marker_fails_before_deletion(self):
+    def test_pruning_gets_all_snapshot_pages_in_one_aws_cli_call(self):
         self.state["snapshots"] = [snapshot("one"), snapshot("two")]
         self.state["page_size"] = 1
-        self.state["repeat_marker"] = True
         result = self.run_script()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("repeated a marker", result.stderr)
-        self.assertNotIn("delete-db-snapshot", self.operations())
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.saved_snapshots(), [])
+        self.assertEqual(self.operations().count("describe-db-snapshots"), 1)
 
     def test_unreadable_tags_or_failed_delete_leave_expired_point_and_report_failure(self):
         for operation in ("list-tags-for-resource", "delete-db-snapshot"):

@@ -108,21 +108,10 @@ class Lifecycle:
             raise BackupError(f"{operation}: invalid JSON response") from None
 
     def snapshots(self, snapshot_type=None):
-        options = ["--db-instance-identifier", self.args.db_instance_identifier,
-                   "--no-paginate", "--max-records", "100"]
+        options = ["--db-instance-identifier", self.args.db_instance_identifier]
         if snapshot_type:
             options += ["--snapshot-type", snapshot_type]
-        snapshots, markers = [], set()
-        while True:
-            page = self.aws("describe-db-snapshots", *options)
-            snapshots.extend(page["DBSnapshots"])
-            marker = page.get("Marker")
-            if not marker:
-                return snapshots
-            if marker in markers:
-                raise BackupError("snapshot pagination repeated a marker")
-            markers.add(marker)
-            options = [*options[:options.index("--marker")], "--marker", marker] if "--marker" in options else [*options, "--marker", marker]
+        return self.aws("describe-db-snapshots", *options)["DBSnapshots"]
 
     def tags(self, arn):
         raw = self.aws("list-tags-for-resource", "--resource-name", arn)["TagList"]

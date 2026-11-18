@@ -47,11 +47,14 @@ elif operation == "describe-db-snapshots":
             snapshots.append(state["late_source"])
     if snapshot_type and not state.get("unfiltered_snapshots"):
         snapshots = [s for s in snapshots if s["SnapshotType"] == snapshot_type]
-    start = int(option("--marker", "0"))
-    end = start + state.get("page_size", 100)
-    response = {"DBSnapshots": snapshots[start:end]}
-    if end < len(snapshots):
-        response["Marker"] = "0" if state.get("repeat_marker") else str(end)
+    if "--no-paginate" in args:
+        start = int(option("--marker", "0"))
+        end = start + state.get("page_size", 100)
+        response = {"DBSnapshots": snapshots[start:end]}
+        if end < len(snapshots):
+            response["Marker"] = str(end)
+    else:
+        response = {"DBSnapshots": snapshots}
 elif operation == "list-tags-for-resource":
     arn = option("--resource-name")
     if arn == state["instance"]["DBInstanceArn"]:
