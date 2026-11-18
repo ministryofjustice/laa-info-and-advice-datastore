@@ -169,6 +169,24 @@ A scheduled job (`DraftDataDeletionTask`) deletes the data of `DRAFT` applicatio
 
 ## Audit logging
 
+### Entity update comparisons
+
+`EntityChangeListener` runs before JPA updates for every current entity except
+`EventEntity`. It reads the stored entity through `EntitySnapshotRepository`, using
+an isolated Hibernate persistence context on the same transaction/connection so
+pending in-memory edits are not mistaken for the original state.
+
+The INFO entry has action `entity.preUpdate`, the entity type/ID, and a sorted
+`labels.changedFields` list. No old/new values are logged, including JSON values,
+to avoid leaking personal data. Singular relationships are compared by ID; changes
+within related entities are logged by their own listeners. Collection-only changes,
+bulk SQL/JPQL updates, and inserts/deletes do not trigger this listener. Generated
+timestamps/version increments applied after the callback are not included. These
+are pending-update diagnostics, not proof of a successful commit; existing domain
+audit logs and durable events remain unchanged.
+
+### Domain and security events
+
 Audit events are structured (ECS JSON) log lines written to the `audit` logger at `INFO`, collected from container stdout by EKS into OpenSearch. OpenSearch keeps 30 days; the SOC integration exports to a separate system with 3 months retention, so that is the longest audit history available from logs. The `events` table remains the durable record of case mutations.
 
 | Field | Meaning |
