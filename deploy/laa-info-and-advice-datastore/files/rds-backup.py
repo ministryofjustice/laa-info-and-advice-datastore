@@ -185,25 +185,34 @@ class Lifecycle:
         ).strip())
         self.source = None
         if self.args.tier == "daily":
-            sources = [
-                point for point in self.snapshots("automated")
-                if point["SnapshotType"] == "automated"
-                and point["DBInstanceIdentifier"] == self.args.db_instance_identifier
-                and point["Status"] == "available"
-                and re.fullmatch(
-                    re.escape(self.snapshot_arn_prefix + "rds:" + self.args.db_instance_identifier)
-                    + r"-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}", point["DBSnapshotArn"]
-                )
-                and point["DBSnapshotArn"] == self.snapshot_arn_prefix + point["DBSnapshotIdentifier"]
-                and self.cycle_start <= original_time(point) <= min(
-                    self.now, self.cycle_start + timedelta(days=1) - timedelta(microseconds=1)
-                )
-            ]
-            if not sources:
-                raise RetryableError("no available automated snapshot in the current UTC backup cycle")
-            self.source = max(sources, key=original_time)
-            log("source-selected", snapshot=self.source["DBSnapshotIdentifier"],
-                recovery_point_time=utc(original_time(self.source)))
+            self.source = self.select_daily_source()
+        name = self.create_or_resume()
+        self.aws("wait", "db-snapshot-available", "--db-snapshot-identifier", name, timeout=1900)
+        self.verify_available(name)
+
+    def select_daily_source(self):
+        sources = [
+            point for point in self.snapshots("automated")
+            if point["SnapshotType"] == "automated"
+            and point["DBInstanceIdentifier"] == self.args.db_instance_identifier
+            and point["Status"] == "available"
+            and re.fullmatch(
+                re.escape(self.snapshot_arn_prefix + "rds:" + self.args.db_instance_identifier)
+                + r"-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}", point["DBSnapshotArn"]
+            )
+            and point["DBSnapshotArn"] == self.snapshot_arn_prefix + point["DBSnapshotIdentifier"]
+            and self.cycle_start <= original_time(point) <= min(
+                self.now, self.cycle_start + timedelta(days=1) - timedelta(microseconds=1)
+            )
+        ]
+        if not sources:
+            raise RetryableError("no available automated snapshot in the current UTC backup cycle")
+        source = max(sources, key=original_time)
+        log("source-selected", snapshot=source["DBSnapshotIdentifier"],
+            recovery_point_time=utc(original_time(source)))
+        return source
+
+    def create_or_resume(self):
         identity = self.source["DBSnapshotArn"] if self.source else self.args.run_id
         name = self.prefix + hashlib.sha256(identity.encode()).hexdigest()[:24]
         existing = [p for p in self.snapshots("manual") if p["DBSnapshotIdentifier"] == name]
@@ -237,7 +246,9 @@ class Lifecycle:
             )
             self.aws(operation, *options, "--tags",
                      json.dumps([{"Key": key, "Value": value} for key, value in tags.items()]))
-        self.aws("wait", "db-snapshot-available", "--db-snapshot-identifier", name, timeout=1900)
+        return name
+
+    def verify_available(self, name):
         point = self.by_name(name)
         if point["Status"] != "available":
             raise BackupError("snapshot waiter returned without an available point")
