@@ -1,5 +1,5 @@
 # Build stage
-FROM amazoncorretto:25-alpine@sha256:abed4fe0730b802823f0cbc5c24ab8e3ba6023af99266f0e2ca3c08d9f6a20f9 AS builder
+FROM amazoncorretto:25.0.5-alpine@sha256:1124f698f69d2185828dbd1a1ebeb9aee21884ac64bed7af3deeafd20b21a9dc AS builder
 
 # Patch known CVEs in base image packages (e.g. zlib) ahead of a new upstream image tag
 RUN apk update && apk upgrade --no-cache
@@ -17,10 +17,9 @@ RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     chmod +x gradlew && ./gradlew :info-and-advice-datastore-service:bootJar --no-daemon
 
 # Runtime stage
-FROM amazoncorretto:25-alpine@sha256:abed4fe0730b802823f0cbc5c24ab8e3ba6023af99266f0e2ca3c08d9f6a20f9
+FROM ghcr.io/ministryofjustice/laa-base-container-images/java:25-corretto-alpine
 
-# Patch known CVEs in base image packages (e.g. zlib) ahead of a new upstream image tag
-RUN apk update && apk upgrade --no-cache
+USER root
 
 # Set up working directory in the container
 RUN mkdir -p /opt/laa-info-and-advice-datastore/
@@ -34,9 +33,6 @@ COPY --from=builder /build/info-and-advice-datastore-service/build/libs/info-and
 RUN wget -q -O /opt/laa-info-and-advice-datastore/rds-ca-bundle.pem \
       https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
     && grep -q "BEGIN CERTIFICATE" /opt/laa-info-and-advice-datastore/rds-ca-bundle.pem
-
-# Create a group and non-root user
-RUN addgroup -S appgroup && adduser -u 1001 -S appuser -G appgroup
 
 # Set the default user
 USER 1001

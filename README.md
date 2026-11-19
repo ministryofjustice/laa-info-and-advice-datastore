@@ -148,6 +148,11 @@ release attribute in the matching Sentry project/environment. Check ingestion li
 and temporarily enable `SENTRY_DEBUG=true` if SDK delivery still fails; diagnostic output
 can contain sensitive data and should not be shared without review.
 
+## RDS snapshot lifecycle
+
+See [the backup lifecycle README](deploy/tests/README.md) for usage, safety
+controls, runtime requirements and offline tests (`make test-backups`).
+
 ## Data deletion of draft applications
 
 A scheduled job (`DraftDataDeletionTask`) deletes the data of `DRAFT` applications that have not been modified for 2 years. It nulls the PII, soft-deletes the application and records an audit event. Applications already deleted are skipped. Other states are unaffected. The job takes its own ShedLock lock (`draft-data-deletion`), so it can run alongside the completed-application retention jobs, but only one pod runs it at a time. It runs when `schedulers-enabled` is true.
