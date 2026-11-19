@@ -9,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
@@ -294,6 +295,22 @@ class EntityChangeListenerIntegrationTest extends BaseIntegrationTest {
     clientDetailsRepository.saveAndFlush(client);
 
     assertChanged("ClientDetailsEntity", "address");
+  }
+
+  @Test
+  void recordsCollectionFieldWhenItsSizeChanges() {
+    ApplicationEntity application =
+        ApplicationEntityGenerator.createWithoutId(
+            ApplicationEntityBuilderExtensions::withDefaultClientDetails);
+    applicationRepository.saveAndFlush(application);
+    entityManager.refresh(application);
+
+    application.setEligibilityAssessments(
+        Set.of(
+            EligibilityAssessmentEntityGenerator.createEligibilityAssessment(application.getId())));
+    entityManager.flush();
+
+    assertChanged("ApplicationEntity", "eligibilityAssessments");
   }
 
   @Test

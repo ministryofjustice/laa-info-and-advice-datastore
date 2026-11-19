@@ -6,11 +6,18 @@ import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PreRemove;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.hibernate.Hibernate;
+import org.hibernate.collection.spi.PersistentCollection;
+import org.hibernate.engine.spi.EntityEntry;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.slf4j.MDC;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -106,11 +113,22 @@ public class EntityChangeListener {
     }
     BeanWrapper original = new BeanWrapperImpl(snapshot);
     BeanWrapper updated = new BeanWrapperImpl(entity);
+    var entityMetadata = entityManager.getMetamodel().entity(entityType);
+    EntityEntry entityEntry =
+        entityManager.unwrap(SessionImplementor.class).getPersistenceContext().getEntry(entity);
+    if (entityEntry == null) {
+      throw new IllegalStateException(
+          "Cannot compare collection changes for unmanaged " + entityType.getSimpleName());
+    }
     var changedFields =
-        entityManager.getMetamodel().entity(entityType).getSingularAttributes().stream()
-            .filter(attribute -> !attribute.isId())
-            .filter(attribute -> changed(attribute, original, updated, persistenceUnitUtil))
-            .map(SingularAttribute::getName)
+        Stream.concat(
+                entityMetadata.getSingularAttributes().stream()
+                    .filter(attribute -> !attribute.isId())
+                    .filter(attribute -> changed(attribute, original, updated, persistenceUnitUtil))
+                    .map(SingularAttribute::getName),
+                entityMetadata.getPluralAttributes().stream()
+                    .filter(attribute -> changed(attribute, entityEntry, updated))
+                    .map(PluralAttribute::getName))
             .sorted()
             .toList();
 
@@ -163,5 +181,40 @@ public class EntityChangeListener {
       after = after == null ? null : persistenceUnitUtil.getIdentifier(after);
     }
     return !Objects.equals(before, after);
+  }
+
+  private boolean changed(
+      PluralAttribute<?, ?, ?> attribute, EntityEntry entityEntry, BeanWrapper updated) {
+    Object before = entityEntry.getLoadedValue(attribute.getName());
+    Object after = updated.getPropertyValue(attribute.getName());
+    return originalCollectionSize(before) != collectionSize(after);
+  }
+
+  private int originalCollectionSize(Object value) {
+    if (value instanceof PersistentCollection<?> collection) {
+      Object snapshot = collection.getStoredSnapshot();
+      if (snapshot != null) {
+        return collectionSize(snapshot);
+      }
+      if (!collection.wasInitialized()) {
+        return collection.getSize();
+      }
+      return 0;
+    }
+    return collectionSize(value);
+  }
+
+  private int collectionSize(Object value) {
+    if (value == null) {
+      return 0;
+    }
+    if (value instanceof Collection<?> collection) {
+      return collection.size();
+    }
+    if (value instanceof Map<?, ?> map) {
+      return map.size();
+    }
+    throw new IllegalStateException(
+        "Plural attribute value is not a Collection or Map: " + value.getClass().getName());
   }
 }
