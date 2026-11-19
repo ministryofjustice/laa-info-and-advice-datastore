@@ -66,6 +66,8 @@ public abstract class AbstractProviderPactTests {
   @MockitoBean protected SystemDrivenEventService systemDrivenEventService;
   @MockitoBean protected UserDrivenEventService userDrivenEventService;
   @MockitoBean protected ApplicationRepository applicationRepository;
+  @MockitoBean protected EntitySnapshotRepository entitySnapshotRepository;
+  @MockitoBean protected EntityChangeRepository entityChangeRepository;
   @MockitoBean protected EventRepository eventRepository;
   @MockitoBean protected LockProvider lockProvider;
 
