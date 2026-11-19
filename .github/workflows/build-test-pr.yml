@@ -9,6 +9,21 @@ permissions:
   packages: write
 
 jobs:
+  snapshot-chart-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: azure/setup-helm@v4
+        with:
+          version: v4.3.0
+      - name: Install chart-test YAML parser
+        run: python3 -m pip install -r deploy/tests/requirements.txt
+      - name: Test backup rendering and deployment gates without cluster access
+        run: make test-backup-chart
+
   snapshot-script-tests:
     runs-on: ubuntu-latest
     steps:

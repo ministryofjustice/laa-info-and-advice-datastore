@@ -6,6 +6,10 @@
 # and we are ready for live users, staging replicaCount should match production
 replicaCount: 2
 
+backups:
+  environment: staging
+  serviceAccountName: ia-datastore-staging-backups
+
 env:
   SPRING_PROFILES_ACTIVE: staging
   SENTRY_ENABLED: "true"
