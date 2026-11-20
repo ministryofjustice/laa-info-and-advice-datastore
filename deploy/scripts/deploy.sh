@@ -17,6 +17,7 @@ deploy_branch() {
                 --values ./deploy/laa-info-and-advice-datastore/values/"$ENVIRONMENT".yaml \
                 --set image.repository="$REGISTRY/$REPOSITORY" \
                 --set metabase.enabled=false \
+                --set backups.enabled=false \
                 --set image.tag="$IMAGE_TAG" \
                 --set ingress.annotations."external-dns\.alpha\.kubernetes\.io/set-identifier"="$IDENTIFIER" \
                 --set ingress.hosts[0].host="$RELEASE_HOST" \

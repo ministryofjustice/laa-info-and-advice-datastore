@@ -47,7 +47,7 @@ availability, encryption and persisted tags before pruning. Any failure stops
 the run without falling back to prune-only. `false` is allowed only in UAT or
 staging: it performs no creation or automated-source discovery, and **can delete
 the last expired managed point**. Production rejects prune-only.
-The future chart's jobs-enabled switch is separate: PR/branch releases must
+The chart's jobs-enabled switch is separate: PR/branch releases must
 deploy neither mode against shared UAT.
 
 The daily backup cycle is the UTC calendar day at each process start; replacement
@@ -63,7 +63,7 @@ the destination's copy time. Hourly points use AWS's original snapshot time,
 falling back to `SnapshotCreateTime` when the original field is absent.
 
 Each process makes one lifecycle attempt. Missing/late sources, snapshot
-activity and create/copy errors fail that run without pruning. MEM-1680 must set
+activity and create/copy errors fail that run without pruning. The chart sets
 Job-level `backoffLimit: 2` and pod-level `restartPolicy: Never` on both CronJobs,
 allowing an initial run and up to two replacement runs within the shared deadline.
 Kubernetes uses its own backoff, not a 30-second application delay, and retries
@@ -75,10 +75,10 @@ a 10-second connect timeout and
 a 30-second read timeout. These are per-request limits, not the former CLI's
 90-second whole-process limit.
 The availability waiter polls at 30-second intervals for at most 60 attempts.
-Elapsed time is owned by Kubernetes, not a Python alarm: both CronJobs must set
-`spec.jobTemplate.spec.activeDeadlineSeconds: 1900` in MEM-1680. This is a
+Elapsed time is owned by Kubernetes, not a Python alarm: both CronJobs set
+`spec.jobTemplate.spec.activeDeadlineSeconds: 1900`. This is a
 whole-Job budget, including retries, creation, waiting and cleanup, not a fresh
-1,900 seconds for each wait or pod. The CronJobs are not implemented yet; direct
+1,900 seconds for each wait or pod. All environments remain disabled by default; direct
 CLI execution has neither whole-run retries nor an overall elapsed-time limit.
 Waiter exhaustion fails the run; an expired Job deadline terminates its pods.
 **Neither means the AWS operation stopped.** Retry with the same run identity.
@@ -125,9 +125,11 @@ Pin the existing AWS Python image, with no custom build or startup installation:
 public.ecr.aws/lambda/python:3.13@sha256:eac388575a9ff5c116d32b9620675341f998def5fe224fc3752186986afa9a4a
 ```
 
-The image includes Python 3.13.18 and boto3/botocore 1.42.97. Override its Lambda
-entrypoint with `command: ["python3"]` and pass the mounted script path and CLI
-arguments. This runs an ordinary Kubernetes Job, not a Lambda function.
+The image includes Python 3.13.18 and boto3/botocore 1.42.97. The chart overrides
+its Lambda entrypoint with `python3 -c`: a small bootstrap derives the DB
+identifier from the address secret and execs the mounted script with its CLI
+arguments. There is no shell or startup installation. This is an ordinary
+Kubernetes Job, not a Lambda function.
 Set UID/GID 1000 explicitly; the image does not declare a non-root default user.
 Keep the dedicated IRSA role and make its projected token readable by that user.
 
@@ -137,7 +139,7 @@ With Docker running, execute the opt-in image smoke test from the repository roo
 make smoke-test-backups
 ```
 
-Both test targets run the pinned image as Linux/amd64 and UID/GID 1000, with all
+Both lifecycle test targets run the pinned image as Linux/amd64 and UID/GID 1000, with all
 capabilities dropped, no privilege escalation, default seccomp, no networking and a read-only
 root filesystem. Only `/tmp` is explicitly writable (`TMPDIR` and `HOME` point
 there); the script and tests are mounted read-only. CPU, memory and process
@@ -164,3 +166,72 @@ compatibility, image vulnerabilities and IRSA token readability, and schedule on
 the tested amd64 architecture (or separately smoke-test arm64). Live
 identity/network access and snapshot permissions are exercised during controlled
 enablement, not by these offline tests.
+
+## Helm wiring and controlled UAT enablement
+
+The chart defaults `backups.enabled` and `backups.creationEnabled` to **false**.
+Environment values reference the existing `ia-datastore-<env>-backups` service
+account; the chart does not create its role or change application identity.
+Only release `laa-info-and-advice-datastore` in its matching environment namespace
+can enable backups. Branch deployments explicitly force `backups.enabled=false`,
+including rollback retries. Kubernetes 1.27+ is required for `timeZone`.
+
+| Settings | Result |
+|---|---|
+| `backups.enabled=false` | No backup ConfigMap, CronJobs or NetworkPolicy |
+| Enabled, creation off (UAT/staging only) | Both schedules prune; **even the last expired managed point can be deleted** |
+| Enabled, creation on | Hourly creation and daily copying, verified before pruning |
+
+Jobs use UTC schedules (`0 * * * *` / `30 9 * * *`), `Forbid` concurrency, a
+five-minute missed-start window, one successful/three failed history entries and
+a one-day finished-Job TTL. Each Job has the shared deadline/retry policy above.
+Pods run on amd64 as UID/GID 1000, with a read-only root/script and a bounded
+memory-backed `/tmp`. Kubernetes API token automount is disabled; the separate
+IRSA web-identity projection must be verified during UAT enablement.
+Only `rds_instance_address` from `rds-postgresql-instance-output` is exposed,
+not database credentials. The Job-name label supplies the stable run identity.
+
+The backup NetworkPolicy denies ingress and permits DNS (TCP/UDP 53) and IPv4
+HTTPS (TCP 443). **This is not an AWS-host-specific allowlist.** Its selector
+does not match application pods. Existing chart policies exclude backup pods,
+including policies rendered by PR releases. NetworkPolicies are additive:
+inspect namespace policies, including older PR releases, before relying on
+effective isolation. The application receives no new HTTPS allowance.
+
+With Helm (validated with 4.3.0) and Python available:
+
+```sh
+python3 -m pip install -r deploy/tests/requirements.txt
+make test-backup-chart
+```
+
+This runs offline render/command/deployment-gate tests and lints all three
+disabled environment configurations. Enabled configurations render under the
+canonical release in tests; `helm lint` uses its own noncanonical release name.
+The deployment tests expose only a stub Helm on PATH, including rollback paths;
+they cannot fall back to the real deployment command. The bootstrap test stubs
+process handoff rather than connecting to RDS. These checks also run in PR CI.
+
+An enabled **render only**, with no cluster changes:
+
+```sh
+helm template laa-info-and-advice-datastore deploy/laa-info-and-advice-datastore \
+  --namespace laa-info-and-advice-datastore-uat \
+  --values deploy/laa-info-and-advice-datastore/values/uat.yaml \
+  --set backups.enabled=true --set backups.creationEnabled=true
+```
+
+Before any live UAT run, confirm IAM tag-policy changes are applied, image
+admission/pull and vulnerability checks pass, and the projected IRSA token is
+readable. Verify effective DNS/STS/RDS access and preserve the snapshots' KMS
+key. UAT's overnight DB stop/start prevents continuous hourly creation, so the
+initial rehearsal must be time-bounded during working hours.
+
+In controlled UAT, exercise hourly create and daily copy, verify tags/encryption/
+original timestamps, prove a replacement pod resumes the same point, and prune
+only explicitly disposable expired managed points. Check failed/deadline-exceeded
+Jobs and the absence of backup resources in PR releases. Live permissions,
+controller behaviour and alert delivery are not proven by offline tests.
+To stop new runs immediately, suspend both CronJobs; inspect and stop active
+Jobs separately if required. `backups.enabled=false` removes chart resources;
+`creationEnabled=false` is **not suspension** and continues pruning.
