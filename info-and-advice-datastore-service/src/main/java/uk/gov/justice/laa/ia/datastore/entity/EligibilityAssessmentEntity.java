@@ -3,6 +3,7 @@ package uk.gov.justice.laa.ia.datastore.entity;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,6 +17,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import uk.gov.justice.laa.ia.datastore.entity.listener.EntityChangeListener;
 
 /** Entity to represent an eligibility assessment's data and calculation result. */
 @Data
@@ -23,6 +25,7 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(EntityChangeListener.class)
 @Table(name = "eligibility_assessments")
 public class EligibilityAssessmentEntity {
 

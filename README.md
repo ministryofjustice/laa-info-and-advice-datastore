@@ -174,6 +174,36 @@ A scheduled job (`DraftDataDeletionTask`) deletes the data of `DRAFT` applicatio
 
 ## Audit logging
 
+### Entity lifecycle auditing
+
+`EntityChangeListener` records creates, database loads, updates and deletes for the six
+entities configured with the listener; `EventEntity` and `EntityChangeEntity` are excluded.
+A unit test scans JPA entities to enforce listener registration for all other entities.
+For updates it reads
+the stored entity through `EntitySnapshotRepository`, using
+an isolated Hibernate persistence context on the same transaction/connection so
+pending in-memory edits are not mistaken for the original state.
+
+Each event writes a row to `entity_changes` with an action (`CREATE`, `READ`, `UPDATE` or
+`DELETE`), entity type, entity ID, user ID, correlation ID, sorted `changed_fields` list
+and `created_at`. Request identity and correlation ID come from `UserContext`. Outside
+a request, the user ID is `SYSTEM` and the correlation ID comes from the logging context
+(or is null when none is set). Older rows have null identity fields.
+For creates, the list contains non-null singular persistent fields present at the
+post-persist callback, excluding the entity ID; primitive fields are included even when
+their value is false or zero. For reads and deletes the list is empty. No old/new
+values are stored, including JSON values, to avoid leaking personal data. Singular
+relationships are compared by ID; changes within related entities get their own rows.
+Collection-only changes and bulk SQL/JPQL operations do not trigger the listener.
+Generated timestamps/version increments applied after the update callback are not
+included. Mutation rows commit or roll back with the mutation. Reads use an independent
+writable transaction, so they also work in read-only transactions and remain recorded if
+the caller later rolls back. Reads reflect JPA entity loads, not cache hits, and exclude
+the internal snapshot reads used for comparisons. Existing domain audit logs and durable
+`events` remain unchanged.
+
+### Domain and security events
+
 Audit events are structured (ECS JSON) log lines written to the `audit` logger at `INFO`, collected from container stdout by EKS into OpenSearch. OpenSearch keeps 30 days; the SOC integration exports to a separate system with 3 months retention, so that is the longest audit history available from logs. The `events` table remains the durable record of case mutations.
 
 | Field | Meaning |
