@@ -110,10 +110,13 @@ public class ApplicationSpecification {
 
   /** Setups a specification for filtering ApplicationEntity. */
   public static Specification<ApplicationEntity> filterBy(
-      String officeId, ApplicationState status, EligibilityIndication eligibilityIndication) {
+      String officeId,
+      ApplicationState status,
+      EligibilityIndication eligibilityIndication,
+      Boolean includeMeansExemptApplications) {
     return hasOfficeId(officeId)
         .and(hasStatus(status))
-        .and(hasEligibilityIndication(eligibilityIndication));
+        .and(hasEligibilityIndication(eligibilityIndication, includeMeansExemptApplications));
   }
 
   /** Returns a specification that filters ApplicationEntity by status. */
@@ -136,7 +139,7 @@ public class ApplicationSpecification {
 
   /** Returns a specification that filters ApplicationEntity by eligibility indication. */
   public static Specification<ApplicationEntity> hasEligibilityIndication(
-      EligibilityIndication eligibilityIndication) {
+      EligibilityIndication eligibilityIndication, Boolean includeMeansExemptApplications) {
     if (eligibilityIndication == null) {
       return Specification.unrestricted();
     }
@@ -144,7 +147,11 @@ public class ApplicationSpecification {
     return (root, query, criteriaBuilder) -> {
       var eligibilityJoin = root.join("eligibilityAssessments", JoinType.LEFT);
       query.distinct(true);
-      return criteriaBuilder.equal(eligibilityJoin.get("indication"), indication);
+      var matchesIndication = criteriaBuilder.equal(eligibilityJoin.get("indication"), indication);
+      return Boolean.TRUE.equals(includeMeansExemptApplications)
+          ? criteriaBuilder.or(
+              matchesIndication, criteriaBuilder.isFalse(root.get("meansAssessmentRequired")))
+          : matchesIndication;
     };
   }
 }

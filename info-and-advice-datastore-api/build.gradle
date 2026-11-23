@@ -19,6 +19,10 @@ sourceSets.main.java.srcDirs += ['generated/src/main/java']
 
 checkstyleMain.exclude "*"
 
+tasks.named('openApiGenerate') {
+    inputs.files(fileTree("$rootDir/info-and-advice-datastore-api/open-api-applications") { include '**/*.yml' })
+}
+
 openApiGenerate {
     generatorName = "spring"
     inputSpec = "$rootDir/info-and-advice-datastore-api/open-api-specification.yml".toString()

@@ -54,6 +54,10 @@ jacocoTestCoverageVerification {
     }
 }
 
+tasks.named('openApiGenerate') {
+    inputs.files(fileTree("$rootDir/info-and-advice-datastore-api/open-api-applications") { include '**/*.yml' })
+}
+
 openApiGenerate {
     generatorName = "java"
     library = "resttemplate"
