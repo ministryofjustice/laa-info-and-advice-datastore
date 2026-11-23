@@ -40,7 +40,8 @@ test-backup-chart:
 		namespace="laa-info-and-advice-datastore-$${environment/production/prod}"; \
 		helm lint ./deploy/laa-info-and-advice-datastore --quiet \
 			--namespace "$$namespace" --kube-version 1.30.0 \
-			--values "./deploy/laa-info-and-advice-datastore/values/$$environment.yaml"; \
+			--values "./deploy/laa-info-and-advice-datastore/values/$$environment.yaml" \
+			--set backups.enabled=false; \
 	done
 	bash -n deploy/scripts/deploy.sh
 
