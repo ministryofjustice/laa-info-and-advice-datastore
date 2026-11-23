@@ -62,11 +62,7 @@ class BackupChartTests(unittest.TestCase):
         self.assertFalse(any(r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "backup"
                              for r in resources))
 
-    def test_backups_are_absent_in_other_environments_and_pr_releases(self):
-        for environment in ("staging", "production"):
-            resources = self.resources(environment=environment)
-            self.assertFalse(any(r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "backup"
-                                 for r in resources))
+    def test_backups_are_absent_when_disabled_and_in_pr_releases(self):
         for environment in ("uat", "staging", "production"):
             for release in (SERVICE, "feature-example"):
                 with self.subTest(environment=environment, release=release):
@@ -77,8 +73,8 @@ class BackupChartTests(unittest.TestCase):
                     ]
                     self.assertEqual(backups, [])
 
-    def test_uat_canonical_values_enable_both_creation_jobs(self):
-        jobs = [r for r in self.resources() if r["kind"] == "CronJob"]
+    def test_production_canonical_values_enable_both_creation_jobs(self):
+        jobs = [r for r in self.resources(environment="production") if r["kind"] == "CronJob"]
         self.assertEqual({job["metadata"]["labels"]["backup-tier"] for job in jobs}, {"hourly", "daily"})
         for job in jobs:
             args = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]["args"]
@@ -88,7 +84,7 @@ class BackupChartTests(unittest.TestCase):
         for settings, reason in (
             ({"release": "feature-example"}, "canonical release"),
             ({"namespace": f"{SERVICE}-staging"}, "namespace"),
-            ({"environment": "production"}, "prune-only"),
+            ({"environment": "production", "backups.creationEnabled": False}, "prune-only"),
             ({"backups.environment": "unknown"}, "environment"),
             ({"backups.serviceAccountName": ""}, "dedicated service account"),
             ({"backups.serviceAccountName": "cd-serviceaccount"}, "dedicated service account"),
@@ -109,25 +105,26 @@ class BackupChartTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("boolean", result.stderr)
 
-    def test_enabled_uat_renders_two_prune_only_jobs(self):
-        resources = self.resources(**{"backups.enabled": True, "backups.creationEnabled": False})
-        jobs = [resource for resource in resources if resource["kind"] == "CronJob"]
-        self.assertEqual(len(jobs), 2)
-        for job in jobs:
-            spec = job["spec"]
-            tier = job["metadata"]["labels"]["backup-tier"]
-            self.assertEqual(spec["schedule"], {"hourly": "0 * * * *", "daily": "30 9 * * *"}[tier])
-            self.assertEqual(spec["timeZone"], "Etc/UTC")
-            self.assertEqual(spec["concurrencyPolicy"], "Forbid")
-            job_spec = spec["jobTemplate"]["spec"]
-            self.assertEqual(job_spec["activeDeadlineSeconds"], 1900)
-            self.assertEqual(job_spec["backoffLimit"], 2)
-            pod = job_spec["template"]["spec"]
-            self.assertEqual(pod["restartPolicy"], "Never")
-            self.assertEqual(pod["serviceAccountName"], "ia-datastore-uat-backups")
-            args = pod["containers"][0]["args"]
-            self.assertEqual(args[args.index("--tier") + 1], tier)
-            self.assertEqual(args[args.index("--creation-enabled") + 1], "false")
+    def test_uat_and_staging_values_render_two_prune_only_jobs(self):
+        for environment in ("uat", "staging"):
+            with self.subTest(environment=environment):
+                jobs = [r for r in self.resources(environment=environment) if r["kind"] == "CronJob"]
+                self.assertEqual({job["metadata"]["labels"]["backup-tier"] for job in jobs}, {"hourly", "daily"})
+                for job in jobs:
+                    spec = job["spec"]
+                    tier = job["metadata"]["labels"]["backup-tier"]
+                    self.assertEqual(spec["schedule"], {"hourly": "0 * * * *", "daily": "30 9 * * *"}[tier])
+                    self.assertEqual(spec["timeZone"], "Etc/UTC")
+                    self.assertEqual(spec["concurrencyPolicy"], "Forbid")
+                    job_spec = spec["jobTemplate"]["spec"]
+                    self.assertEqual(job_spec["activeDeadlineSeconds"], 1900)
+                    self.assertEqual(job_spec["backoffLimit"], 2)
+                    pod = job_spec["template"]["spec"]
+                    self.assertEqual(pod["restartPolicy"], "Never")
+                    self.assertEqual(pod["serviceAccountName"], f"ia-datastore-{environment}-backups")
+                    args = pod["containers"][0]["args"]
+                    self.assertEqual(args[args.index("--tier") + 1], tier)
+                    self.assertEqual(args[args.index("--creation-enabled") + 1], "false")
 
     def test_creation_enabled_preserves_application_and_uses_environment_identity(self):
         for environment, env in (("uat", "uat"), ("staging", "staging"), ("production", "prod")):

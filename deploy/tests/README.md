@@ -170,10 +170,11 @@ enablement, not by these offline tests.
 ## Helm wiring and controlled UAT enablement
 
 The chart defaults `backups.enabled` and `backups.creationEnabled` to **false**.
-UAT values temporarily enable both for the daytime rehearsal; staging and
-production remain disabled. After confirming an hourly snapshot, manually
-suspend both UAT CronJobs and follow up with a change disabling both UAT values.
-Suspension is not automatic: do it before the database stops at 22:00 UTC.
+UAT and staging values enable prune-only jobs; production values enable both
+jobs and creation. Prune-only can delete the last expired managed snapshot.
+Applying production values deploys the hourly and daily schedules with creation
+and pruning enabled. Monitoring, the UAT daily-copy and restore rehearsals, and
+live production permissions must be verified before production rollout.
 Environment values reference the existing `ia-datastore-<env>-backups` service
 account; the chart does not create its role or change application identity.
 Only release `laa-info-and-advice-datastore` in its matching environment namespace
@@ -248,8 +249,6 @@ kubectl -n laa-info-and-advice-datastore-uat patch cronjob \
 ```
 
 Check active Jobs and avoid deleting them without assessing ongoing AWS
-operations. A subsequent deployment while UAT values remain enabled may
-unsuspend the CronJobs; coordinate the follow-up disablement. Retain the
-snapshots and their KMS key. Alerting is not yet in place and older UAT
-namespace-wide policies also allow additional ingress/egress to backup pods.
-An hourly rehearsal does not prove daily copying or restore.
+operations. Retain snapshots and their KMS key. Alerting is not yet in place
+and older UAT namespace-wide policies also allow additional ingress/egress to
+backup pods. An hourly rehearsal does not prove daily copying or restore.

@@ -7,6 +7,8 @@
 replicaCount: 2
 
 backups:
+  enabled: true
+  creationEnabled: false
   environment: staging
   serviceAccountName: ia-datastore-staging-backups
 

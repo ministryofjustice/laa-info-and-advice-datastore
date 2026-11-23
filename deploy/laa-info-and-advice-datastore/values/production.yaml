@@ -7,6 +7,8 @@
 replicaCount: 2
 
 backups:
+  enabled: true
+  creationEnabled: true
   environment: prod
   serviceAccountName: ia-datastore-prod-backups
 
