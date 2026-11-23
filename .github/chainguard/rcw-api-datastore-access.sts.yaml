@@ -1,0 +1,8 @@
+issuer: https://token.actions.githubusercontent.com
+subject_pattern: 'repo:ministryofjustice/laa-record-controlled-work-api:.*'
+claim_pattern:
+  job_workflow_ref: 'ministryofjustice/laa-record-controlled-work-api/\.github/workflows/(build-image|build-test|pact-publish|sca|cicd)\.yml@.*'
+
+permissions:
+  contents: read
+  packages: read

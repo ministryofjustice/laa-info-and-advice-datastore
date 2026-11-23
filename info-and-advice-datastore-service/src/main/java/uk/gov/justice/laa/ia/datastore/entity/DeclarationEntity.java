@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,6 +17,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import uk.gov.justice.laa.ia.datastore.entity.listener.EntityChangeListener;
 import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 
 /** Entity to represent a client declaration. */
@@ -24,6 +26,7 @@ import uk.gov.justice.laa.ia.datastore.model.ClientDeclarationStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(EntityChangeListener.class)
 @Table(name = "Declaration")
 public class DeclarationEntity {
   @Id

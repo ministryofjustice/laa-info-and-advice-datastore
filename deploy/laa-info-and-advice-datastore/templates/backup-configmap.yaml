@@ -1,0 +1,12 @@
+{{- if include "your-repo-name.backupsEnabled" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "your-repo-name.fullname" . }}-rds-backup
+  labels:
+    {{- include "your-repo-name.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup
+data:
+  rds-backup.py: |
+{{ .Files.Get "files/rds-backup.py" | indent 4 }}
+{{- end }}

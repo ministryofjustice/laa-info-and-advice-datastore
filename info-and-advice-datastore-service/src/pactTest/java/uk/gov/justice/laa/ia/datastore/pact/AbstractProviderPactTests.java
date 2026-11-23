@@ -23,6 +23,8 @@ import uk.gov.justice.laa.ia.datastore.config.interceptor.UserContextInterceptor
 import uk.gov.justice.laa.ia.datastore.model.ApplicationResponse;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
 import uk.gov.justice.laa.ia.datastore.repository.ApplicationRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EntityChangeRepository;
+import uk.gov.justice.laa.ia.datastore.repository.EntitySnapshotRepository;
 import uk.gov.justice.laa.ia.datastore.repository.EventRepository;
 import uk.gov.justice.laa.ia.datastore.service.ApplicationService;
 import uk.gov.justice.laa.ia.datastore.service.SystemDrivenEventService;
@@ -66,6 +68,8 @@ public abstract class AbstractProviderPactTests {
   @MockitoBean protected SystemDrivenEventService systemDrivenEventService;
   @MockitoBean protected UserDrivenEventService userDrivenEventService;
   @MockitoBean protected ApplicationRepository applicationRepository;
+  @MockitoBean protected EntitySnapshotRepository entitySnapshotRepository;
+  @MockitoBean protected EntityChangeRepository entityChangeRepository;
   @MockitoBean protected EventRepository eventRepository;
   @MockitoBean protected LockProvider lockProvider;
 

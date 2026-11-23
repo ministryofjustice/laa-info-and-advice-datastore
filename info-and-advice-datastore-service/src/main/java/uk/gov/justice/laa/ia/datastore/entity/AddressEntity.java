@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,6 +16,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import uk.gov.justice.laa.ia.datastore.entity.listener.EntityChangeListener;
 
 /** Entity to represent an individuals address. */
 @Data
@@ -22,6 +24,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(EntityChangeListener.class)
 @Table(name = "Addresses")
 public class AddressEntity {
 

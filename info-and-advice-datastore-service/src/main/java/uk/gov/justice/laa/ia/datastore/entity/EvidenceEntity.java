@@ -3,6 +3,7 @@ package uk.gov.justice.laa.ia.datastore.entity;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,6 +18,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
+import uk.gov.justice.laa.ia.datastore.entity.listener.EntityChangeListener;
 
 /** Entity to represent evidence associated with an application. */
 @Data
@@ -24,6 +26,7 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(EntityChangeListener.class)
 @Table(name = "evidence")
 public class EvidenceEntity {
 
