@@ -245,8 +245,11 @@ Only IDs go in audit entries - never client PII. Action names are consumed downs
 
 Install bruno.
 
-There is a single collection under `bruno-collections/info-and-advice-datastore-api-tests`.
+The local API test collection is under `bruno-collections/info-and-advice-datastore-api-tests`.
 Requests are grouped by the response they exercise, under `Applications/`:
+
+For a separate read-only staging authentication check using Entra OBO, see
+[`bruno-collections/staging-datastore-obo`](bruno-collections/staging-datastore-obo/README.md).
 
 | Folder | Purpose |
 |---|---|

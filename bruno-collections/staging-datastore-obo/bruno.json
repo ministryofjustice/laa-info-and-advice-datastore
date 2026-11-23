@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "name": "Datastore staging OBO",
+  "type": "collection",
+  "ignore": ["node_modules", ".git"]
+}

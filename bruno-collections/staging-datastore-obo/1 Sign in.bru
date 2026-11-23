@@ -1,0 +1,34 @@
+meta {
+  name: 1 Sign in
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{rcwUrl}}/actuator/health
+  body: none
+  auth: oauth2
+}
+
+auth:oauth2 {
+  grant_type: authorization_code
+  callback_url: https://oauth.usebruno.com/callback
+  authorization_url: {{authorizeUrl}}
+  access_token_url: {{tokenUrl}}
+  client_id: {{uiClientId}}
+  client_secret: {{uiClientSecret}}
+  scope: api://rcw-api-staging/Applications.Read openid profile
+  pkce: true
+  credentials_placement: body
+  credentials_id: staging-rcw
+  token_placement: header
+  token_header_prefix: Bearer
+  auto_fetch_token: false
+  auto_refresh_token: false
+}
+
+docs {
+  Open Auth and click Get Access Token. Sign in with an authorised staging provider.
+  The token is intended for RCW API and is used as the assertion in the next request.
+  Sending this request is not required.
+}

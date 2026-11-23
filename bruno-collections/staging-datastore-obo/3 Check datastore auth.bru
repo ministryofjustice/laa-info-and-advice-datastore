@@ -1,0 +1,34 @@
+meta {
+  name: 3 Check datastore auth
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v0/applications/ffffffff-ffff-ffff-ffff-ffffffffffff
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{datastoreToken}}
+  X-Authorization: Bearer {{rcwUserToken}}
+  X-Service-Name: bruno-test
+}
+
+script:pre-request {
+  if (!bru.getVar("datastoreToken") || !bru.getVar("rcwUserToken")) {
+    throw new Error("Run 2 Exchange token first.");
+  }
+}
+
+tests {
+  test("authenticated request for a nonexistent application returns 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+}
+
+docs {
+  Read-only authentication check using a deliberately nonexistent application ID.
+  No application is created or modified.
+}

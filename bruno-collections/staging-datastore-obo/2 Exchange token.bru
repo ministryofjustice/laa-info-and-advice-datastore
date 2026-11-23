@@ -1,0 +1,43 @@
+meta {
+  name: 2 Exchange token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{tokenUrl}}
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  grant_type: urn:ietf:params:oauth:grant-type:jwt-bearer
+  client_id: {{apiClientId}}
+  client_secret: {{apiClientSecret}}
+  assertion: {{rcwUserToken}}
+  requested_token_use: on_behalf_of
+  scope: {{datastoreScope}}
+}
+
+script:pre-request {
+  bru.deleteVar("datastoreToken");
+  bru.deleteVar("rcwUserToken");
+  const token = bru.getOauth2CredentialVar("$oauth2.staging-rcw.access_token");
+  if (!token) {
+    throw new Error("Sign in using the Auth tab of 1 Sign in first.");
+  }
+  bru.setVar("rcwUserToken", token);
+}
+
+script:post-response {
+  if (res.getStatus() === 200 && res.getBody().access_token) {
+    bru.setVar("datastoreToken", res.getBody().access_token);
+  }
+}
+
+tests {
+  test("Entra returns an access token", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().access_token).to.be.a("string").and.not.empty;
+  });
+}
