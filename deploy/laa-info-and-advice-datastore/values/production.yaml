@@ -7,7 +7,8 @@
 replicaCount: 2
 
 backups:
-  enabled: true
+  # Creates or copies snapshots, then can delete expired managed snapshots.
+  backupAndPruneSchedulesEnabled: true
   creationEnabled: true
   environment: prod
   serviceAccountName: ia-datastore-prod-backups

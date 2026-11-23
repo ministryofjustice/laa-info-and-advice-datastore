@@ -48,7 +48,7 @@ class BackupChartTests(unittest.TestCase):
 
     def test_chart_defaults_do_not_enable_backups(self):
         values = yaml.safe_load((CHART / "values/uat.yaml").read_text())
-        values["backups"].pop("enabled")
+        values["backups"].pop("backupAndPruneSchedulesEnabled")
         values["backups"].pop("creationEnabled")
         with tempfile.TemporaryDirectory() as work:
             path = Path(work) / "values.yaml"
@@ -66,7 +66,7 @@ class BackupChartTests(unittest.TestCase):
         for environment in ("uat", "staging", "production"):
             for release in (SERVICE, "feature-example"):
                 with self.subTest(environment=environment, release=release):
-                    resources = self.resources(environment=environment, release=release, **{"backups.enabled": False})
+                    resources = self.resources(environment=environment, release=release, **{"backups.backupAndPruneSchedulesEnabled": False})
                     backups = [
                         resource for resource in resources
                         if resource["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "backup"
@@ -90,20 +90,27 @@ class BackupChartTests(unittest.TestCase):
             ({"backups.serviceAccountName": "cd-serviceaccount"}, "dedicated service account"),
         ):
             with self.subTest(settings=settings):
-                result = render(**{"backups.enabled": True, **settings})
+                result = render(**{"backups.backupAndPruneSchedulesEnabled": True, **settings})
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn(reason, result.stderr)
 
     def test_enabled_backups_require_stable_cronjob_timezone_support(self):
-        result = render(kube_version="1.26.0", **{"backups.enabled": True})
+        result = render(kube_version="1.26.0", **{"backups.backupAndPruneSchedulesEnabled": True})
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Kubernetes 1.27", result.stderr)
-        self.assertEqual(render(kube_version="1.26.0", **{"backups.enabled": False}).returncode, 0)
+        self.assertEqual(render(kube_version="1.26.0", **{"backups.backupAndPruneSchedulesEnabled": False}).returncode, 0)
 
     def test_string_false_cannot_accidentally_enable_backup_jobs(self):
-        result = render(extra_args=["--set-string", "backups.enabled=false"])
+        result = render(extra_args=["--set-string", "backups.backupAndPruneSchedulesEnabled=false"])
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("boolean", result.stderr)
+
+    def test_legacy_enabled_value_is_rejected(self):
+        for value in ("true", "false"):
+            with self.subTest(value=value):
+                result = render(extra_args=["--set", f"backups.enabled={value}"])
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("backups.enabled was renamed", result.stderr)
 
     def test_uat_and_staging_values_render_two_prune_only_jobs(self):
         for environment in ("uat", "staging"):
@@ -129,9 +136,9 @@ class BackupChartTests(unittest.TestCase):
     def test_creation_enabled_preserves_application_and_uses_environment_identity(self):
         for environment, env in (("uat", "uat"), ("staging", "staging"), ("production", "prod")):
             with self.subTest(environment=environment):
-                baseline = self.resources(environment=environment, **{"backups.enabled": False})
+                baseline = self.resources(environment=environment, **{"backups.backupAndPruneSchedulesEnabled": False})
                 enabled = self.resources(environment=environment, **{
-                    "backups.enabled": True, "backups.creationEnabled": True,
+                    "backups.backupAndPruneSchedulesEnabled": True, "backups.creationEnabled": True,
                 })
                 self.assertEqual(
                     [r for r in baseline if r["kind"] in ("Deployment", "Service", "ServiceAccount")],
@@ -147,7 +154,7 @@ class BackupChartTests(unittest.TestCase):
                     self.assertEqual(args[args.index("--creation-enabled") + 1], "true")
 
     def test_mounted_script_and_command_pass_only_required_source_identification(self):
-        resources = self.resources(**{"backups.enabled": True, "backups.creationEnabled": False})
+        resources = self.resources(**{"backups.backupAndPruneSchedulesEnabled": True, "backups.creationEnabled": False})
         config = next(r for r in resources if r["kind"] == "ConfigMap")
         self.assertEqual(config["data"]["rds-backup.py"], (CHART / "files/rds-backup.py").read_text())
         job = next(r for r in resources if r["kind"] == "CronJob")
@@ -187,7 +194,7 @@ class BackupChartTests(unittest.TestCase):
         self.assertTrue(next(v for v in container["volumeMounts"] if v["name"] == "script")["readOnly"])
 
     def test_backup_pods_are_restricted_and_not_selected_as_application_pods(self):
-        resources = self.resources(**{"backups.enabled": True})
+        resources = self.resources(**{"backups.backupAndPruneSchedulesEnabled": True})
         deployment = next(r for r in resources if r["kind"] == "Deployment")
         for job in (r for r in resources if r["kind"] == "CronJob"):
             template = job["spec"]["jobTemplate"]["spec"]["template"]
@@ -213,7 +220,7 @@ class BackupChartTests(unittest.TestCase):
             self.assertEqual(next(v for v in pod["volumes"] if v["name"] == "tmp")["emptyDir"]["sizeLimit"], "64Mi")
 
     def test_backup_network_rules_do_not_widen_application_or_pr_pod_egress(self):
-        resources = self.resources(**{"backups.enabled": True})
+        resources = self.resources(**{"backups.backupAndPruneSchedulesEnabled": True})
         job = next(r for r in resources if r["kind"] == "CronJob")
         backup_labels = job["spec"]["jobTemplate"]["spec"]["template"]["metadata"]["labels"]
         application_labels = [
@@ -229,7 +236,7 @@ class BackupChartTests(unittest.TestCase):
         self.assertEqual(ports, {(53, "UDP"), (53, "TCP"), (443, "TCP")})
         for labels in application_labels:
             self.assertFalse(selects(policy["podSelector"], labels))
-        for release_resources in (resources, self.resources(release="feature-example", **{"backups.enabled": False})):
+        for release_resources in (resources, self.resources(release="feature-example", **{"backups.backupAndPruneSchedulesEnabled": False})):
             for existing in (r for r in release_resources if r["kind"] == "NetworkPolicy"
                              and r["metadata"]["labels"].get("app.kubernetes.io/component") != "backup"):
                 selector = existing["spec"]["podSelector"]
@@ -285,7 +292,7 @@ if os.environ.get("FAIL_FIRST_UPGRADE") == "1" and sys.argv[1] == "upgrade":
                 upgrades = [call for call in calls if call[0] == "upgrade"]
                 self.assertEqual(len(upgrades), 2 if fail_first else 1)
                 for args in upgrades:
-                    self.assertIn("backups.enabled=false", args)
+                    self.assertIn("backups.backupAndPruneSchedulesEnabled=false", args)
 
     def test_main_deploy_leaves_backup_enablement_to_canonical_values(self):
         calls = self.deploy("main")

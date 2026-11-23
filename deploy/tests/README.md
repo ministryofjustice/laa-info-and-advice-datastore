@@ -169,7 +169,14 @@ enablement, not by these offline tests.
 
 ## Helm wiring and controlled UAT enablement
 
-The chart defaults `backups.enabled` and `backups.creationEnabled` to **false**.
+The chart defaults `backups.backupAndPruneSchedulesEnabled` and `backups.creationEnabled` to **false**.
+`backupAndPruneSchedulesEnabled` controls the CronJobs, not pruning independently. Enabled
+jobs **can delete expired managed snapshots**, including when creation is disabled:
+hourly snapshots expire after 24 hours and daily snapshots after seven days,
+calculated from their AWS recovery time. Only eligible, owned snapshots are
+deleted; an `incident-hold` tag prevents deletion. The former `backups.enabled`
+value is rejected; remove it when reusing older Helm values and set
+`backups.backupAndPruneSchedulesEnabled` explicitly.
 UAT and staging values enable prune-only jobs; production values enable both
 jobs and creation. Prune-only can delete the last expired managed snapshot.
 Applying production values deploys the hourly and daily schedules with creation
@@ -178,14 +185,14 @@ live production permissions must be verified before production rollout.
 Environment values reference the existing `ia-datastore-<env>-backups` service
 account; the chart does not create its role or change application identity.
 Only release `laa-info-and-advice-datastore` in its matching environment namespace
-can enable backups. Branch deployments explicitly force `backups.enabled=false`,
+can enable backups. Branch deployments explicitly force `backups.backupAndPruneSchedulesEnabled=false`,
 including rollback retries. Kubernetes 1.27+ is required for `timeZone`.
 
 | Settings | Result |
 |---|---|
-| `backups.enabled=false` | No backup ConfigMap, CronJobs or NetworkPolicy |
-| Enabled, creation off (UAT/staging only) | Both schedules prune; **even the last expired managed point can be deleted** |
-| Enabled, creation on | Hourly creation and daily copying, verified before pruning |
+| `backups.backupAndPruneSchedulesEnabled=false` | No backup ConfigMap, CronJobs or NetworkPolicy |
+| Enabled, creation off (UAT/staging only) | Both schedules delete expired managed snapshots; **even the last can be deleted** |
+| Enabled, creation on | Hourly creation and daily copying, verified before deleting expired managed snapshots |
 
 Jobs use UTC schedules (`0 * * * *` / `30 9 * * *`), `Forbid` concurrency, a
 five-minute missed-start window, one successful/three failed history entries and
@@ -223,7 +230,7 @@ An enabled **render only**, with no cluster changes:
 helm template laa-info-and-advice-datastore deploy/laa-info-and-advice-datastore \
   --namespace laa-info-and-advice-datastore-uat \
   --values deploy/laa-info-and-advice-datastore/values/uat.yaml \
-  --set backups.enabled=true --set backups.creationEnabled=true
+  --set backups.backupAndPruneSchedulesEnabled=true --set backups.creationEnabled=true
 ```
 
 Before any live UAT run, confirm IAM tag-policy changes are applied, image
@@ -238,7 +245,7 @@ only explicitly disposable expired managed points. Check failed/deadline-exceede
 Jobs and the absence of backup resources in PR releases. Live permissions,
 controller behaviour and alert delivery are not proven by offline tests.
 To stop new runs immediately, suspend both CronJobs; inspect and stop active
-Jobs separately if required. `backups.enabled=false` removes chart resources;
+Jobs separately if required. `backups.backupAndPruneSchedulesEnabled=false` removes chart resources;
 `creationEnabled=false` is **not suspension** and continues pruning.
 
 ```sh
