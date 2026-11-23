@@ -1,4 +1,4 @@
-.PHONY: docker-up docker-up-entra docker-down test-backups smoke-test-backups
+.PHONY: docker-up docker-up-entra docker-down test-backups smoke-test-backups test-backup-chart
 
 # Fail each recipe line on any error, including within pipelines.
 SHELL := /bin/bash
@@ -34,7 +34,18 @@ test-backups:
 smoke-test-backups:
 	$(BACKUP_TEST_CONTAINER) /workspace/deploy/tests/smoke_rds_backup.py
 
-full-test: test-backups
+test-backup-chart:
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/tests -p 'test_backup_chart.py' -v
+	@for environment in uat staging production; do \
+		namespace="laa-info-and-advice-datastore-$${environment/production/prod}"; \
+		helm lint ./deploy/laa-info-and-advice-datastore --quiet \
+			--namespace "$$namespace" --kube-version 1.30.0 \
+			--values "./deploy/laa-info-and-advice-datastore/values/$$environment.yaml" \
+			--set backups.enabled=false; \
+	done
+	bash -n deploy/scripts/deploy.sh
+
+full-test: test-backups test-backup-chart
 	./gradlew checkStyleAll
 	./gradlew clean build integrationTest
 	docker compose down
