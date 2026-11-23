@@ -170,6 +170,10 @@ enablement, not by these offline tests.
 ## Helm wiring and controlled UAT enablement
 
 The chart defaults `backups.enabled` and `backups.creationEnabled` to **false**.
+UAT values temporarily enable both for the daytime rehearsal; staging and
+production remain disabled. After confirming an hourly snapshot, manually
+suspend both UAT CronJobs and follow up with a change disabling both UAT values.
+Suspension is not automatic: do it before the database stops at 22:00 UTC.
 Environment values reference the existing `ia-datastore-<env>-backups` service
 account; the chart does not create its role or change application identity.
 Only release `laa-info-and-advice-datastore` in its matching environment namespace
@@ -206,7 +210,7 @@ make test-backup-chart
 ```
 
 This runs offline render/command/deployment-gate tests and lints all three
-disabled environment configurations. Enabled configurations render under the
+environments with backups explicitly disabled. Enabled configurations render under the
 canonical release in tests; `helm lint` uses its own noncanonical release name.
 The deployment tests expose only a stub Helm on PATH, including rollback paths;
 they cannot fall back to the real deployment command. The bootstrap test stubs
@@ -235,3 +239,17 @@ controller behaviour and alert delivery are not proven by offline tests.
 To stop new runs immediately, suspend both CronJobs; inspect and stop active
 Jobs separately if required. `backups.enabled=false` removes chart resources;
 `creationEnabled=false` is **not suspension** and continues pruning.
+
+```sh
+kubectl -n laa-info-and-advice-datastore-uat patch cronjob \
+  laa-info-and-advice-datastore-backup-hourly --type merge -p '{"spec":{"suspend":true}}'
+kubectl -n laa-info-and-advice-datastore-uat patch cronjob \
+  laa-info-and-advice-datastore-backup-daily --type merge -p '{"spec":{"suspend":true}}'
+```
+
+Check active Jobs and avoid deleting them without assessing ongoing AWS
+operations. A subsequent deployment while UAT values remain enabled may
+unsuspend the CronJobs; coordinate the follow-up disablement. Retain the
+snapshots and their KMS key. Alerting is not yet in place and older UAT
+namespace-wide policies also allow additional ingress/egress to backup pods.
+An hourly rehearsal does not prove daily copying or restore.

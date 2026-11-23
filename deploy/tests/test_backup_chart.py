@@ -1,13 +1,11 @@
 import json
 import os
 from pathlib import Path
-import runpy
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
 
 import yaml
 
@@ -48,16 +46,43 @@ class BackupChartTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         return [resource for resource in yaml.safe_load_all(result.stdout) if resource]
 
-    def test_backups_are_absent_by_default_in_every_environment_and_pr_release(self):
+    def test_chart_defaults_do_not_enable_backups(self):
+        values = yaml.safe_load((CHART / "values/uat.yaml").read_text())
+        values["backups"].pop("enabled")
+        values["backups"].pop("creationEnabled")
+        with tempfile.TemporaryDirectory() as work:
+            path = Path(work) / "values.yaml"
+            path.write_text(yaml.safe_dump(values))
+            result = subprocess.run(
+                ["helm", "template", SERVICE, str(CHART), "--namespace", f"{SERVICE}-uat", "--values", str(path)],
+                capture_output=True, text=True, timeout=30,
+            )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        resources = [resource for resource in yaml.safe_load_all(result.stdout) if resource]
+        self.assertFalse(any(r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "backup"
+                             for r in resources))
+
+    def test_backups_are_absent_in_other_environments_and_pr_releases(self):
+        for environment in ("staging", "production"):
+            resources = self.resources(environment=environment)
+            self.assertFalse(any(r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "backup"
+                                 for r in resources))
         for environment in ("uat", "staging", "production"):
             for release in (SERVICE, "feature-example"):
                 with self.subTest(environment=environment, release=release):
-                    resources = self.resources(environment=environment, release=release)
+                    resources = self.resources(environment=environment, release=release, **{"backups.enabled": False})
                     backups = [
                         resource for resource in resources
                         if resource["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "backup"
                     ]
                     self.assertEqual(backups, [])
+
+    def test_uat_canonical_values_enable_both_creation_jobs(self):
+        jobs = [r for r in self.resources() if r["kind"] == "CronJob"]
+        self.assertEqual({job["metadata"]["labels"]["backup-tier"] for job in jobs}, {"hourly", "daily"})
+        for job in jobs:
+            args = job["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]["args"]
+            self.assertEqual(args[args.index("--creation-enabled") + 1], "true")
 
     def test_unsafe_enablement_is_rejected(self):
         for settings, reason in (
@@ -77,7 +102,7 @@ class BackupChartTests(unittest.TestCase):
         result = render(kube_version="1.26.0", **{"backups.enabled": True})
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Kubernetes 1.27", result.stderr)
-        self.assertEqual(render(kube_version="1.26.0").returncode, 0)
+        self.assertEqual(render(kube_version="1.26.0", **{"backups.enabled": False}).returncode, 0)
 
     def test_string_false_cannot_accidentally_enable_backup_jobs(self):
         result = render(extra_args=["--set-string", "backups.enabled=false"])
@@ -85,7 +110,7 @@ class BackupChartTests(unittest.TestCase):
         self.assertIn("boolean", result.stderr)
 
     def test_enabled_uat_renders_two_prune_only_jobs(self):
-        resources = self.resources(**{"backups.enabled": True})
+        resources = self.resources(**{"backups.enabled": True, "backups.creationEnabled": False})
         jobs = [resource for resource in resources if resource["kind"] == "CronJob"]
         self.assertEqual(len(jobs), 2)
         for job in jobs:
@@ -107,7 +132,7 @@ class BackupChartTests(unittest.TestCase):
     def test_creation_enabled_preserves_application_and_uses_environment_identity(self):
         for environment, env in (("uat", "uat"), ("staging", "staging"), ("production", "prod")):
             with self.subTest(environment=environment):
-                baseline = self.resources(environment=environment)
+                baseline = self.resources(environment=environment, **{"backups.enabled": False})
                 enabled = self.resources(environment=environment, **{
                     "backups.enabled": True, "backups.creationEnabled": True,
                 })
@@ -125,7 +150,7 @@ class BackupChartTests(unittest.TestCase):
                     self.assertEqual(args[args.index("--creation-enabled") + 1], "true")
 
     def test_mounted_script_and_command_pass_only_required_source_identification(self):
-        resources = self.resources(**{"backups.enabled": True})
+        resources = self.resources(**{"backups.enabled": True, "backups.creationEnabled": False})
         config = next(r for r in resources if r["kind"] == "ConfigMap")
         self.assertEqual(config["data"]["rds-backup.py"], (CHART / "files/rds-backup.py").read_text())
         job = next(r for r in resources if r["kind"] == "CronJob")
@@ -142,19 +167,24 @@ class BackupChartTests(unittest.TestCase):
         )
         self.assertEqual(container["args"][-2:], ["--run-id", "$(BACKUP_RUN_ID)"])
         self.assertEqual(container["command"][:2], ["python3", "-c"])
-        with tempfile.TemporaryDirectory() as work:
-            bootstrap = Path(work) / "bootstrap.py"
-            bootstrap.write_text(container["command"][2])
-            with (
-                patch.dict(os.environ, {"RDS_ADDRESS": f"{SERVICE}-uat.example.eu-west-2.rds.amazonaws.com"}),
-                patch.object(sys, "argv", container["args"].copy()),
-                patch("os.execv") as launch,
-            ):
-                runpy.run_path(str(bootstrap))
-        executable, argv = launch.call_args.args
+        capture = (
+            "import json, os\n"
+            "os.execv = lambda executable, argv: print(json.dumps([executable, argv]))\n"
+            + container["command"][2]
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", capture, *container["args"]],
+            env={**os.environ, "RDS_ADDRESS": f"{SERVICE}-uat.example.eu-west-2.rds.amazonaws.com"},
+            capture_output=True, text=True, timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        executable, argv = json.loads(result.stdout)
         self.assertEqual(executable, sys.executable)
         self.assertEqual(argv[:4], [sys.executable, "/backups/rds-backup.py", "--db-instance-identifier", f"{SERVICE}-uat"])
-        self.assertEqual(argv[4:], container["args"][1:])
+        self.assertEqual(argv[4:], [
+            "--region", "eu-west-2", "--env", "uat", "--tier", "hourly",
+            "--creation-enabled", "false", "--run-id", "$(BACKUP_RUN_ID)",
+        ])
         script_volume = next(v for v in pod["volumes"] if v["name"] == "script")
         self.assertEqual(script_volume["configMap"]["name"], config["metadata"]["name"])
         self.assertTrue(next(v for v in container["volumeMounts"] if v["name"] == "script")["readOnly"])
@@ -202,7 +232,7 @@ class BackupChartTests(unittest.TestCase):
         self.assertEqual(ports, {(53, "UDP"), (53, "TCP"), (443, "TCP")})
         for labels in application_labels:
             self.assertFalse(selects(policy["podSelector"], labels))
-        for release_resources in (resources, self.resources(release="feature-example")):
+        for release_resources in (resources, self.resources(release="feature-example", **{"backups.enabled": False})):
             for existing in (r for r in release_resources if r["kind"] == "NetworkPolicy"
                              and r["metadata"]["labels"].get("app.kubernetes.io/component") != "backup"):
                 selector = existing["spec"]["podSelector"]

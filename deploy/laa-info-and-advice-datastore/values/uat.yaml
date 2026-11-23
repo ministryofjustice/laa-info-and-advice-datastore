@@ -5,6 +5,8 @@
 replicaCount: 1
 
 backups:
+  enabled: true
+  creationEnabled: true
   environment: uat
   serviceAccountName: ia-datastore-uat-backups
 
