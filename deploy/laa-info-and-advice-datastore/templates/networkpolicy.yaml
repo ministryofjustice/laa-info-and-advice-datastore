@@ -8,7 +8,13 @@ metadata:
   labels:
     {{- include "your-repo-name.labels" $ | nindent 4 }}
 spec:
-  podSelector: {}
+  # Exclude backup Pods even in PR releases: namespace policies are additive.
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: NotIn
+        values:
+          - backup
   policyTypes:
     {{- toYaml .policyTypes | nindent 4 }}
   {{- if .ingress }}

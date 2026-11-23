@@ -1,0 +1,7 @@
+backups:
+  enabled: false
+  creationEnabled: false
+  environment: ""
+  serviceAccountName: ""
+  region: eu-west-2
+  image: public.ecr.aws/lambda/python:3.13@sha256:eac388575a9ff5c116d32b9620675341f998def5fe224fc3752186986afa9a4a
