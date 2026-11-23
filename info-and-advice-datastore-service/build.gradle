@@ -23,7 +23,7 @@ configurations {
 }
 
 dependencies {
-    pactTestImplementation 'au.com.dius.pact.provider:spring7:4.7.6'
+    pactTestImplementation 'au.com.dius.pact.provider:spring7:4.7.7'
     pactTestImplementation 'org.springframework.boot:spring-boot-starter-test'
     pactTestImplementation 'org.apache.httpcomponents.client5:httpclient5'
 }
@@ -88,7 +88,7 @@ jacocoTestCoverageVerification {
 dependencies {
     implementation project(':info-and-advice-datastore-api')
     implementation 'org.openapitools:jackson-databind-nullable:0.2.13'
-    implementation platform("com.fasterxml.jackson:jackson-bom:2.22.4")
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.23.0")
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-aspectj'
@@ -103,16 +103,16 @@ dependencies {
 
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
-    implementation 'io.sentry:sentry-spring-boot-4:8.62.0'
-    implementation 'io.sentry:sentry-logback:8.62.0'
+    implementation 'io.sentry:sentry-spring-boot-4:8.65.0'
+    implementation 'io.sentry:sentry-logback:8.65.0'
     // In-memory rate limiting (core module only; the Spring Boot starters target Boot 3)
     implementation 'io.github.resilience4j:resilience4j-ratelimiter:2.4.0'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0'
 
-    implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.27'
+    implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.29'
 
-    implementation 'org.apache.commons:commons-lang3:3.21.0'
+    implementation 'org.apache.commons:commons-lang3:3.22.0'
 
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
@@ -120,8 +120,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-database-postgresql")
 
-    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.10.1'
-    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.10.1'
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:7.11.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.11.0'
     runtimeOnly 'org.postgresql:postgresql:42.7.14'
     runtimeOnly "org.flywaydb:flyway-database-postgresql"
     testImplementation "org.testcontainers:testcontainers-junit-jupiter:2.0.5"
