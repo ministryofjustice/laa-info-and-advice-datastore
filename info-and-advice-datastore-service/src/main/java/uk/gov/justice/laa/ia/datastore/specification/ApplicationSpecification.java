@@ -110,10 +110,29 @@ public class ApplicationSpecification {
 
   /** Setups a specification for filtering ApplicationEntity. */
   public static Specification<ApplicationEntity> filterBy(
-      String officeId, ApplicationState status, EligibilityIndication eligibilityIndication) {
+      String officeId,
+      ApplicationState status,
+      EligibilityIndication eligibilityIndication,
+      Boolean includeMeansExemptApplications) {
     return hasOfficeId(officeId)
         .and(hasStatus(status))
-        .and(hasEligibilityIndication(eligibilityIndication));
+        .and(matchesEligibility(eligibilityIndication, includeMeansExemptApplications));
+  }
+
+  /**
+   * Returns a specification that matches the eligibility indication, optionally widened to also
+   * match means-exempt applications. Has no effect when {@code eligibilityIndication} is null.
+   */
+  protected static Specification<ApplicationEntity> matchesEligibility(
+      EligibilityIndication eligibilityIndication, Boolean includeMeansExemptApplications) {
+    if (eligibilityIndication == null) {
+      return Specification.unrestricted();
+    }
+    Specification<ApplicationEntity> hasIndication =
+        hasEligibilityIndication(eligibilityIndication);
+    return Boolean.TRUE.equals(includeMeansExemptApplications)
+        ? hasIndication.or(isMeansExempt())
+        : hasIndication;
   }
 
   /** Returns a specification that filters ApplicationEntity by status. */
@@ -146,5 +165,14 @@ public class ApplicationSpecification {
       query.distinct(true);
       return criteriaBuilder.equal(eligibilityJoin.get("indication"), indication);
     };
+  }
+
+  /**
+   * Returns a specification that matches applications whose stored meansAssessmentRequired is
+   * false. A null value is treated as requiring a means assessment.
+   */
+  public static Specification<ApplicationEntity> isMeansExempt() {
+    return (root, query, criteriaBuilder) ->
+        criteriaBuilder.isFalse(root.get("meansAssessmentRequired"));
   }
 }
