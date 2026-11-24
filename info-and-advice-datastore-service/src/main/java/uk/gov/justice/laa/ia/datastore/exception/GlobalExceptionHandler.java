@@ -2,6 +2,7 @@ package uk.gov.justice.laa.ia.datastore.exception;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,8 @@ import uk.gov.justice.laa.ia.datastore.context.UserContext;
 @Slf4j
 @RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+  private static final String DUPLICATE_UFN_REASON = "CONFLICT_UFN_DUPLICATE";
+  private static final String UFN_UNIQUE_CONSTRAINT = "uq_applications_office_code_ufn";
   private final AuditLogger auditLogger;
   private final UserContext userContext;
 
@@ -68,6 +71,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     log.warn("Duplicate UFN: {}", exception.getMessage());
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    problemDetail.setProperty("reason", DUPLICATE_UFN_REASON);
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
   }
 
@@ -99,6 +103,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<ProblemDetail> handleDataIntegrityViolationException(
       DataIntegrityViolationException exception) {
     log.warn("Data integrity violation: {}", exception.getMessage());
+    for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+      if (cause instanceof ConstraintViolationException constraintViolation
+          && UFN_UNIQUE_CONSTRAINT.equals(constraintViolation.getConstraintName())) {
+        ProblemDetail problemDetail =
+            ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, "UFN already exists for this provider office code.");
+        problemDetail.setProperty("reason", DUPLICATE_UFN_REASON);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+      }
+    }
     ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(
             HttpStatus.CONFLICT, "Conflict: the request violates a data integrity constraint");
