@@ -111,6 +111,10 @@ components:
           format: date-time
         eligibilityIndication:
           $ref: '#/components/schemas/EligibilityIndication'
+        meansAssessmentRequired:
+          type: boolean
+          description: >
+            Stored assessment requirement, if known.
 
     ApplicationResponses:
       type: object

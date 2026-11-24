@@ -1,6 +1,7 @@
 package uk.gov.justice.laa.ia.datastore.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
+import uk.gov.justice.laa.ia.datastore.entity.EligibilityAssessmentEntity;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.model.ApplicationState;
@@ -293,6 +296,192 @@ public class GetApplicationsIntegrationTest extends BaseIntegrationTest {
         description.appendText("list of dates either not parseable or not in descending order");
       }
     };
+  }
+
+  @Test
+  void shouldIncludeExemptApplicationsAlongsideEligibleIndications() throws Exception {
+    final var exempt = saveApplication(false, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    var eligible = saveApplication(true, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    saveIndication(eligible, true);
+    var unknownEligible = saveApplication(null, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    saveIndication(unknownEligible, true);
+    saveApplication(null, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    clearCache();
+
+    mockMvc
+        .perform(
+            get("/api/v0/applications")
+                .param("eligibilityIndication", "eligible")
+                .param("includeMeansExemptApplications", "true")
+                .withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.totalElements").value(3))
+        .andExpect(
+            jsonPath(
+                "$.content[*].id",
+                containsInAnyOrder(
+                    exempt.getId().toString(),
+                    eligible.getId().toString(),
+                    unknownEligible.getId().toString())));
+  }
+
+  @Test
+  void shouldIncludeExemptApplicationsAlongsideIneligibleIndications() throws Exception {
+    var exempt = saveApplication(false, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    saveIndication(exempt, true);
+    var ineligible = saveApplication(true, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    saveIndication(ineligible, false);
+    clearCache();
+
+    mockMvc
+        .perform(
+            get("/api/v0/applications")
+                .param("eligibilityIndication", "ineligible")
+                .param("includeMeansExemptApplications", "true")
+                .withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.totalElements").value(2))
+        .andExpect(
+            jsonPath(
+                "$.content[*].id",
+                containsInAnyOrder(exempt.getId().toString(), ineligible.getId().toString())));
+  }
+
+  @Test
+  void shouldPreserveEligibilityFilteringWhenExemptionsAreNotIncluded() throws Exception {
+    saveApplication(false, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    var eligible = saveApplication(true, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    saveIndication(eligible, true);
+    saveIndication(eligible, false);
+    clearCache();
+
+    for (var flag : List.of("", "false")) {
+      var request =
+          get("/api/v0/applications")
+              .param("eligibilityIndication", "eligible")
+              .withBearerReadToken();
+      if (!flag.isEmpty()) {
+        request.param("includeMeansExemptApplications", flag);
+      }
+      mockMvc
+          .perform(request)
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.totalElements").value(1))
+          .andExpect(jsonPath("$.content[0].id").value(eligible.getId().toString()))
+          .andExpect(jsonPath("$.content[0].eligibilityIndication").value("ineligible"))
+          .andExpect(jsonPath("$.content[0].meansAssessmentRequired").value(true));
+    }
+  }
+
+  @Test
+  void shouldIgnoreExemptionFlagWithoutIndication() throws Exception {
+    var exempt = saveApplication(false, ApplicationState.DRAFT, PROVIDER_OFFICE_CODE);
+    var unknown = saveApplication(null, ApplicationState.DRAFT, PROVIDER_OFFICE_CODE);
+    clearCache();
+
+    mockMvc
+        .perform(
+            get("/api/v0/applications")
+                .param("includeMeansExemptApplications", "true")
+                .withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.totalElements").value(2))
+        .andExpect(
+            jsonPath(
+                "$.content[*].id",
+                containsInAnyOrder(exempt.getId().toString(), unknown.getId().toString())));
+  }
+
+  @Test
+  void shouldApplyOtherFiltersAndPaginationWhenIncludingExemptions() throws Exception {
+    final var exempt = saveApplication(false, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    var eligible = saveApplication(true, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    saveIndication(eligible, true);
+    saveIndication(eligible, true);
+    saveApplication(false, ApplicationState.DRAFT, PROVIDER_OFFICE_CODE);
+    saveApplication(false, ApplicationState.COMPLETED, SECONDARY_PROVIDER_OFFICE_CODE);
+    var unauthorizedOffice = UUID.randomUUID().toString();
+    saveApplication(false, ApplicationState.COMPLETED, unauthorizedOffice);
+    clearCache();
+
+    var ids = new java.util.ArrayList<String>();
+    for (var page : List.of("0", "1")) {
+      var response =
+          mockMvc
+              .perform(
+                  get("/api/v0/applications")
+                      .param("eligibilityIndication", "eligible")
+                      .param("includeMeansExemptApplications", "true")
+                      .param("status", "COMPLETED")
+                      .param("officeId", PROVIDER_OFFICE_CODE)
+                      .param("page", page)
+                      .param("size", "1")
+                      .withBearerReadToken())
+              .andExpect(status().isOk())
+              .andExpect(jsonPath("$.totalElements").value(2))
+              .andExpect(jsonPath("$.totalPages").value(2))
+              .andExpect(jsonPath("$.content", hasSize(1)))
+              .andReturn();
+      ids.add(
+          objectMapper
+              .readTree(response.getResponse().getContentAsString())
+              .get("content")
+              .get(0)
+              .get("id")
+              .asText());
+    }
+    assertThat(ids)
+        .containsExactlyInAnyOrder(exempt.getId().toString(), eligible.getId().toString());
+
+    mockMvc
+        .perform(
+            get("/api/v0/applications")
+                .param("eligibilityIndication", "eligible")
+                .param("includeMeansExemptApplications", "true")
+                .param("officeId", unauthorizedOffice)
+                .withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.totalElements").value(0));
+  }
+
+  @Test
+  void shouldReturnStoredMeansAssessmentRequirementInSummary() throws Exception {
+    var exempt = saveApplication(false, ApplicationState.COMPLETED, PROVIDER_OFFICE_CODE);
+    clearCache();
+
+    mockMvc
+        .perform(get("/api/v0/applications").withBearerReadToken())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].id").value(exempt.getId().toString()))
+        .andExpect(jsonPath("$.content[0].meansAssessmentRequired").value(false));
+  }
+
+  private ApplicationEntity saveApplication(
+      Boolean meansAssessmentRequired, ApplicationState state, String officeCode) {
+    return applicationRepository.save(
+        ApplicationEntityGenerator.createWithoutId(builder ->
+            builder
+                .withDefaultClientDetails()
+                .providerFirmCode(FIRM_CODE)
+                .providerOfficeCode(officeCode)
+                .applicationState(state)
+                .meansAssessmentRequired(meansAssessmentRequired)));
+  }
+
+  private void saveIndication(ApplicationEntity application, Boolean indication) {
+    entityManager
+        .createNativeQuery(
+            "UPDATE eligibility_assessments SET created_at = created_at - INTERVAL '1 second'"
+                + " WHERE application_id = :applicationId")
+        .setParameter("applicationId", application.getId())
+        .executeUpdate();
+    eligibilityAssessmentRepository.saveAndFlush(
+        EligibilityAssessmentEntity.builder()
+            .applicationId(application.getId())
+            .resultJson(com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode())
+            .createdBy("test")
+            .indication(indication)
+            .build());
   }
 
   @Test

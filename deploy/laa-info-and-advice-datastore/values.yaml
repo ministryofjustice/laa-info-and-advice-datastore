@@ -1,5 +1,7 @@
 backups:
-  enabled: false
+  # Enabled schedules can delete expired managed snapshots, even when creation is disabled.
+  backupAndPruneSchedulesEnabled: false
+  # When enabled, create or copy a snapshot and verify it before pruning.
   creationEnabled: false
   environment: ""
   serviceAccountName: ""
