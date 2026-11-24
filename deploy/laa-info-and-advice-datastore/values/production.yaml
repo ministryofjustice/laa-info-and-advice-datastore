@@ -232,10 +232,10 @@ metabase:
         SecRule REQUEST_URI "@beginsWith /api/dataset" "id:1002,phase:1,pass,nolog,ctl:ruleEngine=DetectionOnly"
         # Native SQL is expected when creating questions; exclude only that field from SQLi rules.
         SecRule REQUEST_METHOD "@streq POST" "id:1003,phase:1,pass,nolog,chain"
-          SecRule REQUEST_URI "@rx ^/api/card(?:\?.*)?$" "ctl:ruleRemoveTargetByTag=attack-sqli;ARGS:json.dataset_query.stages.array_0.native"
+          SecRule REQUEST_URI "@rx ^/api/card(?:\?.*)?$" "ctl:ruleRemoveTargetByTag=attack-sqli;ARGS:json.dataset_query.stages.array_0.native,ctl:ruleRemoveTargetByTag=attack-sqli;ARGS:json.dataset_query.native.query"
         # Updating an existing question also requires PUT, which CRS blocks by default.
         SecRule REQUEST_METHOD "@streq PUT" "id:1004,phase:1,pass,nolog,chain"
-          SecRule REQUEST_URI "@rx ^/api/card/[0-9]+(?:\?.*)?$" "ctl:ruleRemoveById=911100,ctl:ruleRemoveTargetByTag=attack-sqli;ARGS:json.dataset_query.stages.array_0.native"
+          SecRule REQUEST_URI "@rx ^/api/card/[0-9]+(?:\?.*)?$" "ctl:ruleRemoveById=911100,ctl:ruleRemoveTargetByTag=attack-sqli;ARGS:json.dataset_query.stages.array_0.native,ctl:ruleRemoveTargetByTag=attack-sqli;ARGS:json.dataset_query.native.query"
         # Dashboard saves use PUT too; retain all request-body inspection.
         SecRule REQUEST_METHOD "@streq PUT" "id:1005,phase:1,pass,nolog,chain"
           SecRule REQUEST_URI "@rx ^/api/dashboard/[0-9]+(?:\?.*)?$" "ctl:ruleRemoveById=911100"
