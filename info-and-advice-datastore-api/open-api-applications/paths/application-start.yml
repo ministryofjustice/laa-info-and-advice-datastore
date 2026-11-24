@@ -40,7 +40,9 @@ post:
           schema:
             $ref: '../components/response-schemas.yml#/components/schemas/ApiError'
     '409':
-      description: Conflict - UFN already in use for this provider office code
+      description: >-
+        Conflict. ProblemDetail reason is CONFLICT_UFN_DUPLICATE when the UFN is
+        already in use for this provider office code.
       content:
         application/problem+json:
           schema:
