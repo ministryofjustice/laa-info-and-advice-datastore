@@ -5,8 +5,9 @@
 replicaCount: 1
 
 backups:
-  enabled: true
-  creationEnabled: true
+  # Prune-only: can delete expired managed snapshots without creating replacements.
+  backupAndPruneSchedulesEnabled: true
+  creationEnabled: false
   environment: uat
   serviceAccountName: ia-datastore-uat-backups
 
