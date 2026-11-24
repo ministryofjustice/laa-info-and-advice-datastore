@@ -1,8 +1,11 @@
 {{- define "your-repo-name.backupsEnabled" -}}
-{{- if or (not (kindIs "bool" .Values.backups.enabled)) (not (kindIs "bool" .Values.backups.creationEnabled)) -}}
-{{- fail "backup enabled and creationEnabled settings must be boolean values" -}}
+{{- if hasKey .Values.backups "enabled" -}}
+{{- fail "backups.enabled was renamed to backups.backupAndPruneSchedulesEnabled; remove the old value" -}}
 {{- end -}}
-{{- if .Values.backups.enabled -}}
+{{- if or (not (kindIs "bool" .Values.backups.backupAndPruneSchedulesEnabled)) (not (kindIs "bool" .Values.backups.creationEnabled)) -}}
+{{- fail "backup backupAndPruneSchedulesEnabled and creationEnabled settings must be boolean values" -}}
+{{- end -}}
+{{- if .Values.backups.backupAndPruneSchedulesEnabled -}}
 {{- if not (semverCompare ">=1.27-0" .Capabilities.KubeVersion.Version) -}}
 {{- fail "backups require Kubernetes 1.27 or newer for CronJob timeZone" -}}
 {{- end -}}

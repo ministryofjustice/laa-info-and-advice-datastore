@@ -41,7 +41,7 @@ test-backup-chart:
 		helm lint ./deploy/laa-info-and-advice-datastore --quiet \
 			--namespace "$$namespace" --kube-version 1.30.0 \
 			--values "./deploy/laa-info-and-advice-datastore/values/$$environment.yaml" \
-			--set backups.enabled=false; \
+			--set backups.backupAndPruneSchedulesEnabled=false; \
 	done
 	bash -n deploy/scripts/deploy.sh
 

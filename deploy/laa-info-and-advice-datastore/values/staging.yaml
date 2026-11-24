@@ -7,6 +7,9 @@
 replicaCount: 2
 
 backups:
+  # Prune-only: can delete expired managed snapshots without creating replacements.
+  backupAndPruneSchedulesEnabled: true
+  creationEnabled: false
   environment: staging
   serviceAccountName: ia-datastore-staging-backups
 

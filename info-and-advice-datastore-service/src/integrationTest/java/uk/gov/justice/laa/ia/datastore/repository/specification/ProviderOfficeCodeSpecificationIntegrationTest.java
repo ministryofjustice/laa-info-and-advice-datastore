@@ -40,7 +40,7 @@ public class ProviderOfficeCodeSpecificationIntegrationTest extends BaseIntegrat
 
     // create specification
     Specification<ApplicationEntity> specification =
-        ApplicationSpecification.filterBy(officeId, null, null);
+        ApplicationSpecification.filterBy(officeId, null, null, null);
 
     // Act
     List<ApplicationEntity> applications = applicationRepository.findAll(specification);

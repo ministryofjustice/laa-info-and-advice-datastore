@@ -1,0 +1,40 @@
+meta {
+  name: Include Means Exempt Applications
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v0/applications?page=0&size=25&eligibilityIndication=eligible&includeMeansExemptApplications=true
+  body: none
+  auth: inherit
+}
+
+script:pre-request {
+  const seedRes = await bru.runRequest("Applications/Fixtures/Seed Means Exempt Application");
+  bru.setVar("seedStatus", seedRes.status);
+}
+
+tests {
+  test("application is marked as means exempt", function() {
+    expect(bru.getVar("seedStatus")).to.equal(204);
+  });
+
+  test("status is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("means-exempt application without an assessment is included", function() {
+    const application = res.getBody().content.find(
+      (summary) => summary.id === bru.getVar("applicationId")
+    );
+    expect(application).to.exist;
+    expect(application.meansAssessmentRequired).to.equal(false);
+  });
+}
+
+docs {
+  Starts an application, marks it as not requiring a means assessment, then lists eligible
+  applications with `includeMeansExemptApplications=true`. The exempt application has no
+  eligibility assessment but is still returned.
+}

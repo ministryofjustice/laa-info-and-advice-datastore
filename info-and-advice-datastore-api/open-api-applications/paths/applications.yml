@@ -29,8 +29,22 @@ get:
     - name: eligibilityIndication
       in: query
       required: false
+      description: >
+        Match applications with any assessment having this indication. The
+        summary's eligibilityIndication reflects the most recent assessment.
       schema:
         $ref: '../components/response-schemas.yml#/components/schemas/EligibilityIndication'
+    - name: includeMeansExemptApplications
+      in: query
+      required: false
+      description: >
+        When true and eligibilityIndication is supplied, also include applications
+        whose stored meansAssessmentRequired is false. Other filters still apply.
+        When eligibilityIndication is omitted, this parameter has no effect.
+        Omitted or false preserves the existing eligibility filter. An exempt
+        application can be included regardless of its assessment indication.
+      schema:
+        type: boolean
     - $ref: '../components/parameters.yml#/components/parameters/XAuthorizationHeader'
     - $ref: '../components/parameters.yml#/components/parameters/XCorrelationHeader'
     - $ref: '../components/parameters.yml#/components/parameters/XServiceNameHeader'
