@@ -238,7 +238,7 @@ class BackupChartTests(unittest.TestCase):
             self.assertFalse(selects(policy["podSelector"], labels))
         for release_resources in (resources, self.resources(release="feature-example", **{"backups.backupAndPruneSchedulesEnabled": False})):
             for existing in (r for r in release_resources if r["kind"] == "NetworkPolicy"
-                             and r["metadata"]["labels"].get("app.kubernetes.io/component") != "backup"):
+                             and r["metadata"]["labels"].get("app.kubernetes.io/component") not in ("backup", "metabase")):
                 selector = existing["spec"]["podSelector"]
                 self.assertFalse(selects(selector, backup_labels))
                 for labels in [*application_labels, {}]:
@@ -299,6 +299,42 @@ if os.environ.get("FAIL_FIRST_UPGRADE") == "1" and sys.argv[1] == "upgrade":
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0][:2], ["upgrade", SERVICE])
         self.assertFalse(any(arg.startswith("backups.") for arg in calls[0]))
+
+
+class MetabaseGoogleAuthChartTests(unittest.TestCase):
+    def resources(self, environment, **settings):
+        result = render(environment=environment, **settings)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return [resource for resource in yaml.safe_load_all(result.stdout) if resource]
+
+    def test_google_sign_in_remains_disabled_outside_uat(self):
+        for environment in ("staging", "production"):
+            with self.subTest(environment=environment):
+                resources = self.resources(environment)
+                self.assertFalse(any(r["metadata"]["name"].endswith("-metabase-google-auth") for r in resources))
+                deployment = next(r for r in resources if r["kind"] == "Deployment"
+                                  and r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "metabase")
+                names = {entry["name"] for entry in deployment["spec"]["template"]["spec"]["containers"][0]["env"]}
+                self.assertNotIn("MB_GOOGLE_AUTH_CLIENT_ID", names)
+
+    def test_enabled_sign_in_uses_secret_and_limits_egress_to_metabase(self):
+        resources = self.resources("uat")
+        deployment = next(r for r in resources if r["kind"] == "Deployment"
+                          and r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "metabase")
+        pod = deployment["spec"]["template"]
+        env = {entry["name"]: entry for entry in pod["spec"]["containers"][0]["env"]}
+        self.assertEqual(env["MB_GOOGLE_AUTH_CLIENT_ID"]["valueFrom"]["secretKeyRef"], {
+            "name": "laa-info-and-advice-datastore-metabase-google", "key": "client_id",
+        })
+        self.assertEqual(env["MB_GOOGLE_AUTH_ENABLED"]["value"], "true")
+        self.assertNotIn("MB_GOOGLE_AUTH_AUTO_CREATE_ACCOUNTS_DOMAIN", env)
+        policy = next(r for r in resources if r["kind"] == "NetworkPolicy"
+                      and r["metadata"]["name"].endswith("-metabase-google-auth"))["spec"]
+        self.assertTrue(selects(policy["podSelector"], pod["metadata"]["labels"]))
+        for other in (r for r in resources if r["kind"] == "Deployment" and r is not deployment):
+            self.assertFalse(selects(policy["podSelector"], other["spec"]["template"]["metadata"]["labels"]))
+        self.assertEqual(policy["policyTypes"], ["Egress"])
+        self.assertEqual(policy["egress"], [{"ports": [{"protocol": "TCP", "port": 443}]}])
 
 
 if __name__ == "__main__":
