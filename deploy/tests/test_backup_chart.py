@@ -301,6 +301,34 @@ if os.environ.get("FAIL_FIRST_UPGRADE") == "1" and sys.argv[1] == "upgrade":
         self.assertFalse(any(arg.startswith("backups.") for arg in calls[0]))
 
 
+class ClaimsApiProductionChartTests(unittest.TestCase):
+    def test_production_uses_live_claims_without_enabling_retention_jobs(self):
+        result = render(environment="production")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        resources = [resource for resource in yaml.safe_load_all(result.stdout) if resource]
+        deployment = next(r for r in resources if r["kind"] == "Deployment"
+                          and r["metadata"].get("labels", {}).get("app.kubernetes.io/component") != "metabase")
+        pod = deployment["spec"]["template"]
+        env = {entry["name"]: entry for entry in pod["spec"]["containers"][0]["env"]}
+        self.assertEqual(env["CLAIMS_API_MODE"]["value"], "live")
+        self.assertEqual(env["CLAIMS_API_URL"]["value"],
+                         "http://laa-data-claims-api.laa-data-claims-api-prod.svc.cluster.local:8080")
+        self.assertEqual(env["CLAIMS_API_KEY"]["valueFrom"]["secretKeyRef"], {
+            "name": "laa-info-and-advice-datastore-claims-api", "key": "CLAIMS_API_KEY", "optional": True,
+        })
+        self.assertEqual(env["DATA_RETENTION_SCHEDULERS_ENABLED"]["value"], "false")
+        policy = next(r for r in resources if r["kind"] == "NetworkPolicy"
+                      and r["metadata"]["name"].endswith("-allow-egress-claims-api"))["spec"]
+        self.assertTrue(selects(policy["podSelector"], pod["metadata"]["labels"]))
+        self.assertEqual(policy["policyTypes"], ["Egress"])
+        self.assertEqual(policy["egress"], [{
+            "to": [{"namespaceSelector": {"matchLabels": {
+                "kubernetes.io/metadata.name": "laa-data-claims-api-prod",
+            }}}],
+            "ports": [{"port": 8080, "protocol": "TCP"}],
+        }])
+
+
 class MetabaseGoogleAuthChartTests(unittest.TestCase):
     def resources(self, environment, **settings):
         result = render(environment=environment, **settings)
