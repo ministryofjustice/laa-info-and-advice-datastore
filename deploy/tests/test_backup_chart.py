@@ -307,34 +307,34 @@ class MetabaseGoogleAuthChartTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         return [resource for resource in yaml.safe_load_all(result.stdout) if resource]
 
-    def test_google_sign_in_remains_disabled_outside_uat(self):
-        for environment in ("staging", "production"):
-            with self.subTest(environment=environment):
-                resources = self.resources(environment)
-                self.assertFalse(any(r["metadata"]["name"].endswith("-metabase-google-auth") for r in resources))
-                deployment = next(r for r in resources if r["kind"] == "Deployment"
-                                  and r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "metabase")
-                names = {entry["name"] for entry in deployment["spec"]["template"]["spec"]["containers"][0]["env"]}
-                self.assertNotIn("MB_GOOGLE_AUTH_CLIENT_ID", names)
-
-    def test_enabled_sign_in_uses_secret_and_limits_egress_to_metabase(self):
-        resources = self.resources("uat")
+    def test_google_sign_in_remains_disabled_in_production(self):
+        resources = self.resources("production")
+        self.assertFalse(any(r["metadata"]["name"].endswith("-metabase-google-auth") for r in resources))
         deployment = next(r for r in resources if r["kind"] == "Deployment"
                           and r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "metabase")
-        pod = deployment["spec"]["template"]
-        env = {entry["name"]: entry for entry in pod["spec"]["containers"][0]["env"]}
-        self.assertEqual(env["MB_GOOGLE_AUTH_CLIENT_ID"]["valueFrom"]["secretKeyRef"], {
-            "name": "laa-info-and-advice-datastore-metabase-google", "key": "client_id",
-        })
-        self.assertEqual(env["MB_GOOGLE_AUTH_ENABLED"]["value"], "true")
-        self.assertNotIn("MB_GOOGLE_AUTH_AUTO_CREATE_ACCOUNTS_DOMAIN", env)
-        policy = next(r for r in resources if r["kind"] == "NetworkPolicy"
-                      and r["metadata"]["name"].endswith("-metabase-google-auth"))["spec"]
-        self.assertTrue(selects(policy["podSelector"], pod["metadata"]["labels"]))
-        for other in (r for r in resources if r["kind"] == "Deployment" and r is not deployment):
-            self.assertFalse(selects(policy["podSelector"], other["spec"]["template"]["metadata"]["labels"]))
-        self.assertEqual(policy["policyTypes"], ["Egress"])
-        self.assertEqual(policy["egress"], [{"ports": [{"protocol": "TCP", "port": 443}]}])
+        names = {entry["name"] for entry in deployment["spec"]["template"]["spec"]["containers"][0]["env"]}
+        self.assertNotIn("MB_GOOGLE_AUTH_CLIENT_ID", names)
+
+    def test_enabled_sign_in_uses_secret_and_limits_egress_to_metabase(self):
+        for environment in ("uat", "staging"):
+            with self.subTest(environment=environment):
+                resources = self.resources(environment)
+                deployment = next(r for r in resources if r["kind"] == "Deployment"
+                                  and r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "metabase")
+                pod = deployment["spec"]["template"]
+                env = {entry["name"]: entry for entry in pod["spec"]["containers"][0]["env"]}
+                self.assertEqual(env["MB_GOOGLE_AUTH_CLIENT_ID"]["valueFrom"]["secretKeyRef"], {
+                    "name": "laa-info-and-advice-datastore-metabase-google", "key": "client_id",
+                })
+                self.assertEqual(env["MB_GOOGLE_AUTH_ENABLED"]["value"], "true")
+                self.assertNotIn("MB_GOOGLE_AUTH_AUTO_CREATE_ACCOUNTS_DOMAIN", env)
+                policy = next(r for r in resources if r["kind"] == "NetworkPolicy"
+                              and r["metadata"]["name"].endswith("-metabase-google-auth"))["spec"]
+                self.assertTrue(selects(policy["podSelector"], pod["metadata"]["labels"]))
+                for other in (r for r in resources if r["kind"] == "Deployment" and r is not deployment):
+                    self.assertFalse(selects(policy["podSelector"], other["spec"]["template"]["metadata"]["labels"]))
+                self.assertEqual(policy["policyTypes"], ["Egress"])
+                self.assertEqual(policy["egress"], [{"ports": [{"protocol": "TCP", "port": 443}]}])
 
 
 if __name__ == "__main__":
