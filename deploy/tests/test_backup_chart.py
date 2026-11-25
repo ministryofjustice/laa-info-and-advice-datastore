@@ -307,16 +307,19 @@ class MetabaseGoogleAuthChartTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         return [resource for resource in yaml.safe_load_all(result.stdout) if resource]
 
-    def test_google_sign_in_remains_disabled_in_production(self):
-        resources = self.resources("production")
-        self.assertFalse(any(r["metadata"]["name"].endswith("-metabase-google-auth") for r in resources))
-        deployment = next(r for r in resources if r["kind"] == "Deployment"
-                          and r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "metabase")
-        names = {entry["name"] for entry in deployment["spec"]["template"]["spec"]["containers"][0]["env"]}
-        self.assertNotIn("MB_GOOGLE_AUTH_CLIENT_ID", names)
+    def test_google_sign_in_can_be_disabled(self):
+        for environment in ("uat", "staging", "production"):
+            with self.subTest(environment=environment):
+                resources = self.resources(environment, **{"metabase.googleAuth.enabled": False})
+                self.assertFalse(any(r["metadata"]["name"].endswith("-metabase-google-auth") for r in resources))
+                deployment = next(r for r in resources if r["kind"] == "Deployment"
+                                  and r["metadata"].get("labels", {}).get("app.kubernetes.io/component") == "metabase")
+                names = {entry["name"] for entry in deployment["spec"]["template"]["spec"]["containers"][0]["env"]}
+                self.assertNotIn("MB_GOOGLE_AUTH_CLIENT_ID", names)
+                self.assertNotIn("MB_GOOGLE_AUTH_ENABLED", names)
 
     def test_enabled_sign_in_uses_secret_and_limits_egress_to_metabase(self):
-        for environment in ("uat", "staging"):
+        for environment in ("uat", "staging", "production"):
             with self.subTest(environment=environment):
                 resources = self.resources(environment)
                 deployment = next(r for r in resources if r["kind"] == "Deployment"

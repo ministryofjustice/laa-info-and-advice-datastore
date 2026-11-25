@@ -182,6 +182,8 @@ affinity: {}
 # fully separate from the product database.
 metabase:
   enabled: true
+  googleAuth:
+    enabled: true
   image:
     repository: metabase/metabase
     pullPolicy: IfNotPresent
