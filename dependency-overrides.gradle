@@ -3,10 +3,10 @@
 dependencies {
     implementation 'io.micrometer:micrometer-core:1.17.1'
     // fix https://security.snyk.io/vuln/SNYK-JAVA-IOMICROMETER-19233327
-    implementation 'ch.qos.logback:logback-core:1.5.37'
+    implementation 'ch.qos.logback:logback-core:1.6.8'
     // logback-classic pinned to match logback-core; a version mismatch makes Logback dump its
     // internal bootstrap status log to the console, breaking up the normal log output
-    implementation 'ch.qos.logback:logback-classic:1.5.37'
+    implementation 'ch.qos.logback:logback-classic:1.6.8'
     // fix https://security.snyk.io/vuln/SNYK-JAVA-CHQOSLOGBACK-17675439
     implementation 'org.apache.tomcat.embed:tomcat-embed-core:11.0.27'
     // fix https://security.snyk.io/vuln/SNYK-JAVA-ORGAPACHETOMCATEMBED-17732890
