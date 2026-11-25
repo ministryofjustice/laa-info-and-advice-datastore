@@ -108,7 +108,7 @@ class DatastoreApiClientResponseVersionTest {
 
     ApplicationResponses response =
         applicationApi.getApplications(
-            "Bearer user-token", "correlation-id", "service", null, null, null, null, null);
+            "Bearer user-token", "correlation-id", "service", null, null, null, null, null, null);
 
     assertThat(response.getTotalElements()).isEqualTo(123L);
   }

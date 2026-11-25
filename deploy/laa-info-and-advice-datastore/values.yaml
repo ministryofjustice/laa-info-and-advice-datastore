@@ -1,7 +1,14 @@
 backups:
-  enabled: false
+  # Enabled schedules can delete expired managed snapshots, even when creation is disabled.
+  backupAndPruneSchedulesEnabled: false
+  # When enabled, create or copy a snapshot and verify it before pruning.
   creationEnabled: false
   environment: ""
   serviceAccountName: ""
   region: eu-west-2
   image: public.ecr.aws/lambda/python:3.13@sha256:eac388575a9ff5c116d32b9620675341f998def5fe224fc3752186986afa9a4a
+
+metabase:
+  googleAuth:
+    enabled: false
+    secretName: laa-info-and-advice-datastore-metabase-google

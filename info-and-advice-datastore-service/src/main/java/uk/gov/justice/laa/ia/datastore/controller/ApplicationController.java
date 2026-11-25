@@ -49,9 +49,11 @@ public class ApplicationController implements ApplicationApi {
       Integer size,
       String officeId,
       ApplicationState status,
-      EligibilityIndication eligibilityIndication) {
+      EligibilityIndication eligibilityIndication,
+      Boolean includeMeansExemptApplications) {
     final Specification<ApplicationEntity> filterBy =
-        ApplicationSpecification.filterBy(officeId, status, eligibilityIndication);
+        ApplicationSpecification.filterBy(
+            officeId, status, eligibilityIndication, includeMeansExemptApplications);
     final Page<ApplicationSummary> result = service.getAllApplications(filterBy, page, size);
     final ApplicationResponses responses =
         new ApplicationResponses()

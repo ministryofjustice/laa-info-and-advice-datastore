@@ -60,6 +60,15 @@ spec:
                 secretKeyRef:
                   name: rds-postgresql-instance-metabase-output
                   key: jdbc_url
+            {{- if .Values.metabase.googleAuth.enabled }}
+            - name: MB_GOOGLE_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "metabase.googleAuth.secretName is required" .Values.metabase.googleAuth.secretName | quote }}
+                  key: client_id
+            - name: MB_GOOGLE_AUTH_ENABLED
+              value: "true"
+            {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
