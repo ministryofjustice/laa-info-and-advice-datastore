@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: v4.3.0
       - name: Install chart-test YAML parser
@@ -49,7 +49,7 @@ jobs:
         run: |
           BASE_SHA=$(git merge-base "origin/${{ github.base_ref }}" HEAD)
 
-          if git diff --quiet "$BASE_SHA" HEAD -- info-and-advice-datastore-api info-and-advice-datastore-client; then
+          if git diff --quiet "$BASE_SHA" HEAD -- info-and-advice-datastore-api info-and-advice-datastore-client ':!**/build.gradle'; then
             echo "No changes to info-and-advice-datastore-api or info-and-advice-datastore-client."
             exit 0
           fi
