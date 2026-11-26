@@ -8,10 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import lombok.experimental.ExtensionMethod;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import uk.gov.justice.laa.ia.datastore.entity.ApplicationEntity;
 import uk.gov.justice.laa.ia.datastore.entity.EvidenceEntity;
+import uk.gov.justice.laa.ia.datastore.exception.GlobalExceptionHandler;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityBuilderExtensions;
 import uk.gov.justice.laa.ia.datastore.generator.ApplicationEntityGenerator;
 import uk.gov.justice.laa.ia.datastore.generator.DeclarationEntityGenerator;
@@ -21,6 +24,8 @@ import uk.gov.justice.laa.ia.datastore.utils.BaseIntegrationTest;
 @WithMockUser
 @ExtensionMethod(ApplicationEntityBuilderExtensions.class)
 public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
+  @Autowired private GlobalExceptionHandler globalExceptionHandler;
+
   @Test
   void shouldGetApplication() {
     final ApplicationEntity entity =
@@ -132,7 +137,16 @@ public class ApplicationRepositoryIntegrationTest extends BaseIntegrationTest {
     applicationRepository.saveAndFlush(first);
 
     assertThatThrownBy(() -> applicationRepository.saveAndFlush(second))
-        .isInstanceOf(DataIntegrityViolationException.class);
+        .isInstanceOf(DataIntegrityViolationException.class)
+        .satisfies(exception -> {
+          var response =
+              globalExceptionHandler.handleDataIntegrityViolationException(
+                  (DataIntegrityViolationException) exception);
+          assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+          assertThat(response.getBody()).isNotNull();
+          assertThat(response.getBody().getProperties())
+              .containsEntry("reason", "CONFLICT_UFN_DUPLICATE");
+        });
   }
 
   @Test
