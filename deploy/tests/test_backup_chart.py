@@ -302,7 +302,7 @@ if os.environ.get("FAIL_FIRST_UPGRADE") == "1" and sys.argv[1] == "upgrade":
 
 
 class ClaimsApiProductionChartTests(unittest.TestCase):
-    def test_production_uses_live_claims_without_enabling_retention_jobs(self):
+    def test_production_uses_live_claims_with_retention_jobs_enabled(self):
         result = render(environment="production")
         self.assertEqual(result.returncode, 0, result.stderr)
         resources = [resource for resource in yaml.safe_load_all(result.stdout) if resource]
@@ -316,7 +316,7 @@ class ClaimsApiProductionChartTests(unittest.TestCase):
         self.assertEqual(env["CLAIMS_API_KEY"]["valueFrom"]["secretKeyRef"], {
             "name": "laa-info-and-advice-datastore-claims-api", "key": "CLAIMS_API_KEY", "optional": True,
         })
-        self.assertEqual(env["DATA_RETENTION_SCHEDULERS_ENABLED"]["value"], "false")
+        self.assertEqual(env["DATA_RETENTION_SCHEDULERS_ENABLED"]["value"], "true")
         policy = next(r for r in resources if r["kind"] == "NetworkPolicy"
                       and r["metadata"]["name"].endswith("-allow-egress-claims-api"))["spec"]
         self.assertTrue(selects(policy["podSelector"], pod["metadata"]["labels"]))
