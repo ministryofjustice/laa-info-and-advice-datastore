@@ -170,7 +170,14 @@ public class CreateApplicationIntegrationTest extends BaseIntegrationTest {
                 .withBearerWriteToken()
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(toJson(second)))
-        .andExpect(status().isConflict());
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.reason").value("CONFLICT_UFN_DUPLICATE"))
+        .andExpect(
+            jsonPath("$.detail")
+                .value(
+                    "UFN 123456/1 already exists for provider office code "
+                        + PROVIDER_OFFICE_CODE
+                        + "."));
   }
 
   @ParameterizedTest

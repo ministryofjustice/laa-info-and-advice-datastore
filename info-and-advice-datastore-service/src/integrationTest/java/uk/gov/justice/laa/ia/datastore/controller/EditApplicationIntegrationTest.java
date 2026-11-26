@@ -920,7 +920,14 @@ public class EditApplicationIntegrationTest extends BaseIntegrationTest {
                     {"eTag":0,"ufn":"123456/12","declaration":
                      {"declarationConfirmation":true,"dateSigned":"2025-01-01"}}
                     """))
-        .andExpect(status().isConflict());
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.reason").value("CONFLICT_UFN_DUPLICATE"))
+        .andExpect(
+            jsonPath("$.detail")
+                .value(
+                    "UFN 123456/12 already exists for provider office code "
+                        + PROVIDER_OFFICE_CODE
+                        + "."));
 
     clearCache();
     final ApplicationEntity unchanged = applicationRepository.findById(applicationId).orElseThrow();
