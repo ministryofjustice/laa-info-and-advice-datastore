@@ -89,6 +89,7 @@ dependencies {
     implementation project(':info-and-advice-datastore-api')
     implementation 'org.openapitools:jackson-databind-nullable:0.2.13'
     implementation platform("com.fasterxml.jackson:jackson-bom:2.23.0")
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-aspectj'
