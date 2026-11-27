@@ -7,6 +7,9 @@ import os
 import re
 import sys
 import time
+import urllib.parse
+import urllib.request
+import uuid
 
 import boto3
 from botocore.config import Config
@@ -52,6 +55,50 @@ def utc(value):
 
 def original_time(point):
     return timestamp(point.get("OriginalSnapshotCreateTime") or point["SnapshotCreateTime"])
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+class SentryCheckIn:
+    def __init__(self, tier, environment):
+        self.schedule = os.environ.get("BACKUP_SENTRY_SCHEDULE", "")
+        self.dsn = os.environ.get("SENTRY_DSN", "")
+        self.tier = tier
+        self.environment = environment
+        self.check_in_id = uuid.uuid4().hex
+
+    def send(self, status):
+        if not self.schedule:
+            return
+        try:
+            dsn = urllib.parse.urlsplit(self.dsn)
+            if (dsn.scheme != "https" or not dsn.hostname or not dsn.username or dsn.password
+                    or not re.fullmatch(r"/[0-9]+/?", dsn.path) or dsn.query or dsn.fragment):
+                raise ValueError("invalid DSN")
+            host = dsn.netloc.rsplit("@", 1)[-1]
+            key = urllib.parse.quote(dsn.username, safe="")
+            slug = f"datastore-backup-{self.environment}-{self.tier}"
+            url = f"https://{host}/api/{dsn.path.strip('/')}/cron/{slug}/{key}/"
+            payload = {
+                "status": status, "check_in_id": self.check_in_id, "environment": self.environment,
+            }
+            if status == "in_progress":
+                payload["monitor_config"] = {
+                    "schedule": {"type": "crontab", "value": self.schedule},
+                    "timezone": "Etc/UTC", "checkin_margin": 10, "max_runtime": 35,
+                    "failure_issue_threshold": 1, "recovery_threshold": 1,
+                }
+            request = urllib.request.Request(
+                url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.build_opener(NoRedirect()).open(request, timeout=2):
+                pass
+        except Exception:
+            log("sentry-check-in-failed", status=status)
 
 
 class Lifecycle:
@@ -282,18 +329,25 @@ def main():
     CONTEXT.update(database=args.db_instance_identifier, env=args.env, tier=args.tier,
                    run_id=args.run_id, creation_enabled=args.creation_enabled)
     log("started")
+    sentry = SentryCheckIn(args.tier, args.env)
+    sentry.send("in_progress")
     try:
         lifecycle = Lifecycle(args)
         if args.creation_enabled == "true":
             lifecycle.create()
         lifecycle.prune()
         log("completed", cleanup="complete", duration_seconds=round(time.monotonic() - STARTED, 3))
+        sentry.send("ok")
         return 0
     except (BackupError, BotoCoreError, ClientError, KeyError, TypeError, ValueError, OSError) as error:
         reason = failure_reason(error)
         log("failed", reason=reason, duration_seconds=round(time.monotonic() - STARTED, 3))
         print(f"backup failed: {reason}", file=sys.stderr)
+        sentry.send("error")
         return 1
+    except Exception:
+        sentry.send("error")
+        raise
 
 
 if __name__ == "__main__":

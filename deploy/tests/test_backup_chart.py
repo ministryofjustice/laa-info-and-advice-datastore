@@ -132,6 +132,8 @@ class BackupChartTests(unittest.TestCase):
                     args = pod["containers"][0]["args"]
                     self.assertEqual(args[args.index("--tier") + 1], tier)
                     self.assertEqual(args[args.index("--creation-enabled") + 1], "false")
+                    env = {item["name"]: item for item in pod["containers"][0]["env"]}
+                    self.assertEqual(env["BACKUP_SENTRY_SCHEDULE"]["value"], spec["schedule"])
 
     def test_creation_enabled_preserves_application_and_uses_environment_identity(self):
         for environment, env in (("uat", "uat"), ("staging", "staging"), ("production", "prod")):
@@ -152,6 +154,8 @@ class BackupChartTests(unittest.TestCase):
                     args = pod["containers"][0]["args"]
                     self.assertEqual(args[args.index("--env") + 1], env)
                     self.assertEqual(args[args.index("--creation-enabled") + 1], "true")
+                    variables = {item["name"]: item for item in pod["containers"][0]["env"]}
+                    self.assertEqual(variables["BACKUP_SENTRY_SCHEDULE"]["value"], job["spec"]["schedule"])
 
     def test_mounted_script_and_command_pass_only_required_source_identification(self):
         resources = self.resources(**{"backups.backupAndPruneSchedulesEnabled": True, "backups.creationEnabled": False})
@@ -164,7 +168,11 @@ class BackupChartTests(unittest.TestCase):
         variables = {entry["name"]: entry for entry in container["env"]}
         secrets = [entry["valueFrom"]["secretKeyRef"] for entry in container["env"]
                    if "secretKeyRef" in entry.get("valueFrom", {})]
-        self.assertEqual(secrets, [{"name": "rds-postgresql-instance-output", "key": "rds_instance_address"}])
+        self.assertEqual(secrets, [
+            {"name": "rds-postgresql-instance-output", "key": "rds_instance_address"},
+            {"name": "laa-info-and-advice-datastore-sentry", "key": "SENTRY_DSN", "optional": True},
+        ])
+        self.assertEqual(variables["BACKUP_SENTRY_SCHEDULE"]["value"], job["spec"]["schedule"])
         self.assertEqual(
             variables["BACKUP_RUN_ID"]["valueFrom"]["fieldRef"]["fieldPath"],
             "metadata.labels['batch.kubernetes.io/job-name']",

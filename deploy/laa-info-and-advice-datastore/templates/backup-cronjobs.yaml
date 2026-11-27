@@ -78,6 +78,14 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.labels['batch.kubernetes.io/job-name']
+                - name: SENTRY_DSN
+                  valueFrom:
+                    secretKeyRef:
+                      name: laa-info-and-advice-datastore-sentry
+                      key: SENTRY_DSN
+                      optional: true
+                - name: BACKUP_SENTRY_SCHEDULE
+                  value: {{ .schedule | quote }}
                 - name: AWS_DEFAULT_REGION
                   value: {{ $.Values.backups.region | quote }}
                 - name: HOME
