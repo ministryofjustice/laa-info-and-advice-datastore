@@ -1,5 +1,5 @@
 # Build stage
-FROM amazoncorretto:25.0.5-alpine@sha256:1124f698f69d2185828dbd1a1ebeb9aee21884ac64bed7af3deeafd20b21a9dc AS builder
+FROM amazoncorretto:27.0.1-alpine@sha256:2a1963f0f2748128ca5ca81cc9ea69f26f1af4be481997afb04e8fb32f19aa4f AS builder
 
 # Patch known CVEs in base image packages (e.g. zlib) ahead of a new upstream image tag
 RUN apk update && apk upgrade --no-cache
