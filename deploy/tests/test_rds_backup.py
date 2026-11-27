@@ -8,7 +8,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+from urllib.error import URLError
 
 from fake_rds import RDSStub
 
@@ -85,7 +86,7 @@ class SnapshotLifecycleTests(unittest.TestCase):
             "snapshots": [],
         }
 
-    def run_script(self, **overrides):
+    def run_script(self, sentry_dsn=None, schedule=None, sentry_error=None, requests=None, **overrides):
         options = {
             "db-instance-identifier": "laa-info-and-advice-datastore-uat",
             "region": "eu-west-2",
@@ -101,8 +102,15 @@ class SnapshotLifecycleTests(unittest.TestCase):
         spec.loader.exec_module(module)
         rds = RDSStub(self.state, self.calls)
         stdout, stderr = io.StringIO(), io.StringIO()
+        response = MagicMock()
+        opener = MagicMock()
+        opener.open.return_value.__enter__.return_value = response
+        if sentry_error:
+            opener.open.side_effect = sentry_error
         with (
             patch("boto3.client", return_value=rds),
+            patch.dict("os.environ", {"SENTRY_DSN": sentry_dsn or "", "BACKUP_SENTRY_SCHEDULE": schedule or ""}),
+            patch("urllib.request.build_opener", return_value=opener),
             patch.object(module, "utc_now", side_effect=self.clock),
             patch.object(sys, "argv", [str(SCRIPT), *args]),
             redirect_stdout(stdout),
@@ -112,8 +120,74 @@ class SnapshotLifecycleTests(unittest.TestCase):
                 code = module.main()
             except SystemExit as error:
                 code = error.code
+        if requests is not None:
+            requests.extend(opener.open.call_args_list)
         self.state_file.write_text(json.dumps(rds.state))
         return subprocess.CompletedProcess(args, code, stdout.getvalue(), stderr.getvalue())
+
+    def test_sentry_checkins_follow_attempt_success_and_failure(self):
+        for fail in (False, True):
+            with self.subTest(fail=fail):
+                self.state["failures"] = {"describe-db-instances": ["AccessDenied"]} if fail else {}
+                requests = []
+                result = self.run_script(
+                    sentry_dsn="https://publickey@o123.ingest.sentry.io/123",
+                    schedule="0 * * * *", requests=requests,
+                )
+                self.assertEqual(result.returncode, 1 if fail else 0)
+                self.assertEqual(len(requests), 2)
+                payloads = [json.loads(call.args[0].data) for call in requests]
+                self.assertEqual([payload["status"] for payload in payloads],
+                                 ["in_progress", "error" if fail else "ok"])
+                self.assertEqual(payloads[0]["check_in_id"], payloads[1]["check_in_id"])
+                self.assertEqual(payloads[0]["environment"], "uat")
+                self.assertEqual(payloads[0]["monitor_config"], {
+                    "schedule": {"type": "crontab", "value": "0 * * * *"},
+                    "timezone": "Etc/UTC", "checkin_margin": 10, "max_runtime": 35,
+                    "failure_issue_threshold": 1, "recovery_threshold": 1,
+                })
+                self.assertEqual(requests[0].args[0].full_url,
+                                 "https://o123.ingest.sentry.io/api/123/cron/datastore-backup-uat-hourly/publickey/")
+                self.assertNotIn("publickey", result.stdout + result.stderr)
+
+    def test_sentry_outage_does_not_change_backup_result_or_expose_url(self):
+        self.state["snapshots"] = [snapshot()]
+        result = self.run_script(
+            sentry_dsn="https://publickey@o123.ingest.sentry.io/123",
+            schedule="0 * * * *", sentry_error=URLError("https://secret-url/publickey"),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.saved_snapshots(), [])
+        self.assertIn("sentry-check-in-failed", result.stdout)
+        self.assertNotIn("publickey", result.stdout + result.stderr)
+
+    def test_invalid_or_missing_dsn_does_not_block_backup(self):
+        for dsn in ("", "http://publickey@example.com/123", "https://publickey@example.com/invalid"):
+            with self.subTest(dsn=dsn):
+                requests = []
+                result = self.run_script(sentry_dsn=dsn, schedule="0 * * * *", requests=requests)
+                self.assertEqual(result.returncode, 0)
+                self.assertIn("sentry-check-in-failed", result.stdout)
+                self.assertEqual(requests, [])
+                self.assertNotIn("publickey", result.stdout + result.stderr)
+
+    def test_daily_checkins_use_daily_schedule_and_environment(self):
+        requests = []
+        self.run_script(tier="daily", sentry_dsn="https://publickey@o123.ingest.sentry.io/123",
+                        schedule="30 9 * * *", requests=requests)
+        payload = json.loads(requests[0].args[0].data)
+        self.assertIn("/cron/datastore-backup-uat-daily/", requests[0].args[0].full_url)
+        self.assertEqual(payload["monitor_config"]["schedule"]["value"], "30 9 * * *")
+        self.assertEqual(payload["environment"], "uat")
+
+    def test_retry_attempts_use_distinct_checkin_ids(self):
+        attempts = []
+        for _ in range(2):
+            requests = []
+            self.run_script(sentry_dsn="https://publickey@o123.ingest.sentry.io/123",
+                            schedule="0 * * * *", requests=requests)
+            attempts.append(json.loads(requests[0].args[0].data)["check_in_id"])
+        self.assertNotEqual(*attempts)
 
     def operations(self):
         if not self.calls.exists():

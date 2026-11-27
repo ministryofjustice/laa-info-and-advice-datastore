@@ -87,6 +87,36 @@ monitor the Job's `DeadlineExceeded` and exhausted-retry `BackoffLimitExceeded`
 failures, not just application logs.
 Quota, permission, throttling and terminal waiter failures remain failures.
 
+## Sentry Cron check-ins
+
+The chart exposes only `SENTRY_DSN` from the existing
+`laa-info-and-advice-datastore-sentry` secret to backup pods and passes each
+CronJob's own schedule to the script. It uses Python's standard-library HTTPS
+client; no SDK or startup installation is needed. The secret reference is
+optional so a missing DSN never prevents backup or pruning. Check-in failures
+are logged without the DSN or URL and never change the backup exit status.
+Requests use a two-second timeout and do not follow redirects.
+
+The first check-in creates or updates `datastore-backup-<environment>-hourly` or
+`datastore-backup-<environment>-daily` in the DSN's Sentry project. Separate
+monitors allow intentional suspension per environment. Check-ins use the backup
+environment (`uat`, `staging`, or `prod`), the CronJob's UTC schedule, a
+10-minute missed-start margin, a 35-minute per-attempt maximum runtime, and
+failure/recovery thresholds of one. Each pod attempt has its own check-in ID;
+an attempt reports `error` even when a later retry succeeds. It reports `ok`
+only after creation and verification (when enabled) and pruning complete.
+Prune-only success does not imply a snapshot was created.
+
+The monitor cannot detect a missing job until its first check-in creates the
+monitor and environment. A pod terminated before its final check-in is detected
+only by timeout; a failed check-in can also reflect Sentry/network problems.
+Sentry HTTP acceptance does not prove ingestion or alert delivery. Configure and
+verify issue alerts and Slack routing to `#mnm-engineering-alerts` in Sentry,
+and rehearse failures and retries in UAT. Suspended UAT schedules must not be
+resumed without an agreed rehearsal; after an environment has checked in,
+intentional suspension may require monitor management to avoid missed alerts.
+Check-ins do not independently verify snapshot freshness or restorability.
+
 Boto3 handles snapshot pagination automatically. Pruning remains
 source/tier-specific and limited to available manual
 snapshots under `<db>-scheduled-<tier>-` with matching ARN, complete ownership
